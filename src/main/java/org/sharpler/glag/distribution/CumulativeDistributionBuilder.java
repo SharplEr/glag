@@ -2,6 +2,7 @@ package org.sharpler.glag.distribution;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.sharpler.glag.pojo.SafepointEvent;
 
 public final class CumulativeDistributionBuilder {
     private final int size;
@@ -10,6 +11,12 @@ public final class CumulativeDistributionBuilder {
 
     public CumulativeDistributionBuilder(int size) {
         this.size = size;
+    }
+
+    public static List<CumulativeDistributionPoint> toDistribution(List<SafepointEvent> events) {
+        var builder = new CumulativeDistributionBuilder(events.size());
+        events.forEach(x -> builder.addValue(x.totalTimeNs()));
+        return builder.build();
     }
 
     public void addValue(long value) {

@@ -1,7 +1,5 @@
 package org.sharpler.glag;
 
-import static org.fusesource.jansi.Ansi.ansi;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,22 +7,18 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import org.fusesource.jansi.Ansi;
-import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
-import org.sharpler.glag.distribution.CumulativeDistributionPoint;
+import org.sharpler.glag.output.ConsoleOutput;
 import org.sharpler.glag.parsing.GcParser;
 import org.sharpler.glag.parsing.SafepointParser;
 import org.sharpler.glag.pojo.GcEvent;
-import org.sharpler.glag.pojo.GcLog;
+import org.sharpler.glag.aggregations.GcLog;
 import org.sharpler.glag.pojo.GcTime;
-import org.sharpler.glag.pojo.SafapointLog;
+import org.sharpler.glag.aggregations.SafapointLog;
 import org.sharpler.glag.pojo.SafepointEvent;
 import picocli.CommandLine;
 
@@ -57,57 +51,9 @@ final class Main implements Callable<Integer> {
         var safepoints = readSafepoints(safepointsPath);
         var gclog = readGcLog(gcPath);
 
-        for (var e : safepoints.distributions().entrySet()) {
-            System.out.println("Operation: " + e.getKey());
-
-            System.out.println("\tCumulative distributions:");
-            for (var point : e.getValue()) {
-                var timingMs = point.value() / 1E6;
-
-                var line = String.format(
-                    "\t\ttiming= %.3f ms, probability=%.2f %%", timingMs, point.prob() * 100d
-                );
-                if (timingMs > thresholdMs) {
-                    AnsiConsole.out().println(ansi().fg(Ansi.Color.RED).a(line).reset());
-                } else {
-                    AnsiConsole.out().println(line);
-                }
-            }
-
-            System.out.printf("\tSlow events: threshold=%d(ms) %n", thresholdMs);
-            for (var event : safepoints.events().get(e.getKey())) {
-                if (event.totalTimeNs() > TimeUnit.MILLISECONDS.toNanos(thresholdMs)) {
-                    System.out.printf("\t\t %s, GC number = %s %n", event,
-                        (event.timestampSec() < gclog.startLogSec() || event.timestampSec() > gclog.finishLogSec()) ? "out of gc log" :
-                            findGcByTime(event.timestampSec(), 0.1d, gclog.times()));
-                }
-            }
-        }
+        ConsoleOutput.print(safepoints, gclog, thresholdMs);
 
         return 0;
-    }
-
-    private static List<Integer> findGcByTime(double timeSec, double delta, List<GcTime> times) {
-        var result = new ArrayList<Integer>();
-        var lowBound = timeSec - delta;
-        var upperBound = timeSec + delta;
-        for (var time : times) {
-            if (match(lowBound, upperBound, time.startSec(), time.finishSec())) {
-                result.add(time.gcNum());
-            }
-        }
-        return result;
-    }
-
-    private static boolean match(double xStart, double xFinish, double yStart, double yFinish) {
-        if (xStart == yStart || xStart == yFinish || yFinish == yStart || yFinish == xFinish) {
-            return true;
-        }
-        if (xStart < yStart) {
-            return xFinish > yStart;
-        } else {
-            return xStart < yFinish;
-        }
     }
 
     private static GcLog readGcLog(Path path) throws IOException {
@@ -143,14 +89,8 @@ final class Main implements Callable<Integer> {
         }
 
         var operations2stat = operations2events.entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, x -> toDistribution(x.getValue())));
+            .collect(Collectors.toMap(Map.Entry::getKey, x -> CumulativeDistributionBuilder.toDistribution(x.getValue())));
 
         return new SafapointLog(operations2events, operations2stat);
-    }
-
-    private static List<CumulativeDistributionPoint> toDistribution(List<SafepointEvent> events) {
-        var builder = new CumulativeDistributionBuilder(events.size());
-        events.forEach(x -> builder.addValue(x.totalTimeNs()));
-        return builder.build();
     }
 }
