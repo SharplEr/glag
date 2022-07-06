@@ -1,13 +1,14 @@
-package org.sharpler.glag;
+package org.sharpler.glag.parsing;
 
 import java.util.regex.Pattern;
+import org.sharpler.glag.pojo.SafepointEvent;
 
 public final class SafepointParser {
     private SafepointParser() {
         // No-op
     }
 
-    private final static Pattern PATTERN = Pattern.compile(
+    private static final Pattern PATTERN = Pattern.compile(
         "^\\[([^\\[\\]]*)\\]\\[([^\\[\\]]*)s\\]\\[([^\\[\\]]*)\\]\\[([^\\[\\]]*)\\] Safepoint \\\"([^\\\"]*)\\\", Time since last: (\\d*) ns, Reaching safepoint: (\\d*) ns, At safepoint: (\\d*) ns, Total: (\\d*) ns$"
     );
 

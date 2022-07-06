@@ -13,15 +13,25 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
+import org.sharpler.glag.distribution.CumulativeDistributionPoint;
+import org.sharpler.glag.parsing.GcParser;
+import org.sharpler.glag.parsing.SafepointParser;
+import org.sharpler.glag.pojo.GcEvent;
+import org.sharpler.glag.pojo.GcTime;
+import org.sharpler.glag.pojo.SafepointEvent;
 import picocli.CommandLine;
 
-public class Main implements Callable<Integer> {
+final class Main implements Callable<Integer> {
+    @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
     @CommandLine.Option(names = {"-s", "--safepoints"}, paramLabel = "SAFEPOINTS", description = "safepoints log", required = true)
     private Path safepointsPath = Paths.get(".");
 
+    @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
     @CommandLine.Option(names = {"-g", "--gc"}, paramLabel = "GC", description = "gc log", required = true)
     private Path gcPath = Paths.get(".");
 
+    @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
     @CommandLine.Option(
         names = {"-t", "--threshold"},
         paramLabel = "THRESHOLD",
@@ -86,8 +96,10 @@ public class Main implements Callable<Integer> {
     }
 
     private static GcLog readGcLog(Path path) throws IOException {
-        var events =
-            Files.readAllLines(path).stream().map(GcParser::parse).filter(Objects::nonNull).collect(Collectors.groupingBy(GcEvent::gcNum));
+        var events = Files.readAllLines(path).stream()
+            .map(GcParser::parse)
+            .filter(Objects::nonNull)
+            .collect(Collectors.groupingBy(GcEvent::gcNum));
 
         var times = new ArrayList<GcTime>(events.size());
         for (var e : events.entrySet()) {
@@ -108,22 +120,27 @@ public class Main implements Callable<Integer> {
             events.add(SafepointParser.parse(lines.get(i), i));
         }
 
-        var operations2events = events.stream().collect(Collectors.groupingBy(SafepointEvent::operationName));
+        var operations2events = events.stream()
+            .collect(Collectors.groupingBy(SafepointEvent::operationName));
 
         for (var entry : operations2events.entrySet()) {
             entry.getValue().sort(Comparator.comparingLong(SafepointEvent::totalTimeNs));
         }
 
-        var operations2stat = operations2events.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
-            var builder = new HistogramBuilder(e.getValue().size());
-            e.getValue().forEach(x -> builder.addValue(x.totalTimeNs()));
-            return builder.build();
-        }));
+        var operations2stat = operations2events.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, x -> toDistribution(x.getValue())));
 
         return new SafapointLog(operations2events, operations2stat);
     }
 
-    private record SafapointLog(Map<String, List<SafepointEvent>> events, Map<String, List<HistogramPoint>> histogram) {
+    private static List<CumulativeDistributionPoint> toDistribution(List<SafepointEvent> events) {
+        var builder = new CumulativeDistributionBuilder(events.size());
+        events.forEach(x -> builder.addValue(x.totalTimeNs()));
+        return builder.build();
+    }
+
+
+    private record SafapointLog(Map<String, List<SafepointEvent>> events, Map<String, List<CumulativeDistributionPoint>> histogram) {
 
     }
 
