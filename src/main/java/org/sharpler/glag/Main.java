@@ -1,5 +1,7 @@
 package org.sharpler.glag;
 
+import static org.fusesource.jansi.Ansi.ansi;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,6 +15,8 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 import org.sharpler.glag.parsing.GcParser;
@@ -58,7 +62,16 @@ final class Main implements Callable<Integer> {
 
             System.out.println("\tCumulative distributions:");
             for (var point : e.getValue()) {
-                System.out.printf("\t\ttiming= %.3f ms, probability=%.2f %% %n", point.value() / 1E6, point.prob() * 100d);
+                var timingMs = point.value() / 1E6;
+
+                var line = String.format(
+                    "\t\ttiming= %.3f ms, probability=%.2f %%", timingMs, point.prob() * 100d
+                );
+                if (timingMs > thresholdMs) {
+                    AnsiConsole.out().println(ansi().fg(Ansi.Color.RED).a(line).reset());
+                } else {
+                    AnsiConsole.out().println(line);
+                }
             }
 
             System.out.printf("\tSlow events: threshold=%d(ms) %n", thresholdMs);
