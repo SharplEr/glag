@@ -18,7 +18,9 @@ import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 import org.sharpler.glag.parsing.GcParser;
 import org.sharpler.glag.parsing.SafepointParser;
 import org.sharpler.glag.pojo.GcEvent;
+import org.sharpler.glag.pojo.GcLog;
 import org.sharpler.glag.pojo.GcTime;
+import org.sharpler.glag.pojo.SafapointLog;
 import org.sharpler.glag.pojo.SafepointEvent;
 import picocli.CommandLine;
 
@@ -51,18 +53,18 @@ final class Main implements Callable<Integer> {
         var safepoints = readSafepoints(safepointsPath);
         var gclog = readGcLog(gcPath);
 
-        for (var e : safepoints.histogram.entrySet()) {
+        for (var e : safepoints.distributions().entrySet()) {
             System.out.println("Operation: " + e.getKey());
 
-            System.out.println("\tHistogram:");
+            System.out.println("\tCumulative distributions:");
             for (var point : e.getValue()) {
-                System.out.printf("\t\tval= %.3f ms, prob=%.2f %% %n", point.value() / 1E6, point.prob() * 100d);
+                System.out.printf("\t\ttiming= %.3f ms, probability=%.2f %% %n", point.value() / 1E6, point.prob() * 100d);
             }
 
-            System.out.println("\tSlow events:");
-            for (var event : safepoints.events.get(e.getKey())) {
+            System.out.printf("\tSlow events: threshold=%d(ms) %n", thresholdMs);
+            for (var event : safepoints.events().get(e.getKey())) {
                 if (event.totalTimeNs() > TimeUnit.MILLISECONDS.toNanos(thresholdMs)) {
-                    System.out.printf("\t\t slow safepoint = %s, gc = %s %n", event,
+                    System.out.printf("\t\t %s, GC number = %s %n", event,
                         (event.timestampSec() < gclog.startLogSec() || event.timestampSec() > gclog.finishLogSec()) ? "out of gc log" :
                             findGcByTime(event.timestampSec(), 0.1d, gclog.times()));
                 }
@@ -115,7 +117,7 @@ final class Main implements Callable<Integer> {
     private static SafapointLog readSafepoints(Path path) throws IOException {
         var lines = Files.readAllLines(path);
 
-        var events = new ArrayList<SafepointEvent>();
+        var events = new ArrayList<SafepointEvent>(lines.size());
         for (int i = 0; i < lines.size(); i++) {
             events.add(SafepointParser.parse(lines.get(i), i));
         }
@@ -137,15 +139,5 @@ final class Main implements Callable<Integer> {
         var builder = new CumulativeDistributionBuilder(events.size());
         events.forEach(x -> builder.addValue(x.totalTimeNs()));
         return builder.build();
-    }
-
-
-    private record SafapointLog(Map<String, List<SafepointEvent>> events, Map<String, List<CumulativeDistributionPoint>> histogram) {
-
-    }
-
-
-    private record GcLog(Map<Integer, List<GcEvent>> events, List<GcTime> times, double startLogSec, double finishLogSec) {
-
     }
 }
