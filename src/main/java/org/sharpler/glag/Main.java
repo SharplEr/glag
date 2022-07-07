@@ -11,14 +11,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+import org.sharpler.glag.aggregations.GcLog;
+import org.sharpler.glag.aggregations.SafapointLog;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 import org.sharpler.glag.output.ConsoleOutput;
 import org.sharpler.glag.parsing.GcParser;
 import org.sharpler.glag.parsing.SafepointParser;
 import org.sharpler.glag.pojo.GcEvent;
-import org.sharpler.glag.aggregations.GcLog;
 import org.sharpler.glag.pojo.GcTime;
-import org.sharpler.glag.aggregations.SafapointLog;
 import org.sharpler.glag.pojo.SafepointEvent;
 import picocli.CommandLine;
 
@@ -91,6 +91,11 @@ final class Main implements Callable<Integer> {
         var operations2stat = operations2events.entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey, x -> CumulativeDistributionBuilder.toDistribution(x.getValue())));
 
-        return new SafapointLog(operations2events, operations2stat);
+        return new SafapointLog(
+            operations2events,
+            operations2stat,
+            events.get(0).timestampSec(),
+            events.get(events.size() - 1).timestampSec()
+        );
     }
 }

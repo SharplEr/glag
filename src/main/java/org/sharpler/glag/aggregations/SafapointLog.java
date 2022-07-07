@@ -5,6 +5,11 @@ import java.util.Map;
 import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 import org.sharpler.glag.pojo.SafepointEvent;
 
-public record SafapointLog(Map<String, List<SafepointEvent>> events, Map<String, List<CumulativeDistributionPoint>> distributions) {
+public record SafapointLog(
+    Map<String, List<SafepointEvent>> events,
+    Map<String, List<CumulativeDistributionPoint>> distributions,
+    double startLogSec,
+    double finishLogSec
+) {
 
 }
