@@ -1,0 +1,18 @@
+Safepoint is a point where it's safe to stop thread execution and then do operations with the java heap
+like move objects and free memory.
+
+For example, it's **unsafe** to stop thread when object already allocated but reference still not assigned.
+
+Safepoint is just read operation from special page in memory.
+
+When JVM want to do something under the pause it protects this page from reading which create trap:
+when thread trying to read the page it stops and get signal from OS.
+JVM catches this signal.
+Eventually all thread stops and JVM could do its operation.
+
+So there are two phases: reaching safepoint and do JVM operation.
+
+Single GC iteration could be split into many safe points so GC could do concurrent operations between them.
+
+While concurrent operations effect on application throughput (because of CPU consuming),
+safepoints effect on latency.

@@ -15,6 +15,7 @@ import org.sharpler.glag.aggregations.GcLog;
 import org.sharpler.glag.aggregations.SafapointLog;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 import org.sharpler.glag.output.ConsoleOutput;
+import org.sharpler.glag.output.MdOutput;
 import org.sharpler.glag.parsing.GcParser;
 import org.sharpler.glag.parsing.SafepointParser;
 import org.sharpler.glag.pojo.GcEvent;
@@ -41,6 +42,9 @@ final class Main implements Callable<Integer> {
     )
     private int thresholdMs = 50;
 
+    @CommandLine.Option(names = {"-o", "--output"}, paramLabel = "OUTPUT", description = "Report output path", required = false)
+    private Path output = null;
+
     public static void main(String... args) {
         int exitCode = new CommandLine(new Main()).execute(args);
         System.exit(exitCode);
@@ -51,7 +55,11 @@ final class Main implements Callable<Integer> {
         var safepoints = readSafepoints(safepointsPath);
         var gclog = readGcLog(gcPath);
 
-        ConsoleOutput.print(safepoints, gclog, thresholdMs);
+        if (output == null) {
+            ConsoleOutput.print(safepoints, gclog, thresholdMs);
+        } else {
+            new MdOutput(output).print(safepoints, gclog, thresholdMs);
+        }
 
         return 0;
     }
@@ -89,7 +97,7 @@ final class Main implements Callable<Integer> {
         }
 
         var operations2stat = operations2events.entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, x -> CumulativeDistributionBuilder.toDistribution(x.getValue())));
+            .collect(Collectors.toMap(Map.Entry::getKey, x -> CumulativeDistributionBuilder.operationTimeDistribution(x.getValue())));
 
         return new SafapointLog(
             operations2events,

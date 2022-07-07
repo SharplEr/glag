@@ -29,5 +29,7 @@ You could use it to analize your gc and safepoint logs.
 
 ```bash
 mvn package
-java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar -s /home/safepoint.log -g /home/gc.log
+java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar -s /home/safepoint.log -g /home/gc.log -o /home/report.md
 ```
+
+After this you could convert `*.md` output file into `pdf` and read it as a book. 

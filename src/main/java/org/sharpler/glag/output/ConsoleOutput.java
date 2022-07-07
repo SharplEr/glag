@@ -66,15 +66,7 @@ public final class ConsoleOutput {
         }
         AnsiConsole.out().println("Time to safepoint cumulative distribution: ");
 
-        var builder = new CumulativeDistributionBuilder(safepoints.events().values().stream().mapToInt(List::size).sum());
-
-        safepoints.events().values().stream()
-            .flatMap(Collection::stream)
-            .mapToLong(SafepointEvent::reachingTimeNs)
-            .sorted()
-            .forEach(builder::addValue);
-
-        for (var point : builder.build()) {
+        for (var point : CumulativeDistributionBuilder.reachingDistribution(safepoints)) {
             var timingMs = point.value() / 1E6;
             printLn(
                 timingMs > thresholdMs ? RED : DEFAULT,

@@ -11,4 +11,5 @@ public record SafepointEvent(
     long totalTimeNs,
     int line
 ) {
+
 }
