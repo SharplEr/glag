@@ -37,8 +37,7 @@ public final class ConsoleOutput {
             printLn(YELLOW, "\tSlow events: threshold = %d (ms)", thresholdMs);
 
             for (var event : safepoints.events().get(e.getKey())) {
-                if (event.totalTimeNs() > TimeUnit.MILLISECONDS.toNanos(thresholdMs)) {
-
+                if (event.insideTimeNs() > TimeUnit.MILLISECONDS.toNanos(thresholdMs)) {
                     var line = ansi().a("\t\t").a(event).a(", ");
                     if (event.timestampSec() < gcLog.startLogSec() || event.timestampSec() > gcLog.finishLogSec()) {
                         line = line.fg(RED).a("OUT OF GC LOG");

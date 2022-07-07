@@ -85,7 +85,7 @@ final class Main implements Callable<Integer> {
             .collect(Collectors.groupingBy(SafepointEvent::operationName));
 
         for (var entry : operations2events.entrySet()) {
-            entry.getValue().sort(Comparator.comparingLong(SafepointEvent::totalTimeNs));
+            entry.getValue().sort(Comparator.comparingLong(SafepointEvent::insideTimeNs));
         }
 
         var operations2stat = operations2events.entrySet().stream()

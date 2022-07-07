@@ -15,7 +15,7 @@ public final class CumulativeDistributionBuilder {
 
     public static List<CumulativeDistributionPoint> toDistribution(List<SafepointEvent> events) {
         var builder = new CumulativeDistributionBuilder(events.size());
-        events.forEach(x -> builder.addValue(x.totalTimeNs()));
+        events.forEach(x -> builder.addValue(x.insideTimeNs()));
         return builder.build();
     }
 
