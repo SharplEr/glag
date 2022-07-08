@@ -16,3 +16,20 @@ Single GC iteration could be split into many safe points so GC could do concurre
 
 While concurrent operations effect on application throughput (because of CPU consuming),
 safepoints effect on latency.
+
+Here [source code of safepoints logging:](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/runtime/safepoint.cpp)
+
+```C++
+log_info(safepoint)(
+   "Safepoint \"%s\", "
+   "Time since last: " JLONG_FORMAT " ns, "
+   "Reaching safepoint: " JLONG_FORMAT " ns, "
+   "At safepoint: " JLONG_FORMAT " ns, "
+   "Total: " JLONG_FORMAT " ns",
+    VM_Operation::name(_current_type),
+    _last_app_time_ns,
+    _last_safepoint_cleanup_time_ns - _last_safepoint_begin_time_ns,
+    _last_safepoint_end_time_ns     - _last_safepoint_cleanup_time_ns,
+    _last_safepoint_end_time_ns     - _last_safepoint_begin_time_ns
+   );
+```
