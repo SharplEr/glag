@@ -3,10 +3,18 @@ package org.sharpler.glag.aggregations;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 import org.sharpler.glag.pojo.GcEvent;
+import org.sharpler.glag.pojo.GcName;
 import org.sharpler.glag.pojo.GcTime;
 
-public record GcLog(Map<Integer, List<GcEvent>> events, List<GcTime> times, double startLogSec, double finishLogSec) {
+public record GcLog(
+    @Nullable GcName gcName,
+    Map<Integer, List<GcEvent>> events,
+    List<GcTime> times,
+    double startLogSec,
+    double finishLogSec
+) {
 
     public List<Integer> findGcByTime(double timeSec, double delta) {
         var result = new ArrayList<Integer>();

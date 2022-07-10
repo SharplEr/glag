@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
@@ -19,6 +18,7 @@ import org.sharpler.glag.output.MdOutput;
 import org.sharpler.glag.parsing.GcParser;
 import org.sharpler.glag.parsing.SafepointParser;
 import org.sharpler.glag.pojo.GcEvent;
+import org.sharpler.glag.pojo.GcName;
 import org.sharpler.glag.pojo.GcTime;
 import org.sharpler.glag.pojo.SafepointEvent;
 import picocli.CommandLine;
@@ -76,9 +76,25 @@ final class Main implements Callable<Integer> {
             times.add(new GcTime(e.getKey(), stats.getMin(), stats.getMax()));
         }
 
-        var stats = events.values().stream().flatMap(Collection::stream).mapToDouble(GcEvent::timestampSec).summaryStatistics();
+        var min = Double.MAX_VALUE;
+        var max = Double.MIN_VALUE;
+        GcName gcName = null;
+        for (var ev : events.values()) {
+            for (var e : ev) {
+                min = Math.min(min, e.timestampSec());
+                max = Math.max(max, e.timestampSec());
+                if (gcName == null) {
+                    for (var gc : GcName.VALUES) {
+                        if (e.origin().contains(gc.getName())) {
+                            gcName = gc;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
 
-        return new GcLog(events, times, stats.getMin(), stats.getMax());
+        return new GcLog(gcName, events, times, min, max);
     }
 
     private static SafapointLog readSafepoints(Path path) throws IOException {
