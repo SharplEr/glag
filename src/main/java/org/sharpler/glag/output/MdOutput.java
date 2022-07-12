@@ -7,9 +7,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.sharpler.glag.aggregations.GcLog;
 import org.sharpler.glag.aggregations.SafapointLog;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
+import org.sharpler.glag.pojo.SafepointEvent;
+import org.sharpler.glag.pojo.SafepointExplain;
 
 public final class MdOutput {
     private static final Path DOCS_PATH = Paths.get("src", "main", "resources", "docs");
@@ -80,28 +84,47 @@ public final class MdOutput {
 
             writef("#### Slow events: threshold = %d (ms)%n%n", thresholdMs);
 
-            writef("| line in safepoint log | operation time (ns)| time to safepoint (ns) | GC number |%n");
-            writef("| --------------------- | ------------------ | ---------------------- | --------- |%n");
+            var explains = events.stream()
+                .filter(event -> event.insideTimeNs() > TimeUnit.MILLISECONDS.toNanos(thresholdMs))
+                .map(x -> tryExplain(x, gcLog))
+                .collect(
+                    Collectors.partitioningBy(x -> x.explain instanceof SafepointExplain.NoExplain)
+                );
 
-            for (var event : events) {
-                if (event.insideTimeNs() > TimeUnit.MILLISECONDS.toNanos(thresholdMs)) {
+            for (var explain : explains.get(false)) {
+                writef("##### Slow safepoint : safepoint log line = %d%n%n", explain.event().line());
+                writef("Operation time = %d (ns)%n%n", explain.event().insideTimeNs());
+                writef("Time to safepoint = %d (ns)%n%n", explain.event.reachingTimeNs());
+
+                if (explain.explain() instanceof SafepointExplain.GcExplain) {
+                    var gcExplain = (SafepointExplain.GcExplain) explain.explain();
+                    writef("Found following gc operation: %s %n%n", gcExplain.gcs().keySet());
+
+                    for (var gc : gcExplain.gcs().entrySet()) {
+                        writef("###### GC invocation = %d%n%n", gc.getKey());
+                        writef("```%n");
+                        for (var gcEvent : gc.getValue()) {
+                            writef("%s%n", gcEvent.origin());
+                        }
+                        writef("```%n%n");
+                    }
+                }
+            }
+
+            writef("##### Slow safepoint without explain%n%n");
+
+
+            writef("| line in safepoint log | operation time (ns)| time to safepoint (ns) |%n");
+            writef("| --------------------- | ------------------ | ---------------------- |%n");
+
+            for (var event : explains.get(true)) {
+                if (event.event().insideTimeNs() > TimeUnit.MILLISECONDS.toNanos(thresholdMs)) {
                     writef(
                         "| %d | %d | %d | ",
-                        event.line(),
-                        event.insideTimeNs(),
-                        event.reachingTimeNs()
+                        event.event().line(),
+                        event.event().insideTimeNs(),
+                        event.event().reachingTimeNs()
                     );
-
-                    if (event.timestampSec() < gcLog.startLogSec() || event.timestampSec() > gcLog.finishLogSec()) {
-                        writef("**OUT OF GC LOG** |%n");
-                    } else {
-                        var gcNums = gcLog.findGcByTime(event.timestampSec(), 0.1d);
-                        if (gcNums.isEmpty()) {
-                            writef("*miss in GC log* |%n");
-                        } else {
-                            writef("%s |%n", gcNums);
-                        }
-                    }
                 }
             }
         }
@@ -127,6 +150,26 @@ public final class MdOutput {
                 point.prob() * 100d
             );
         }
+    }
+
+    private SafepointWithExplain tryExplain(SafepointEvent event, GcLog gcLog) {
+        if (event.timestampSec() < gcLog.startLogSec() || event.timestampSec() > gcLog.finishLogSec()) {
+            return new SafepointWithExplain(event, SafepointExplain.NoExplain.INSTANCE);
+        }
+
+        var gcNums = gcLog.findGcByTime(event.timestampSec(), 0.1d);
+        if (gcNums.isEmpty()) {
+            return new SafepointWithExplain(event, SafepointExplain.NoExplain.INSTANCE);
+        }
+
+        return new SafepointWithExplain(
+            event,
+            new SafepointExplain.GcExplain(gcNums.stream().collect(Collectors.toMap(Function.identity(), x -> gcLog.events().get(x))))
+        );
+    }
+
+    private record SafepointWithExplain(SafepointEvent event, SafepointExplain explain) {
+
     }
 
     private void writef(String format, Object... args) throws IOException {
