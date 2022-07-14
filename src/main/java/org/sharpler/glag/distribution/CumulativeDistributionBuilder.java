@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.sharpler.glag.aggregations.SafapointLog;
-import org.sharpler.glag.pojo.SafepointEvent;
+import org.sharpler.glag.records.SafepointEvent;
 
 public final class CumulativeDistributionBuilder {
     private final int size;

@@ -6,15 +6,12 @@ import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.Color.YELLOW;
 import static org.fusesource.jansi.Ansi.ansi;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.aggregations.GcLog;
 import org.sharpler.glag.aggregations.SafapointLog;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
-import org.sharpler.glag.pojo.SafepointEvent;
 
 public final class ConsoleOutput {
     public static void print(SafapointLog safepoints, GcLog gcLog, int thresholdMs) {

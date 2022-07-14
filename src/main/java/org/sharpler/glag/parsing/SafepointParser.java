@@ -1,7 +1,7 @@
 package org.sharpler.glag.parsing;
 
 import java.util.regex.Pattern;
-import org.sharpler.glag.pojo.SafepointEvent;
+import org.sharpler.glag.records.SafepointEvent;
 
 public final class SafepointParser {
     private SafepointParser() {

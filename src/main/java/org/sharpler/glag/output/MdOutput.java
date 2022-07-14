@@ -12,8 +12,8 @@ import java.util.stream.Collectors;
 import org.sharpler.glag.aggregations.GcLog;
 import org.sharpler.glag.aggregations.SafapointLog;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
-import org.sharpler.glag.pojo.SafepointEvent;
-import org.sharpler.glag.pojo.SafepointExplain;
+import org.sharpler.glag.records.SafepointEvent;
+import org.sharpler.glag.records.SafepointExplain;
 
 public final class MdOutput {
     private static final Path DOCS_PATH = Paths.get("src", "main", "resources", "docs");

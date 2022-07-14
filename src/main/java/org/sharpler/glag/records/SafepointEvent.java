@@ -1,4 +1,4 @@
-package org.sharpler.glag.pojo;
+package org.sharpler.glag.records;
 
 public record SafepointEvent(
     String time,

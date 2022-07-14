@@ -2,7 +2,7 @@ package org.sharpler.glag.parsing;
 
 import java.util.regex.Pattern;
 import org.jetbrains.annotations.Nullable;
-import org.sharpler.glag.pojo.GcEvent;
+import org.sharpler.glag.records.GcEvent;
 
 public final class GcParser {
     private static final Pattern PATTERN =

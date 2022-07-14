@@ -17,10 +17,10 @@ import org.sharpler.glag.output.ConsoleOutput;
 import org.sharpler.glag.output.MdOutput;
 import org.sharpler.glag.parsing.GcParser;
 import org.sharpler.glag.parsing.SafepointParser;
-import org.sharpler.glag.pojo.GcEvent;
-import org.sharpler.glag.pojo.GcName;
-import org.sharpler.glag.pojo.GcTime;
-import org.sharpler.glag.pojo.SafepointEvent;
+import org.sharpler.glag.records.GcEvent;
+import org.sharpler.glag.records.GcName;
+import org.sharpler.glag.records.GcTime;
+import org.sharpler.glag.records.SafepointEvent;
 import picocli.CommandLine;
 
 final class Main implements Callable<Integer> {

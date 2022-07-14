@@ -1,4 +1,4 @@
-package org.sharpler.glag.pojo;
+package org.sharpler.glag.records;
 
 import java.util.List;
 import java.util.Map;

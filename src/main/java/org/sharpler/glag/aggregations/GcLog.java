@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
-import org.sharpler.glag.pojo.GcEvent;
-import org.sharpler.glag.pojo.GcName;
-import org.sharpler.glag.pojo.GcTime;
+import org.sharpler.glag.records.GcEvent;
+import org.sharpler.glag.records.GcName;
+import org.sharpler.glag.records.GcTime;
 
 public record GcLog(
     @Nullable GcName gcName,
