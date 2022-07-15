@@ -2,7 +2,7 @@ package org.sharpler.glag.parsing;
 
 import java.util.regex.Pattern;
 import org.jetbrains.annotations.Nullable;
-import org.sharpler.glag.records.GcEvent;
+import org.sharpler.glag.records.GcLogRecord;
 
 public final class GcParser {
     private static final Pattern PATTERN =
@@ -14,14 +14,14 @@ public final class GcParser {
 
 
     @Nullable
-    public static GcEvent parse(String line) {
+    public static GcLogRecord parse(String line) {
         var matcher = PATTERN.matcher(line);
         if (!matcher.matches()) {
             return null;
         }
         var result = matcher.toMatchResult();
 
-        return new GcEvent(
+        return new GcLogRecord(
             line,
             Double.parseDouble(result.group(2)),
             Integer.parseInt(result.group(5))

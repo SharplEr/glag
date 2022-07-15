@@ -10,13 +10,13 @@ import java.util.concurrent.TimeUnit;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.aggregations.GcLog;
-import org.sharpler.glag.aggregations.SafapointLog;
+import org.sharpler.glag.aggregations.SafepointLog;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 
 public final class ConsoleOutput {
-    public static void print(SafapointLog safepoints, GcLog gcLog, int thresholdMs) {
+    public static void print(SafepointLog safepoints, GcLog gcLog, int thresholdMs) {
         for (var e : safepoints.distributions().entrySet()) {
-            var events = safepoints.events().get(e.getKey());
+            var events = safepoints.byTypes().get(e.getKey());
 
             AnsiConsole.out().println(ansi().a("Operation: ").fg(GREEN).a(e.getKey()).reset());
 
@@ -36,29 +36,6 @@ public final class ConsoleOutput {
                     timingMs,
                     point.prob() * 100d
                 );
-            }
-
-            if (e.getValue().get(e.getValue().size() - 1).value() / 1E6 < thresholdMs) {
-                continue;
-            }
-
-            printLn(YELLOW, "\tSlow events: threshold = %d (ms)", thresholdMs);
-
-            for (var event : events) {
-                if (event.insideTimeNs() > TimeUnit.MILLISECONDS.toNanos(thresholdMs)) {
-                    var line = ansi().a("\t\t").a(event).a(", ");
-                    if (event.timestampSec() < gcLog.startLogSec() || event.timestampSec() > gcLog.finishLogSec()) {
-                        line = line.fg(RED).a("OUT OF GC LOG");
-                    } else {
-                        var gcNums = gcLog.findGcByTime(event.timestampSec(), 0.1d);
-                        if (gcNums.isEmpty()) {
-                            line = line.fg(YELLOW).a("miss in GC log");
-                        } else {
-                            line = line.a("GC number = ").a(gcNums);
-                        }
-                    }
-                    AnsiConsole.out().println(line.reset());
-                }
             }
         }
         AnsiConsole.out().println("Time to safepoint cumulative distribution: ");

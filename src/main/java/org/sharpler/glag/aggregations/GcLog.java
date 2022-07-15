@@ -4,38 +4,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
-import org.sharpler.glag.records.GcEvent;
+import org.sharpler.glag.index.RangeIndex;
+import org.sharpler.glag.index.ValueWithRange;
+import org.sharpler.glag.records.GcLogRecord;
 import org.sharpler.glag.records.GcName;
-import org.sharpler.glag.records.GcTime;
 
 public record GcLog(
     @Nullable GcName gcName,
-    Map<Integer, List<GcEvent>> events,
-    List<GcTime> times,
+    Map<Integer, List<GcLogRecord>> events,
+    RangeIndex<List<GcLogRecord>> timeIndex,
     double startLogSec,
     double finishLogSec
 ) {
 
-    public List<Integer> findGcByTime(double timeSec, double delta) {
-        var result = new ArrayList<Integer>();
-        var lowBound = timeSec - delta;
-        var upperBound = timeSec + delta;
-        for (var time : times) {
-            if (match(lowBound, upperBound, time.startSec(), time.finishSec())) {
-                result.add(time.gcNum());
-            }
+    public static RangeIndex<List<GcLogRecord>> buildIndex(Map<Integer, List<GcLogRecord>> events) {
+        var ranges = new ArrayList<ValueWithRange<List<GcLogRecord>>>(events.size());
+        for (var e : events.entrySet()) {
+            var stats = e.getValue().stream().mapToDouble(GcLogRecord::timestampSec).summaryStatistics();
+            ranges.add(new ValueWithRange<>(e.getValue(), stats.getMin(), stats.getMax()));
         }
-        return result;
-    }
-
-    private static boolean match(double xStart, double xFinish, double yStart, double yFinish) {
-        if (xStart == yStart || xStart == yFinish || yFinish == yStart || yFinish == xFinish) {
-            return true;
-        }
-        if (xStart < yStart) {
-            return xFinish > yStart;
-        } else {
-            return xStart < yFinish;
-        }
+        return new RangeIndex<>(ranges);
     }
 }

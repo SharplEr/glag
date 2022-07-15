@@ -11,16 +11,16 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import org.sharpler.glag.aggregations.GcLog;
-import org.sharpler.glag.aggregations.SafapointLog;
+import org.sharpler.glag.aggregations.RuntimeEvents;
+import org.sharpler.glag.aggregations.SafepointLog;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 import org.sharpler.glag.output.ConsoleOutput;
 import org.sharpler.glag.output.MdOutput;
 import org.sharpler.glag.parsing.GcParser;
 import org.sharpler.glag.parsing.SafepointParser;
-import org.sharpler.glag.records.GcEvent;
+import org.sharpler.glag.records.GcLogRecord;
 import org.sharpler.glag.records.GcName;
-import org.sharpler.glag.records.GcTime;
-import org.sharpler.glag.records.SafepointEvent;
+import org.sharpler.glag.records.SafepointLogRecord;
 import picocli.CommandLine;
 
 final class Main implements Callable<Integer> {
@@ -58,7 +58,7 @@ final class Main implements Callable<Integer> {
         if (output == null) {
             ConsoleOutput.print(safepoints, gclog, thresholdMs);
         } else {
-            new MdOutput(output).print(safepoints, gclog, thresholdMs);
+            new MdOutput(output).print(RuntimeEvents.create(gclog, safepoints, thresholdMs));
         }
 
         return 0;
@@ -68,13 +68,9 @@ final class Main implements Callable<Integer> {
         var events = Files.readAllLines(path).stream()
             .map(GcParser::parse)
             .filter(Objects::nonNull)
-            .collect(Collectors.groupingBy(GcEvent::gcNum));
+            .collect(Collectors.groupingBy(GcLogRecord::gcNum));
 
-        var times = new ArrayList<GcTime>(events.size());
-        for (var e : events.entrySet()) {
-            var stats = e.getValue().stream().mapToDouble(GcEvent::timestampSec).summaryStatistics();
-            times.add(new GcTime(e.getKey(), stats.getMin(), stats.getMax()));
-        }
+        var index = GcLog.buildIndex(events);
 
         var min = Double.MAX_VALUE;
         var max = Double.MIN_VALUE;
@@ -94,32 +90,34 @@ final class Main implements Callable<Integer> {
             }
         }
 
-        return new GcLog(gcName, events, times, min, max);
+        return new GcLog(gcName, events, index, min, max);
     }
 
-    private static SafapointLog readSafepoints(Path path) throws IOException {
+    private static SafepointLog readSafepoints(Path path) throws IOException {
         var lines = Files.readAllLines(path);
 
-        var events = new ArrayList<SafepointEvent>(lines.size());
+        var events = new ArrayList<SafepointLogRecord>(lines.size());
         for (int i = 0; i < lines.size(); i++) {
             events.add(SafepointParser.parse(lines.get(i), i));
         }
 
         var operations2events = events.stream()
-            .collect(Collectors.groupingBy(SafepointEvent::operationName));
+            .collect(Collectors.groupingBy(SafepointLogRecord::operationName));
 
         for (var entry : operations2events.entrySet()) {
-            entry.getValue().sort(Comparator.comparingLong(SafepointEvent::insideTimeNs));
+            entry.getValue().sort(Comparator.comparingLong(SafepointLogRecord::insideTimeNs));
         }
 
         var operations2stat = operations2events.entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey, x -> CumulativeDistributionBuilder.operationTimeDistribution(x.getValue())));
 
-        return new SafapointLog(
+        return new SafepointLog(
+            events,
             operations2events,
             operations2stat,
-            events.get(0).timestampSec(),
-            events.get(events.size() - 1).timestampSec()
+            SafepointLog.buildIndex(events),
+            events.get(0).finishTimeSec(),
+            events.get(events.size() - 1).finishTimeSec()
         );
     }
 }

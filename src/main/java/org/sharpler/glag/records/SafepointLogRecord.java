@@ -1,8 +1,9 @@
 package org.sharpler.glag.records;
 
-public record SafepointEvent(
+public record SafepointLogRecord(
     String time,
-    double timestampSec,
+    double startTimeSec,
+    double finishTimeSec,
     String level, // info
     String type, // safepoint
     String operationName,

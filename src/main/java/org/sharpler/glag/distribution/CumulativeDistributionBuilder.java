@@ -3,8 +3,8 @@ package org.sharpler.glag.distribution;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import org.sharpler.glag.aggregations.SafapointLog;
-import org.sharpler.glag.records.SafepointEvent;
+import org.sharpler.glag.aggregations.SafepointLog;
+import org.sharpler.glag.records.SafepointLogRecord;
 
 public final class CumulativeDistributionBuilder {
     private final int size;
@@ -38,18 +38,17 @@ public final class CumulativeDistributionBuilder {
         return points;
     }
 
-    public static List<CumulativeDistributionPoint> operationTimeDistribution(List<SafepointEvent> events) {
+    public static List<CumulativeDistributionPoint> operationTimeDistribution(List<SafepointLogRecord> events) {
         var builder = new CumulativeDistributionBuilder(events.size());
         events.forEach(x -> builder.addValue(x.insideTimeNs()));
         return builder.build();
     }
 
-    public static List<CumulativeDistributionPoint> reachingDistribution(SafapointLog safepoints) {
-        var builder = new CumulativeDistributionBuilder(safepoints.events().values().stream().mapToInt(List::size).sum());
+    public static List<CumulativeDistributionPoint> reachingDistribution(SafepointLog safepoints) {
+        var builder = new CumulativeDistributionBuilder(safepoints.events().size());
 
-        safepoints.events().values().stream()
-            .flatMap(Collection::stream)
-            .mapToLong(SafepointEvent::reachingTimeNs)
+        safepoints.events().stream()
+            .mapToLong(SafepointLogRecord::reachingTimeNs)
             .sorted()
             .forEach(builder::addValue);
 
