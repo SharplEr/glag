@@ -9,7 +9,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import org.sharpler.glag.aggregations.GcLog;
@@ -114,8 +113,7 @@ final class Main implements Callable<Integer> {
             operations2events,
             operations2stat,
             SafepointLog.buildIndex(events),
-            events.get(0).finishTimeSec(),
-            events.get(events.size() - 1).finishTimeSec()
+            events.get(events.size() - 1).finishTimeSec()-events.get(0).startTimeSec()
         );
     }
 }

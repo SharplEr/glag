@@ -17,10 +17,7 @@ public final class ConsoleOutput {
 
             AnsiConsole.out().println(ansi().a("Operation: ").fg(GREEN).a(e.getKey()).reset());
 
-            AnsiConsole.out().printf(
-                "\tFrequency: %.3f op/min %n",
-                60d * events.size() / (safepoints.finishLogSec() - safepoints.startLogSec())
-            );
+            AnsiConsole.out().printf("\tPeriod: %.3f (sec/op)%n", safepoints.totalLogTimeSec() / events.size());
 
             AnsiConsole.out().println("\tCumulative distribution:");
 

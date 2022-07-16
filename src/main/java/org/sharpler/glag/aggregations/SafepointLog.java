@@ -15,8 +15,7 @@ public record SafepointLog(
 
     RangeIndex<SafepointLogRecord> timeIndex,
 
-    double startLogSec,
-    double finishLogSec
+    double totalLogTimeSec
 ) {
     public static RangeIndex<SafepointLogRecord> buildIndex(List<SafepointLogRecord> events) {
         var ranges = new ArrayList<ValueWithRange<SafepointLogRecord>>(events.size());
