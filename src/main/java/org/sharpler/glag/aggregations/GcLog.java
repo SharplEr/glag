@@ -11,12 +11,8 @@ import org.sharpler.glag.records.GcName;
 
 public record GcLog(
     @Nullable GcName gcName,
-    Map<Integer, List<GcLogRecord>> events,
-    RangeIndex<List<GcLogRecord>> timeIndex,
-    double startLogSec,
-    double finishLogSec
+    RangeIndex<List<GcLogRecord>> timeIndex
 ) {
-
     public static RangeIndex<List<GcLogRecord>> buildIndex(Map<Integer, List<GcLogRecord>> events) {
         var ranges = new ArrayList<ValueWithRange<List<GcLogRecord>>>(events.size());
         for (var e : events.entrySet()) {

@@ -1,7 +1,6 @@
 package org.sharpler.glag.distribution;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import org.sharpler.glag.aggregations.SafepointLog;
 import org.sharpler.glag.records.SafepointLogRecord;

@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -56,7 +58,7 @@ final class Main implements Callable<Integer> {
         var gclog = readGcLog(gcPath);
 
         if (output == null) {
-            ConsoleOutput.print(safepoints, gclog, thresholdMs);
+            ConsoleOutput.print(safepoints, thresholdMs);
         } else {
             new MdOutput(output).print(RuntimeEvents.create(gclog, safepoints, thresholdMs));
         }
@@ -65,32 +67,28 @@ final class Main implements Callable<Integer> {
     }
 
     private static GcLog readGcLog(Path path) throws IOException {
-        var events = Files.readAllLines(path).stream()
-            .map(GcParser::parse)
-            .filter(Objects::nonNull)
-            .collect(Collectors.groupingBy(GcLogRecord::gcNum));
-
-        var index = GcLog.buildIndex(events);
-
-        var min = Double.MAX_VALUE;
-        var max = Double.MIN_VALUE;
+        var gcIteration = new HashMap<Integer, List<GcLogRecord>>();
         GcName gcName = null;
-        for (var ev : events.values()) {
-            for (var e : ev) {
-                min = Math.min(min, e.timestampSec());
-                max = Math.max(max, e.timestampSec());
-                if (gcName == null) {
-                    for (var gc : GcName.VALUES) {
-                        if (e.origin().contains(gc.getName())) {
-                            gcName = gc;
-                            break;
-                        }
+
+        for (var line: Files.readAllLines(path)) {
+            var logRecord = GcParser.parse(line);
+            if (logRecord == null) {
+                continue;
+            }
+            if (gcName == null) {
+                for (var gc : GcName.VALUES) {
+                    if (logRecord.origin().contains(gc.getName())) {
+                        gcName = gc;
+                        break;
                     }
                 }
             }
+            gcIteration.computeIfAbsent(logRecord.gcNum(), key -> new ArrayList<>()).add(logRecord);
         }
 
-        return new GcLog(gcName, events, index, min, max);
+        var index = GcLog.buildIndex(gcIteration);
+
+        return new GcLog(gcName, index);
     }
 
     private static SafepointLog readSafepoints(Path path) throws IOException {

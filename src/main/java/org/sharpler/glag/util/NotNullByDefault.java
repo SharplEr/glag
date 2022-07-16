@@ -16,6 +16,13 @@ import org.jetbrains.annotations.NotNull;
 @Documented
 @Target(ElementType.PACKAGE)
 @Retention(RetentionPolicy.RUNTIME)
-@TypeQualifierDefault({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
+@TypeQualifierDefault({
+    ElementType.METHOD,
+    ElementType.FIELD,
+    ElementType.PARAMETER,
+    ElementType.LOCAL_VARIABLE,
+    ElementType.TYPE_USE,
+    ElementType.RECORD_COMPONENT
+})
 public @interface NotNullByDefault {
 }

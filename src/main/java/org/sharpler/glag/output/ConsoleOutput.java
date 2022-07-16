@@ -3,18 +3,15 @@ package org.sharpler.glag.output;
 import static org.fusesource.jansi.Ansi.Color.DEFAULT;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.Color.RED;
-import static org.fusesource.jansi.Ansi.Color.YELLOW;
 import static org.fusesource.jansi.Ansi.ansi;
 
-import java.util.concurrent.TimeUnit;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
-import org.sharpler.glag.aggregations.GcLog;
 import org.sharpler.glag.aggregations.SafepointLog;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 
 public final class ConsoleOutput {
-    public static void print(SafepointLog safepoints, GcLog gcLog, int thresholdMs) {
+    public static void print(SafepointLog safepoints, int thresholdMs) {
         for (var e : safepoints.distributions().entrySet()) {
             var events = safepoints.byTypes().get(e.getKey());
 
