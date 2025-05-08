@@ -1,11 +1,9 @@
 package org.sharpler.glag.records;
 
 public record SafepointLogRecord(
-    String time,
+    String time, // to remove
     double startTimeSec,
     double finishTimeSec,
-    String level, // info
-    String type, // safepoint
     String operationName,
     long reachingTimeNs,
     long insideTimeNs,

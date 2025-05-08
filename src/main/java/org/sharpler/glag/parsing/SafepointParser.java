@@ -1,6 +1,6 @@
 package org.sharpler.glag.parsing;
 
-import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 import org.sharpler.glag.records.SafepointLogRecord;
 
 public final class SafepointParser {
@@ -8,29 +8,36 @@ public final class SafepointParser {
         // No-op
     }
 
-    private static final Pattern PATTERN = Pattern.compile(
-        "^\\[([^\\[\\]]*)\\]\\[([^\\[\\]]*)s\\]\\[([^\\[\\]]*)\\]\\[([^\\[\\]]*)\\] Safepoint \\\"([^\\\"]*)\\\", Time since last: (\\d*) ns, Reaching safepoint: (\\d*) ns, At safepoint: (\\d*) ns, Total: (\\d*) ns$"
-    );
-
     public static SafepointLogRecord parse(String line, int lineNum) {
-        var matcher = PATTERN.matcher(line);
-        if (!matcher.matches()) {
-            throw new IllegalArgumentException("Can't parse: line = " + lineNum);
+        var builder = new SafepointRecordBuilder(lineNum);
+
+        var tagOpen = line.indexOf('[');
+        var tagClose = line.indexOf(']', tagOpen);
+        builder.addTime(line.substring(tagOpen + 1, tagClose));
+
+        tagOpen = line.indexOf('[', tagClose);
+        tagClose = line.indexOf(']', tagOpen);
+        var timestampSec = Double.parseDouble(line.substring(tagOpen + 1, tagClose - 1));
+        builder.addFinishTimeSec(timestampSec);
+
+        // Ignore level and type, jump to last tag
+        var lastComma = line.lastIndexOf(',');
+        var lastTagClose = line.lastIndexOf(']', lastComma);
+
+        var start = lastTagClose + 1;
+        while (start < line.length()) {
+            var commaIndex = line.indexOf(',', start);
+            if (commaIndex < 0) {
+                commaIndex = line.length();
+            }
+            @Nullable
+            var type = SafepointValueType.resolveType(line, start);
+            if (type != null) {
+                builder.addValue(type, line, start, commaIndex);
+            }
+            start = commaIndex + 1;
         }
-        var result = matcher.toMatchResult();
-        var timestampSec = Double.parseDouble(result.group(2));
-        var totalTimeNs = Long.parseLong(result.group(9));
-        return new SafepointLogRecord(
-            result.group(1),
-            timestampSec - totalTimeNs / 1E9,
-            timestampSec,
-            result.group(3),
-            result.group(4),
-            result.group(5),
-            Long.parseLong(result.group(7)),
-            Long.parseLong(result.group(8)),
-            totalTimeNs,
-            lineNum
-        );
+
+        return builder.build();
     }
 }

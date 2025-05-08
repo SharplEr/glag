@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.sharpler.glag.aggregations.GcLog;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.aggregations.SafepointLog;
@@ -44,6 +45,7 @@ final class Main implements Callable<Integer> {
     private int thresholdMs = 50;
 
     @CommandLine.Option(names = {"-o", "--output"}, paramLabel = "OUTPUT", description = "Report output path", required = false)
+    @Nullable
     private Path output = null;
 
     public static void main(String... args) {
@@ -67,9 +69,11 @@ final class Main implements Callable<Integer> {
 
     private static GcLog readGcLog(Path path) throws IOException {
         var gcIteration = new HashMap<Integer, List<GcLogRecord>>();
+        @Nullable
         GcName gcName = null;
 
         for (var line: Files.readAllLines(path)) {
+            @Nullable
             var logRecord = GcParser.parse(line);
             if (logRecord == null) {
                 continue;

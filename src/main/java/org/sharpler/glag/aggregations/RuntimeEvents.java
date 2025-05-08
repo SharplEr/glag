@@ -5,11 +5,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.sharpler.glag.index.ValueWithRange;
 import org.sharpler.glag.records.GcName;
 import org.sharpler.glag.records.RuntimeEvent;
 
 public record RuntimeEvents(
+    @Nullable
     GcName gcName,
     SafepointLog safepointLog,
     int thresholdMs,
@@ -23,7 +25,7 @@ public record RuntimeEvents(
         var slowGcs = new HashMap<Integer, RuntimeEvent.GcIteration>();
         var slowSingleVmOperations = new HashMap<String, List<RuntimeEvent.SingleVMOperation>>();
 
-        for (var safepoint: safepointLog.events()) {
+        for (var safepoint : safepointLog.events()) {
             if (safepoint.totalTimeNs() > thresholdNs) {
                 var gcs = gcLog.timeIndex().findByRange(safepoint.startTimeSec(), safepoint.finishTimeSec());
                 if (gcs.isEmpty()) {
