@@ -1,5 +1,6 @@
 package org.sharpler.glag;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -68,7 +69,7 @@ final class Main implements Callable<Integer> {
     }
 
     private static GcLog readGcLog(Path path) throws IOException {
-        var gcIteration = new HashMap<Integer, List<GcLogRecord>>();
+        var gcIteration = new Int2ObjectOpenHashMap<List<GcLogRecord>>();
         @Nullable
         GcName gcName = null;
 

@@ -1,7 +1,7 @@
 package org.sharpler.glag.parsing;
 
 import java.util.regex.Pattern;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import org.sharpler.glag.records.GcLogRecord;
 
 public final class GcParser {
@@ -11,7 +11,6 @@ public final class GcParser {
     private GcParser() {
         // No-op.
     }
-
 
     @Nullable
     public static GcLogRecord parse(String line) {
