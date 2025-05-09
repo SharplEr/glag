@@ -5,6 +5,7 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.sharpler.glag.aggregations.RuntimeEvents;
@@ -43,7 +44,11 @@ public final class MdOutput {
                 writef("## %s%n%n", name);
                 writeDoc(gcDescription);
                 writef("%n%n");
+            } else {
+                System.err.printf("GC '%s' description is unsupported%n", name);
             }
+        } else {
+            System.err.println("Failed to detect GC by logs");
         }
 
         writef("## Safepoints%n%n");
@@ -51,6 +56,7 @@ public final class MdOutput {
         writef("%n%n");
         writef("## JVM operations in safepoint%n%n");
 
+        var unknownOperations = new HashSet<String>();
         for (var e : safepoints.distributions().entrySet()) {
             var events = safepoints.byTypes().get(e.getKey());
 
@@ -60,6 +66,10 @@ public final class MdOutput {
                 writef("#### Description%n%n");
                 writeDoc(description);
                 writef("%n%n");
+            } else {
+                if (unknownOperations.add(e.getKey())) {
+                    System.err.printf("GC operation '%s' is unknown%n", e.getKey());
+                }
             }
 
             writef("Period: %.3f (sec/op)%n%n", safepoints.totalLogTimeSec() / events.size());
