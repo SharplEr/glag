@@ -1,12 +1,14 @@
 package org.sharpler.glag.aggregations;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.sharpler.glag.index.ValueWithRange;
+import org.sharpler.glag.records.GcLogRecord;
 import org.sharpler.glag.records.GcName;
 import org.sharpler.glag.records.RuntimeEvent;
 
@@ -18,7 +20,6 @@ public record RuntimeEvents(
     List<RuntimeEvent.GcIteration> slowGcs,
     Map<String, List<RuntimeEvent.SingleVMOperation>> slowSingleVmOperations
 ) {
-
     public static RuntimeEvents create(GcLog gcLog, SafepointLog safepointLog, int thresholdMs) {
         var thresholdNs = TimeUnit.MILLISECONDS.toNanos(thresholdMs);
 
@@ -48,9 +49,18 @@ public record RuntimeEvents(
                     slowGcs.put(gcNum, new RuntimeEvent.GcIteration(safepointsWithGc, gc.value()));
                 } else {
                     System.err.printf(
-                        "More than one gc at the same time: start = %f (s), finish = %f (s) %n",
+                        "More than one gc at the same time: start = %f (s), finish = %f (s), GCs = %s %n",
                         safepoint.startTimeSec(),
-                        safepoint.finishTimeSec()
+                        safepoint.finishTimeSec(),
+                        gcs.stream()
+                            .map(x ->
+                                "num = %s, start = %f (s) finish = %f (s)".formatted(
+                                    Arrays.toString(x.value().stream().mapToInt(GcLogRecord::gcNum).sorted().distinct().toArray()),
+                                    x.start(),
+                                    x.finish()
+                                )
+                            )
+                            .toList()
                     );
                 }
             }

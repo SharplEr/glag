@@ -5,14 +5,14 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 import org.sharpler.glag.records.SafepointLogRecord;
 
 public final class MdOutput {
-    private static final Path DOCS_PATH = Paths.get("src", "main", "resources", "docs");
+    private static final Path DOCS_PATH = Path.of("docs");
 
     private final Path output;
 
@@ -39,7 +39,7 @@ public final class MdOutput {
             var name = runtimeEvents.gcName().getName();
             writef("%s has been detected.%n%n", name);
             var gcDescription = DOCS_PATH.resolve("gc").resolve(name + ".md");
-            if (Files.exists(gcDescription)) {
+            if (docExists(gcDescription)) {
                 writef("## %s%n%n", name);
                 writeDoc(gcDescription);
                 writef("%n%n");
@@ -56,7 +56,7 @@ public final class MdOutput {
 
             writef("### Operation '%s'%n%n", e.getKey());
             var description = DOCS_PATH.resolve("operation").resolve(e.getKey() + ".md");
-            if (Files.exists(description)) {
+            if (docExists(description)) {
                 writef("#### Description%n%n");
                 writeDoc(description);
                 writef("%n%n");
@@ -157,7 +157,27 @@ public final class MdOutput {
         Files.writeString(output, String.format(format, args), APPEND);
     }
 
+    private boolean docExists(Path docPath) throws IOException {
+        try (@Nullable var stream = getClass().getClassLoader().getResourceAsStream(docPath.toString())) {
+            return stream != null;
+        }
+    }
+
     private void writeDoc(Path docPath) throws IOException {
-        Files.write(output, Files.readAllBytes(docPath), APPEND);
+        var strPath = docPath.toString();
+
+        @Nullable
+        byte[] bytes = null;
+        try (@Nullable var stream = getClass().getClassLoader().getResourceAsStream(strPath)) {
+            if (stream == null) {
+                throw new IllegalStateException("Can't find document in resources: '%s'".formatted(strPath));
+            }
+
+            bytes = stream.readAllBytes();
+        }
+        if (bytes.length == 0) {
+            throw new IllegalStateException("Can't read document in resources: '%s'".formatted(strPath));
+        }
+        Files.write(output, bytes, APPEND);
     }
 }
