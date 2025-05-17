@@ -7,8 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -21,7 +19,7 @@ import org.sharpler.glag.output.ConsoleOutput;
 import org.sharpler.glag.output.MdOutput;
 import org.sharpler.glag.parsing.GcParser;
 import org.sharpler.glag.parsing.SafepointParser;
-import org.sharpler.glag.records.GcLogRecord;
+import org.sharpler.glag.records.GcLogRecords;
 import org.sharpler.glag.records.GcName;
 import org.sharpler.glag.records.SafepointLogRecord;
 import picocli.CommandLine;
@@ -69,11 +67,11 @@ final class Main implements Callable<Integer> {
     }
 
     private static GcLog readGcLog(Path path) throws IOException {
-        var gcIteration = new Int2ObjectOpenHashMap<List<GcLogRecord>>();
+        var gcIteration = new Int2ObjectOpenHashMap<GcLogRecords>();
         @Nullable
         GcName gcName = null;
 
-        for (var line: Files.readAllLines(path)) {
+        for (var line : Files.readAllLines(path)) {
             @Nullable
             var logRecord = GcParser.parse(line);
             if (logRecord == null) {
@@ -87,7 +85,10 @@ final class Main implements Callable<Integer> {
                     }
                 }
             }
-            gcIteration.computeIfAbsent(logRecord.gcNum(), key -> new ArrayList<>()).add(logRecord);
+            gcIteration
+                .computeIfAbsent(logRecord.gcNum(), key -> new GcLogRecords(new ArrayList<>(), key))
+                .records()
+                .add(logRecord);
         }
 
         var index = GcLog.buildIndex(gcIteration);
@@ -118,7 +119,7 @@ final class Main implements Callable<Integer> {
             operations2events,
             operations2stat,
             SafepointLog.buildIndex(events),
-            events.get(events.size() - 1).finishTimeSec()-events.get(0).startTimeSec()
+            events.get(events.size() - 1).finishTimeSec() - events.get(0).startTimeSec()
         );
     }
 }

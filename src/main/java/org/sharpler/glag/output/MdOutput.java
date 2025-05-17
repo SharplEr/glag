@@ -5,11 +5,13 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
+import org.sharpler.glag.records.GcLogRecords;
 import org.sharpler.glag.records.SafepointLogRecord;
 
 public final class MdOutput {
@@ -88,6 +90,8 @@ public final class MdOutput {
                 );
             }
 
+            writef("%n");
+
             var slowSingleVmOperations = runtimeEvents.slowSingleVmOperations().getOrDefault(e.getKey(), List.of());
 
             if (slowSingleVmOperations.isEmpty()) {
@@ -107,6 +111,7 @@ public final class MdOutput {
                     event.safepointLog().reachingTimeNs()
                 );
             }
+            writef("%n");
         }
 
         writef("## Time to safepoint%n%n");
@@ -132,35 +137,67 @@ public final class MdOutput {
         }
 
         var slowGcs = runtimeEvents.slowGcs();
-        if (slowGcs.isEmpty()) {
-            return;
+        if (!slowGcs.isEmpty()) {
+            writef("## GC iteration with long pauses: threshold = %d (ms)%n%n", thresholdMs);
+
+            for (var slowGc : slowGcs) {
+                writef("### GC iteration %d%n%n", slowGc.gcLog().gcNum());
+
+                writef("#### Slow safepoints%n%n");
+                writef("| line in safepoint log | operation | operation time (ns)| time to safepoint (ns) |%n");
+                writef("| --------------------- | ----------| ------------------ | ---------------------- |%n");
+                for (var safepoint : slowGc.safepointLog()) {
+                    writef(
+                        "| %d | %s | %d | %d |%n",
+                        safepoint.line(),
+                        safepoint.operationName(),
+                        safepoint.insideTimeNs(),
+                        safepoint.reachingTimeNs()
+                    );
+                }
+                writef("%n");
+
+                writef("#### Gc logs%n%n");
+                writef("```%n");
+                for (var gcEvent : slowGc.gcLog().records()) {
+                    writef("%s%n", gcEvent.origin());
+                }
+                writef("```%n%n");
+            }
+        }
+        var slowSimultaneousGcs = runtimeEvents.slowSimultaneousGcs();
+        if (!slowSimultaneousGcs.isEmpty()) {
+            writef("## Simultaneous GC iteration with long pauses: threshold = %d (ms)%n%n", thresholdMs);
+
+            for (var slowSimultaneousGc : slowSimultaneousGcs) {
+                writef("### GC iterations %s%n%n",
+                    Arrays.toString(slowSimultaneousGc.gcs().stream().mapToInt(GcLogRecords::gcNum).toArray()));
+
+                writef("#### Slow safepoints%n%n");
+                writef("| line in safepoint log | operation | operation time (ns)| time to safepoint (ns) |%n");
+                writef("| --------------------- | ----------| ------------------ | ---------------------- |%n");
+                for (var safepoint : slowSimultaneousGc.safepointLog()) {
+                    writef(
+                        "| %d | %s | %d | %d |%n",
+                        safepoint.line(),
+                        safepoint.operationName(),
+                        safepoint.insideTimeNs(),
+                        safepoint.reachingTimeNs()
+                    );
+                }
+                writef("%n");
+
+                for (var slowGc : slowSimultaneousGc.gcs()) {
+                    writef("#### GC %d logs%n%n", slowGc.gcNum());
+                    writef("```%n");
+                    for (var gcEvent : slowGc.records()) {
+                        writef("%s%n", gcEvent.origin());
+                    }
+                    writef("```%n%n");
+                }
+            }
         }
 
-        writef("## GC iteration with long pauses: threshold = %d (ms)%n%n", thresholdMs);
-
-        for (var slowGc : slowGcs) {
-            writef("### GC iteration %d%n%n", slowGc.gcNum());
-
-            writef("#### Slow safepoints%n%n");
-            writef("| line in safepoint log | operation | operation time (ns)| time to safepoint (ns) |%n");
-            writef("| --------------------- | ----------| ------------------ | ---------------------- |%n");
-            for (var safepoint : slowGc.safepointLog()) {
-                writef(
-                    "| %d | %s | %d | %d |%n",
-                    safepoint.line(),
-                    safepoint.operationName(),
-                    safepoint.insideTimeNs(),
-                    safepoint.reachingTimeNs()
-                );
-            }
-
-            writef("#### Gc logs%n%n");
-            writef("```%n");
-            for (var gcEvent : slowGc.gcLog()) {
-                writef("%s%n", gcEvent.origin());
-            }
-            writef("```%n%n");
-        }
     }
 
     private void writef(String format, Object... args) throws IOException {

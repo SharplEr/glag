@@ -1,4 +1,3 @@
-
 @NotNullByDefault
 package org.sharpler.glag;
 
