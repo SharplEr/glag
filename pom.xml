@@ -12,6 +12,8 @@
     <error-prone.version>2.42.0</error-prone.version>
     <nullaway.version>0.12.9</nullaway.version>
     <jspecify.version>1.0.0</jspecify.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
 
   <build>
@@ -77,6 +79,11 @@
   </build>
 
   <dependencies>
+    <dependency>
+      <groupId>com.google.errorprone</groupId>
+      <artifactId>error_prone_annotations</artifactId>
+      <version>${error-prone.version}</version>
+    </dependency>
     <dependency>
       <groupId>info.picocli</groupId>
       <artifactId>picocli</artifactId>

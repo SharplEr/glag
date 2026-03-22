@@ -5,6 +5,8 @@ import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.ansi;
 
+import com.google.errorprone.annotations.FormatMethod;
+import com.google.errorprone.annotations.FormatString;
 import java.util.Objects;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
@@ -46,7 +48,8 @@ public final class ConsoleOutput {
         }
     }
 
-    private static void printLn(Ansi.Color color, String format, Object... args) {
+    @FormatMethod
+    private static void printLn(Ansi.Color color, @FormatString String format, Object... args) {
         var line = String.format(format, args);
         AnsiConsole.out().println(ansi().fg(color).a(line).reset());
     }

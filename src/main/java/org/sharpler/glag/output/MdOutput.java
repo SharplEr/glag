@@ -2,6 +2,8 @@ package org.sharpler.glag.output;
 
 import static java.nio.file.StandardOpenOption.APPEND;
 
+import com.google.errorprone.annotations.FormatMethod;
+import com.google.errorprone.annotations.FormatString;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -202,7 +204,8 @@ public final class MdOutput {
 
     }
 
-    private void writef(String format, Object... args) throws IOException {
+    @FormatMethod
+    private void writef(@FormatString String format, Object... args) throws IOException {
         Files.writeString(output, String.format(format, args), APPEND);
     }
 
