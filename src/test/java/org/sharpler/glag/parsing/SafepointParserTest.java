@@ -9,7 +9,9 @@ class SafepointParserTest {
     @Test
     void parse() {
         var line =
-            "[2024-12-16T07:05:07.368+0000][3.412s][info][safepoint] Safepoint \"ICBufferFull\", Time since last: 177611286 ns, Reaching safepoint: 69282 ns, Cleanup: 130048 ns, At safepoint: 8449 ns, Total: 207779 ns";
+            "[2024-12-16T07:05:07.368+0000][3.412s][info][safepoint] " +
+                "Safepoint \"ICBufferFull\", Time since last: 177611286 ns, Reaching safepoint: 69282 ns, Cleanup: 130048 ns, " +
+                "At safepoint: 8449 ns, Total: 207779 ns";
 
         var result = SafepointParser.parse(line, 0);
 

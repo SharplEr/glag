@@ -119,7 +119,7 @@ final class Main implements Callable<Integer> {
             operations2events,
             operations2stat,
             SafepointLog.buildIndex(events),
-            events.get(events.size() - 1).finishTimeSec() - events.get(0).startTimeSec()
+            events.getLast().finishTimeSec() - events.getFirst().startTimeSec()
         );
     }
 }

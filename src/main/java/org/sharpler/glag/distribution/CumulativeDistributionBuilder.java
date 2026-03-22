@@ -24,7 +24,7 @@ public final class CumulativeDistributionBuilder {
         } else if (current == size) {
             points.add(new CumulativeDistributionPoint(value, 1d));
         } else {
-            var lastPoint = points.get(points.size() - 1);
+            var lastPoint = points.getLast();
             var prob = (double) current / size;
 
             if (prob - lastPoint.prob() >= 0.1 || value > 2 * lastPoint.value()) {
