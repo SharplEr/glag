@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.index.ValueWithRange;
 import org.sharpler.glag.records.GcIteration;
 import org.sharpler.glag.records.GcLogRecords;

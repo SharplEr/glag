@@ -5,6 +5,7 @@ import static org.fusesource.jansi.Ansi.Color.GREEN;
 import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.ansi;
 
+import java.util.Objects;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.aggregations.SafepointLog;
@@ -13,7 +14,7 @@ import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 public final class ConsoleOutput {
     public static void print(SafepointLog safepoints, int thresholdMs) {
         for (var e : safepoints.distributions().entrySet()) {
-            var events = safepoints.byTypes().get(e.getKey());
+            var events = Objects.requireNonNull(safepoints.byTypes().get(e.getKey()));
 
             AnsiConsole.out().println(ansi().a("Operation: ").fg(GREEN).a(e.getKey()).reset());
 

@@ -1,7 +1,7 @@
 package org.sharpler.glag.parsing;
 
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.records.GcLogRecord;
 
 public final class GcParser {

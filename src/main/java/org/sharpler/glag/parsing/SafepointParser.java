@@ -1,6 +1,6 @@
 package org.sharpler.glag.parsing;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.records.SafepointLogRecord;
 
 public final class SafepointParser {
@@ -30,7 +30,6 @@ public final class SafepointParser {
             if (commaIndex < 0) {
                 commaIndex = line.length();
             }
-            @Nullable
             var type = SafepointValueType.resolveType(line, start);
             if (type != null) {
                 builder.addValue(type, line, start, commaIndex);

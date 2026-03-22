@@ -7,7 +7,8 @@ import static org.sharpler.glag.parsing.SafepointValueType.SAFEPOINT_NAME;
 import static org.sharpler.glag.parsing.SafepointValueType.TIME_SINCE_LAST;
 import static org.sharpler.glag.parsing.SafepointValueType.TOTAL;
 
-import javax.annotation.Nullable;
+import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.records.SafepointLogRecord;
 
 public final class SafepointRecordBuilder {
@@ -95,11 +96,13 @@ public final class SafepointRecordBuilder {
         assert reachingTimeNs >= 0L;
         assert insideTimeNs >= 0L;
         assert totalTimeNs >= 0L;
+        var builtTime = Objects.requireNonNull(time);
+        var builtOperationName = Objects.requireNonNull(operationName);
         return new SafepointLogRecord(
-            time,
+            builtTime,
             startTimeSec,
             finishTimeSec,
-            operationName,
+            builtOperationName,
             reachingTimeNs,
             insideTimeNs,
             totalTimeNs,

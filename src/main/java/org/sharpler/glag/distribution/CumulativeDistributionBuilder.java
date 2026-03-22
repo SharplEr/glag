@@ -10,11 +10,11 @@ public final class CumulativeDistributionBuilder {
     private final ArrayList<CumulativeDistributionPoint> points = new ArrayList<>();
     private int current = 0;
 
-    public CumulativeDistributionBuilder(int size) {
+    private CumulativeDistributionBuilder(int size) {
         this.size = size;
     }
 
-    public void addValue(long value) {
+    private void addValue(long value) {
         if (current == size) {
             throw new IllegalStateException("All values already processed: size=" + size);
         }
@@ -33,7 +33,7 @@ public final class CumulativeDistributionBuilder {
         }
     }
 
-    public List<CumulativeDistributionPoint> build() {
+    private List<CumulativeDistributionPoint> build() {
         return points;
     }
 

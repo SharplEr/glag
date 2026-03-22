@@ -2,7 +2,7 @@ package org.sharpler.glag.aggregations;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import java.util.ArrayList;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.index.RangeIndex;
 import org.sharpler.glag.index.ValueWithRange;
 import org.sharpler.glag.records.GcLogRecord;

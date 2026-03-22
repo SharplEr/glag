@@ -1,7 +1,7 @@
 package org.sharpler.glag.parsing;
 
 import java.util.List;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 enum SafepointValueType {
     SAFEPOINT_NAME(" Safepoint \"", "\""),

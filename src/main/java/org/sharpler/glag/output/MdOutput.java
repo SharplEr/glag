@@ -3,12 +3,14 @@ package org.sharpler.glag.output;
 import static java.nio.file.StandardOpenOption.APPEND;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import javax.annotation.Nullable;
+import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 import org.sharpler.glag.records.GcLogRecords;
@@ -60,7 +62,7 @@ public final class MdOutput {
 
         var unknownOperations = new HashSet<String>();
         for (var e : safepoints.distributions().entrySet()) {
-            var events = safepoints.byTypes().get(e.getKey());
+            var events = Objects.requireNonNull(safepoints.byTypes().get(e.getKey()));
 
             writef("### Operation '%s'%n%n", e.getKey());
             var description = DOCS_PATH.resolve("operation").resolve(e.getKey() + ".md");
@@ -205,7 +207,7 @@ public final class MdOutput {
     }
 
     private boolean docExists(Path docPath) throws IOException {
-        try (@Nullable var stream = getClass().getClassLoader().getResourceAsStream(docPath.toString())) {
+        try (var stream = getClass().getClassLoader().getResourceAsStream(docPath.toString())) {
             return stream != null;
         }
     }
@@ -213,9 +215,8 @@ public final class MdOutput {
     private void writeDoc(Path docPath) throws IOException {
         var strPath = docPath.toString();
 
-        @Nullable
-        byte[] bytes = null;
-        try (@Nullable var stream = getClass().getClassLoader().getResourceAsStream(strPath)) {
+        byte[] bytes;
+        try (var stream = getClass().getClassLoader().getResourceAsStream(strPath)) {
             if (stream == null) {
                 throw new IllegalStateException("Can't find document in resources: '%s'".formatted(strPath));
             }

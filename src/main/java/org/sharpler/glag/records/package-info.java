@@ -1,4 +1,4 @@
-@NotNullByDefault
+@NullMarked
 package org.sharpler.glag.records;
 
-import org.sharpler.glag.util.NotNullByDefault;
+import org.jspecify.annotations.NullMarked;
