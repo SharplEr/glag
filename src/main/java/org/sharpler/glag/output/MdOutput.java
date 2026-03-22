@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import org.fusesource.jansi.AnsiConsole;
 import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
@@ -51,10 +52,10 @@ public final class MdOutput {
                 writeDoc(gcDescription);
                 writef("%n%n");
             } else {
-                System.err.printf("GC '%s' description is unsupported%n", name);
+                AnsiConsole.err().printf("GC '%s' description is unsupported%n", name);
             }
         } else {
-            System.err.println("Failed to detect GC by logs");
+            AnsiConsole.err().println("Failed to detect GC by logs");
         }
 
         writef("## Safepoints%n%n");
@@ -74,7 +75,7 @@ public final class MdOutput {
                 writef("%n%n");
             } else {
                 if (unknownOperations.add(e.getKey())) {
-                    System.err.printf("GC operation '%s' is unknown%n", e.getKey());
+                    AnsiConsole.err().printf("GC operation '%s' is unknown%n", e.getKey());
                 }
             }
 
