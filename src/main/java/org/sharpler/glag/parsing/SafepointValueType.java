@@ -12,6 +12,7 @@ enum SafepointValueType {
     TOTAL(" Total: ", " ns"),
     ;
     static final List<SafepointValueType> VALUES = List.of(values());
+    private static final SafepointValueTypeIndex INDEX = new SafepointValueTypeIndex(values());
 
     final String prefix;
     final String suffix;
@@ -23,13 +24,7 @@ enum SafepointValueType {
 
     @Nullable
     static SafepointValueType resolveType(String line, int start) {
-        for (var type : VALUES) {
-            if (type.isMatch(line, start)) {
-                return type;
-            }
-        }
-
-        return null;
+        return INDEX.parseType(line, start);
     }
 
     boolean isMatch(String line, int start) {

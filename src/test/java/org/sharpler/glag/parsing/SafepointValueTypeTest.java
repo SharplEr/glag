@@ -1,65 +1,128 @@
 package org.sharpler.glag.parsing;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import net.jqwik.api.Arbitraries;
+import net.jqwik.api.Arbitrary;
+import net.jqwik.api.ForAll;
+import net.jqwik.api.Property;
+import net.jqwik.api.Provide;
+import net.jqwik.api.constraints.DoubleRange;
+import net.jqwik.api.constraints.IntRange;
+import net.jqwik.api.constraints.LongRange;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
-@Execution(ExecutionMode.CONCURRENT)
 class SafepointValueTypeTest {
-    @Test
-    void isMatch() {
-        var value = "foo:12.34";
-        for (var type : SafepointValueType.VALUES) {
-            var ok = type.prefix + value + type.suffix;
-            var wrong = '_' + type.prefix + value + type.suffix;
+    @Property
+    void isMatchWithPrefixAndSuffix(
+        @ForAll("types") SafepointValueType type,
+        @ForAll("payloads") String value,
+        @ForAll @IntRange(min = 1, max = 8) int start
+    ) {
+        var prefix = "_".repeat(start);
+        var str = prefix + type.prefix + value + type.suffix;
 
-            Assertions.assertTrue(type.isMatch(ok, 0));
-            Assertions.assertFalse(type.isMatch(ok, ok.length()));
-
-            Assertions.assertTrue(type.isMatch(wrong, 1));
-            Assertions.assertFalse(type.isMatch(wrong, 0));
-        }
+        assertTrue(type.isMatch(str, start));
     }
 
-    @Test
-    void parseString() {
-        var value = "foo:12.34";
-        for (var type : SafepointValueType.VALUES) {
-            var str = '_' + type.prefix + value + type.suffix + '_';
-            Assertions.assertEquals(value, type.parseString(str, 1, str.length() - 1));
-        }
+    @Property
+    void doesNotMatchWithoutPrefix(
+        @ForAll("types") SafepointValueType type,
+        @ForAll("payloads") String value
+    ) {
+        var str = type.prefix + value + type.suffix;
+
+        assertFalse(type.isMatch(str, 1));
     }
 
-    @Test
-    void parseLong() {
-        var value = Long.MAX_VALUE;
-        for (var type : SafepointValueType.VALUES) {
-            var str = '_' + type.prefix + value + type.suffix + '_';
-            Assertions.assertEquals(value, type.parseLong(str, 1, str.length() - 1));
-        }
+    @Property
+    void doesNotMatchWithoutSuffix(
+        @ForAll("types") SafepointValueType type,
+        @ForAll("payloads") String value,
+        @ForAll @IntRange(min = 1, max = 8) int start
+    ) {
+        var prefix = "_".repeat(start);
+        var str = prefix + type.prefix + value;
+
+        assertFalse(type.isMatch(str, start));
     }
 
-    @Test
-    void parseDouble() {
-        var value = 3.1415;
-        for (var type : SafepointValueType.VALUES) {
-            var str = '_' + type.prefix + value + type.suffix + '_';
-            Assertions.assertEquals(value, type.parseDouble(str, 1, str.length() - 1));
-        }
+    @Property
+    void parseString(
+        @ForAll("types") SafepointValueType type,
+        @ForAll("payloads") String value,
+        @ForAll @IntRange(min = 1, max = 8) int start
+    ) {
+        var prefix = "_".repeat(start);
+        var suffix = "_".repeat(start + 1);
+        var str = prefix + type.prefix + value + type.suffix + suffix;
+
+        assertEquals(value, type.parseString(str, start, str.length() - suffix.length()));
     }
 
-    @Test
-    void resolveType() {
-        var value = "foo:12.34";
-        for (var type : SafepointValueType.VALUES) {
-            var str = '_' + type.prefix + value + type.suffix + '_';
-            Assertions.assertEquals(type, SafepointValueType.resolveType(str, 1));
-        }
+    @Property
+    void parseLong(
+        @ForAll("types") SafepointValueType type,
+        @ForAll @LongRange(min = Long.MIN_VALUE, max = Long.MAX_VALUE) long value,
+        @ForAll @IntRange(min = 1, max = 8) int start
+    ) {
+        var prefix = "_".repeat(start);
+        var suffix = "_".repeat(start + 1);
+        var str = prefix + type.prefix + value + type.suffix + suffix;
+
+        assertEquals(value, type.parseLong(str, start, str.length() - suffix.length()));
     }
 
-    @Test
-    void resolveTypeNoMatch() {
-        Assertions.assertNull(SafepointValueType.resolveType("", 0));
+    @Property
+    void parseDouble(
+        @ForAll("types") SafepointValueType type,
+        @ForAll @DoubleRange(min = -1.0E12, max = 1.0E12) double value,
+        @ForAll @IntRange(min = 1, max = 8) int start
+    ) {
+        var prefix = "_".repeat(start);
+        var suffix = "_".repeat(start + 1);
+        var str = prefix + type.prefix + value + type.suffix + suffix;
+
+        assertEquals(value, type.parseDouble(str, start, str.length() - suffix.length()));
+    }
+
+    @Property
+    void resolveType(
+        @ForAll("types") SafepointValueType type,
+        @ForAll("payloads") String value,
+        @ForAll @IntRange(min = 1, max = 8) int start
+    ) {
+        var prefix = "_".repeat(start);
+        var suffix = "_".repeat(start + 1);
+        var str = prefix + type.prefix + value + type.suffix + suffix;
+
+        assertEquals(type, SafepointValueType.resolveType(str, start));
+    }
+
+    @Property
+    void resolveTypeNoMatch(
+        @ForAll("payloads") String value,
+        @ForAll @IntRange(min = 1, max = 8) int start
+    ) {
+        var prefix = "_".repeat(start);
+        var str = prefix + value;
+
+        assertNull(SafepointValueType.resolveType(str, start));
+    }
+
+    @Provide
+    Arbitrary<SafepointValueType> types() {
+        return Arbitraries.of(SafepointValueType.VALUES);
+    }
+
+    @Provide
+    Arbitrary<String> payloads() {
+        return Arbitraries.strings()
+            .withChars("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:._-")
+            .ofMinLength(1)
+            .ofMaxLength(32);
     }
 }

@@ -13,6 +13,7 @@
     <nullaway.version>0.13.1</nullaway.version>
     <jspecify.version>1.0.0</jspecify.version>
     <junit-jupiter.version>6.0.3</junit-jupiter.version>
+    <jqwik.version>1.9.3</jqwik.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
@@ -113,6 +114,12 @@
       <version>8.5.18</version>
     </dependency>
 
+    <dependency>
+      <groupId>net.jqwik</groupId>
+      <artifactId>jqwik</artifactId>
+      <version>${jqwik.version}</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
