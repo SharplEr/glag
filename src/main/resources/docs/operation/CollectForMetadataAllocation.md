@@ -1,74 +1,29 @@
-**CollectForMetadataAllocation** is the general JVM operation used to GC.
+**CollectForMetadataAllocation** is a HotSpot VM operation triggered by **Metaspace allocation pressure**.
 
-[Source code](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/gc/shared/gcVMOperations.cpp)
+It is used when the JVM is trying to allocate metadata and the normal fast path is not enough.
+That usually means pressure from class loading, class metadata growth, or weak progress in reclaiming Metaspace.
 
-```C++
-void VM_CollectForMetadataAllocation::doit() {
-  SvcGCMarker sgcm(SvcGCMarker::FULL);
+[Source code see VM_CollectForMetadataAllocation](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/gc/shared/gcVMOperations.cpp)
 
-  CollectedHeap* heap = Universe::heap();
-  GCCauseSetter gccs(heap, _gc_cause);
+This operation tries several recovery steps:
 
-  // Check again if the space is available.  Another thread
-  // may have similarly failed a metadata allocation and induced
-  // a GC that freed space for the allocation.
-  if (!MetadataAllocationFailALot) {
-    _result = _loader_data->metaspace_non_null()->allocate(_size, _mdtype);
-    if (_result != NULL) {
-      return;
-    }
-  }
+1. Retry the metadata allocation.
+2. For G1, possibly start concurrent GC/class-unloading-related work.
+3. Trigger stop-the-world collection if needed.
+4. Retry allocation again.
+5. Expand Metaspace if possible.
+6. As a stronger fallback, do another collection that may clear soft references.
 
-#if INCLUDE_G1GC
-  if (UseG1GC && ClassUnloadingWithConcurrentMark) {
-    G1CollectedHeap::heap()->start_concurrent_gc_for_metadata_allocation(_gc_cause);
-    // For G1 expand since the collection is going to be concurrent.
-    _result = _loader_data->metaspace_non_null()->expand_and_allocate(_size, _mdtype);
-    if (_result != NULL) {
-      return;
-    }
+So this operation is a **recovery path for failing metadata allocation**, not a normal steady-state young GC.
 
-    log_debug(gc)("G1 full GC for Metaspace");
-  }
-#endif
+## Why it may be slow
 
-  // Don't clear the soft refs yet.
-  heap->collect_as_vm_thread(GCCause::_metadata_GC_threshold);
-  // After a GC try to allocate without expanding.  Could fail
-  // and expansion will be tried below.
-  _result = _loader_data->metaspace_non_null()->allocate(_size, _mdtype);
-  if (_result != NULL) {
-    return;
-  }
+1. **Heavy class loading or class generation.** Frameworks, proxies, bytecode generation, or redeploy-style workloads can put strong pressure on Metaspace.
+2. **Class unloading is not reclaiming enough space.** This may happen if class loaders stay reachable for too long or unloading cannot make enough progress.
+3. **Metaspace is close to its limit.** This includes pressure from `MaxMetaspaceSize` or general native memory pressure.
+4. **The operation escalates from retry to GC to stronger fallback paths.** The more fallback stages it needs, the longer the pause may become.
 
-  // If still failing, allow the Metaspace to expand.
-  // See delta_capacity_until_GC() for explanation of the
-  // amount of the expansion.
-  // This should work unless there really is no more space
-  // or a MaxMetaspaceSize has been specified on the command line.
-  _result = _loader_data->metaspace_non_null()->expand_and_allocate(_size, _mdtype);
-  if (_result != NULL) {
-    return;
-  }
+You can read more about Metaspace here:
 
-  // If expansion failed, do a collection clearing soft references.
-  heap->collect_as_vm_thread(GCCause::_metadata_GC_clear_soft_refs);
-  _result = _loader_data->metaspace_non_null()->allocate(_size, _mdtype);
-  if (_result != NULL) {
-    return;
-  }
-
-  log_debug(gc)("After Metaspace GC failed to allocate size " SIZE_FORMAT, _size);
-
-  if (GCLocker::is_active_and_needs_gc()) {
-    set_gc_locked();
-  }
-}
-```
-
-This operation is trying to allocate memory in Metaspace and
-retry on fails with metaspace expansion and collection.
-
-It also could start concurrent class unloading on G1 GC.
-
-You could read about metaspace more [here](https://poonamparhar.github.io/understanding-metaspace-gc-logs/).
+1. [Oracle HotSpot docs: Metaspace tuning flags](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html)
+2. [Understanding Metaspace GC logs](https://poonamparhar.github.io/understanding-metaspace-gc-logs/)

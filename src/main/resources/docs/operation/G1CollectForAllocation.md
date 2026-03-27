@@ -1,58 +1,24 @@
-**G1CollectForAllocation** is JVM operation of G1 GC.
+**G1CollectForAllocation** is a G1-specific VM operation used when the JVM needs to recover space for allocation.
 
-[Source code](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/gc/g1/g1VMOperations.cpp):
+[Source code see VM_G1CollectForAllocation](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/gc/g1/g1VMOperations.cpp)
 
-```C++
-void VM_G1CollectForAllocation::doit() {
-  G1CollectedHeap* g1h = G1CollectedHeap::heap();
+At a high level this operation means:
 
-  if (should_try_allocation_before_gc() && _word_size > 0) {
-    // An allocation has been requested. So, try to do that first.
-    _result = g1h->attempt_allocation_at_safepoint(_word_size,
-                                                   false /* expect_null_cur_alloc_region */);
-    if (_result != NULL) {
-      // If we can successfully allocate before we actually do the
-      // pause then we will consider this pause successful.
-      _gc_succeeded = true;
-      return;
-    }
-  }
+1. An allocation request could not be satisfied cheaply.
+2. G1 tries a stop-the-world collection pause.
+3. If that succeeds, it may retry the allocation.
+4. If the situation is bad enough, G1 may escalate toward a stronger collection path, including Full GC.
 
-  GCCauseSetter x(g1h, _gc_cause);
-  // Try a partial collection of some kind.
-  _gc_succeeded = g1h->do_collection_pause_at_safepoint(_target_pause_time_ms);
+This operation may also be used with allocation size `0`, which means:
+"run a G1 collection pause now even though there is no immediate post-GC allocation request".
 
-  if (_gc_succeeded) {
-    if (_word_size > 0) {
-      // An allocation had been requested. Do it, eventually trying a stronger
-      // kind of GC.
-      _result = g1h->satisfy_failed_allocation(_word_size, &_gc_succeeded);
-    } else if (g1h->should_upgrade_to_full_gc()) {
-      // There has been a request to perform a GC to free some space. We have no
-      // information on how much memory has been asked for. In case there are
-      // absolutely no regions left to allocate into, do a full compaction.
-      _gc_succeeded = g1h->upgrade_to_full_collection();
-    }
-  }
-}
-```
+So **G1CollectForAllocation** should be understood as
+**"G1 had to stop and reclaim space in order to move forward with allocation-related work"**.
 
-This operation is trying to allocate memory in heap and
-retry on fails with heap collection which fallbacks to
-stronger collection on every fail.
+## Why it may be slow
 
-So if you see a huge pause here it probably means operation was degraded to full GC.
-
-It could happen not only bacause of no free memory,
-but also because of heap fragmentation.
-
-Also, this operation could be triggered only for [collection without allocation](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/gc/g1/g1CollectedHeap.cpp).
-
-```C++
-// Schedule a standard evacuation pause. We're setting word_size
-// to 0 which means that we are not requesting a post-GC allocation.
-VM_G1CollectForAllocation op(0,     /* word_size */
-                             counters_before.total_collections(),
-                             cause,
-                             policy()->max_pause_time_ms());
-```
+1. **The heap is under real memory pressure.** There is not enough free space for normal allocation progress.
+2. **Evacuation is expensive.** Large live data, large collection sets, or costly remembered-set processing can stretch the pause.
+3. **The heap is fragmented.** Even if total free memory exists, finding usable destination space may still be hard.
+4. **Humongous allocations or humongous-region pressure are involved.** These can make G1 behavior more expensive and less flexible.
+5. **The operation degrades to Full GC.** If you see a very large pause here, escalation to a stronger collection path is one of the main suspects.
