@@ -19,10 +19,10 @@ public final class CumulativeDistributionBuilder {
             throw new IllegalStateException("All values already processed: size=" + size);
         }
         current++;
-        if (current == 1) {
-            points.add(new CumulativeDistributionPoint(value, 0d));
-        } else if (current == size) {
+        if (current == size) {
             points.add(new CumulativeDistributionPoint(value, 1d));
+        } else if (current == 1) {
+            points.add(new CumulativeDistributionPoint(value, 0d));
         } else {
             var lastPoint = points.getLast();
             var prob = (double) current / size;
