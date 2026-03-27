@@ -15,12 +15,12 @@ import org.sharpler.glag.aggregations.GcLog;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.aggregations.SafepointLog;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
+import org.sharpler.glag.index.RangeIndex;
 import org.sharpler.glag.output.ConsoleOutput;
 import org.sharpler.glag.output.MdOutput;
 import org.sharpler.glag.parsing.GcParser;
 import org.sharpler.glag.parsing.SafepointParser;
 import org.sharpler.glag.records.GcLogRecords;
-import org.sharpler.glag.records.GcLogRecord;
 import org.sharpler.glag.records.GcName;
 import org.sharpler.glag.records.SafepointLogRecord;
 import picocli.CommandLine;
@@ -89,7 +89,7 @@ final class Main implements Callable<Integer> {
                 .add(logRecord);
         }
 
-        var index = GcLog.buildIndex(gcIteration);
+        var index = new RangeIndex<>(gcIteration.values().stream().map(GcLogRecords::withRange).toList());
 
         return new GcLog(gcName, index);
     }
