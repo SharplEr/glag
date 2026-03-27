@@ -22,15 +22,26 @@ public final class CumulativeDistributionBuilder {
         if (current == size) {
             points.add(new CumulativeDistributionPoint(value, 1d));
         } else if (current == 1) {
-            points.add(new CumulativeDistributionPoint(value, 0d));
+            points.add(new CumulativeDistributionPoint(value, 1d / size));
         } else {
             var lastPoint = points.getLast();
             var prob = (double) current / size;
 
-            if (prob - lastPoint.prob() >= 0.1 || value > 2 * lastPoint.value()) {
+            if (roundCompare(value, lastPoint.value())) {
+                points.removeLast();
+                points.add(new CumulativeDistributionPoint(value, prob));
+            } else if (prob - lastPoint.prob() >= 0.1 || value > 2 * lastPoint.value()) {
                 points.add(new CumulativeDistributionPoint(value, prob));
             }
         }
+    }
+
+    private static boolean roundCompare(long a, long b) {
+        return round(a) == round(b);
+    }
+
+    private static long round(long value) {
+        return value / 1000 + (value % 1000 >= 500 ? 1 : 0);
     }
 
     private List<CumulativeDistributionPoint> build() {

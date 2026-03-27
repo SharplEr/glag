@@ -5,19 +5,19 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import org.fusesource.jansi.AnsiConsole;
-import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 import org.sharpler.glag.records.GcLogRecords;
 import org.sharpler.glag.records.SafepointLogRecord;
+import org.sharpler.glag.records.SingleVMOperation;
 
 public final class MdOutput {
     private static final Path DOCS_PATH = Path.of("docs");
@@ -28,7 +28,7 @@ public final class MdOutput {
         this.output = output;
     }
 
-    public void print(RuntimeEvents runtimeEvents) throws IOException {
+    public void print(RuntimeEvents runtimeEvents, int examples) throws IOException {
         var thresholdMs = runtimeEvents.thresholdMs();
         var safepoints = runtimeEvents.safepointLog();
 
@@ -103,17 +103,24 @@ public final class MdOutput {
                 continue;
             }
 
-            writef("#### Slow single safepoints: threshold = %d (ms)%n%n", thresholdMs);
+            writef("#### Slow single safepoints: threshold = %d (ms), top size = %d%n%n", thresholdMs, examples);
 
             writef("| line in safepoint log | operation time (ns)| time to safepoint (ns) |%n");
             writef("| --------------------- | ------------------ | ---------------------- |%n");
 
-            for (var event : slowSingleVmOperations) {
+            var topSlowVmOperations = slowSingleVmOperations
+                .stream()
+                .map(SingleVMOperation::safepointLog)
+                .sorted(Comparator.comparingLong((SafepointLogRecord x) -> x.insideTimeNs() + x.reachingTimeNs()).reversed())
+                .limit(examples)
+                .toList();
+
+            for (var safepointLog : topSlowVmOperations) {
                 writef(
                     "| %d | %d | %d |%n",
-                    event.safepointLog().line(),
-                    event.safepointLog().insideTimeNs(),
-                    event.safepointLog().reachingTimeNs()
+                    safepointLog.line(),
+                    safepointLog.insideTimeNs(),
+                    safepointLog.reachingTimeNs()
                 );
             }
             writef("%n");
@@ -141,9 +148,13 @@ public final class MdOutput {
             );
         }
 
-        var slowGcs = runtimeEvents.slowGcs();
+        var slowGcs = runtimeEvents.slowGcs()
+            .stream()
+            .sorted(Comparator.comparingDouble(x -> x.gcLog().withRange().finish() - x.gcLog().withRange().start()))
+            .limit(examples)
+            .toList();
         if (!slowGcs.isEmpty()) {
-            writef("## GC iteration with long pauses: threshold = %d (ms)%n%n", thresholdMs);
+            writef("## GC iteration with long pauses: threshold = %d (ms), top size = %d%n%n", thresholdMs, examples);
 
             for (var slowGc : slowGcs) {
                 writef("### GC iteration %d%n%n", slowGc.gcLog().gcNum());

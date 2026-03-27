@@ -44,6 +44,15 @@ final class Main implements Callable<Integer> {
     )
     private int thresholdMs = 50;
 
+    @CommandLine.Option(
+        names = {"--examples"},
+        paramLabel = "EXAMPLES",
+        description = "count of slow operation examples",
+        required = false,
+        defaultValue = "5"
+    )
+    private int examples = 5;
+
     @CommandLine.Option(names = {"-o", "--output"}, paramLabel = "OUTPUT", description = "Report output path", required = false)
     @Nullable
     private Path output = null;
@@ -60,7 +69,7 @@ final class Main implements Callable<Integer> {
         if (output == null) {
             ConsoleOutput.print(safepoints, thresholdMs);
         } else {
-            new MdOutput(output).print(RuntimeEvents.create(gclog, safepoints, thresholdMs));
+            new MdOutput(output).print(RuntimeEvents.create(gclog, safepoints, thresholdMs), examples);
         }
 
         return 0;
