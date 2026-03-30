@@ -38,8 +38,4 @@ enum SafepointValueType {
     long parseLong(String line, int start, int end) {
         return Long.parseLong(line, start + prefix.length(), end - suffix.length(), 10);
     }
-
-    double parseDouble(String line, int start, int end) {
-        return Double.parseDouble(parseString(line, start, end));
-    }
 }

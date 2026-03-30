@@ -12,7 +12,6 @@ import net.jqwik.api.ForAll;
 import net.jqwik.api.Property;
 import net.jqwik.api.Provide;
 import net.jqwik.api.constraints.DoubleRange;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.sharpler.glag.records.GcLogRecord;
 

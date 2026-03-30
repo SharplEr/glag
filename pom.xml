@@ -14,6 +14,7 @@
     <jspecify.version>1.0.0</jspecify.version>
     <junit-jupiter.version>6.0.3</junit-jupiter.version>
     <jqwik.version>1.9.3</jqwik.version>
+    <fastdoubleparser.version>2.0.1</fastdoubleparser.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
@@ -112,6 +113,11 @@
       <groupId>it.unimi.dsi</groupId>
       <artifactId>fastutil</artifactId>
       <version>8.5.18</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.randelshofer</groupId>
+      <artifactId>fastdoubleparser</artifactId>
+      <version>${fastdoubleparser.version}</version>
     </dependency>
 
     <dependency>

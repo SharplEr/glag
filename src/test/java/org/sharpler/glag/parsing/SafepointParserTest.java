@@ -1,5 +1,14 @@
 package org.sharpler.glag.parsing;
 
+import java.util.ArrayList;
+import java.util.List;
+import net.jqwik.api.Arbitraries;
+import net.jqwik.api.Arbitrary;
+import net.jqwik.api.Combinators;
+import net.jqwik.api.ForAll;
+import net.jqwik.api.Property;
+import net.jqwik.api.Provide;
+import net.jqwik.api.constraints.DoubleRange;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.sharpler.glag.records.SafepointLogRecord;
@@ -50,5 +59,112 @@ class SafepointParserTest {
             ),
             result
         );
+    }
+
+    @Test
+    void parseWithUptimeMillisDecorator() {
+        var line =
+            "[3412ms][info][safepoint] " +
+                "Safepoint \"ICBufferFull\", Time since last: 177611286 ns, Reaching safepoint: 69282 ns, Cleanup: 130048 ns, " +
+                "At safepoint: 8449 ns, Total: 207779 ns";
+
+        var result = SafepointParser.parse(line, 0);
+
+        Assertions.assertEquals(
+            new SafepointLogRecord(
+                3.412 - 207779 / 1E9,
+                3.412,
+                "ICBufferFull",
+                69282L,
+                8449L,
+                207779L,
+                0
+            ),
+            result
+        );
+    }
+
+    @Test
+    void parseWithUptimeNanosDecorator() {
+        var line =
+            "[3412000000ns][info][safepoint] " +
+                "Safepoint \"ICBufferFull\", Time since last: 177611286 ns, Reaching safepoint: 69282 ns, Cleanup: 130048 ns, " +
+                "At safepoint: 8449 ns, Total: 207779 ns";
+
+        var result = SafepointParser.parse(line, 0);
+
+        Assertions.assertEquals(
+            new SafepointLogRecord(
+                3.412 - 207779 / 1E9,
+                3.412,
+                "ICBufferFull",
+                69282L,
+                8449L,
+                207779L,
+                0
+            ),
+            result
+        );
+    }
+
+    @Property
+    void parsePrefersMostPreciseTimestampDecorator(
+        @ForAll @DoubleRange(min = 0.0, max = 1_000_000.0) double seconds,
+        @ForAll("decoratorCombinations") List<String> decoratorKinds
+    ) {
+        var decorators = decoratorKinds.stream()
+            .map(kind -> switch (kind) {
+                case "s" -> "[%.3fs]".formatted(seconds);
+                case "ms" -> "[%dms]".formatted(Math.round(seconds * 1_000d));
+                case "ns" -> "[%dns]".formatted(Math.round(seconds * 1_000_000_000d));
+                default -> throw new IllegalArgumentException(kind);
+            })
+            .reduce("", String::concat);
+        var line = decorators +
+            "[info][safepoint] Safepoint \"ICBufferFull\", Time since last: 177611286 ns, Reaching safepoint: 69282 ns, Cleanup: 130048 ns, " +
+            "At safepoint: 8449 ns, Total: 207779 ns";
+
+        var expectedFinishTime = decoratorKinds.contains("ns")
+            ? Math.round(seconds * 1_000_000_000d) / 1_000_000_000d
+            : decoratorKinds.contains("ms")
+            ? Math.round(seconds * 1_000d) / 1_000d
+            : seconds;
+
+        Assertions.assertEquals(
+            new SafepointLogRecord(
+                expectedFinishTime - 207779 / 1E9,
+                expectedFinishTime,
+                "ICBufferFull",
+                69282L,
+                8449L,
+                207779L,
+                0
+            ),
+            SafepointParser.parse(line, 0)
+        );
+    }
+
+    @Provide
+    Arbitrary<List<String>> decoratorCombinations() {
+        return Combinators.combine(
+                Arbitraries.of(false, true),
+                Arbitraries.of(false, true),
+                Arbitraries.of(false, true)
+            )
+            .as((seconds, millis, nanos) -> {
+                var result = new ArrayList<String>(3);
+                if (seconds) {
+                    result.add("s");
+                }
+                if (millis) {
+                    result.add("ms");
+                }
+                if (nanos) {
+                    result.add("ns");
+                }
+                return result;
+            })
+            .filter(list -> !list.isEmpty())
+            .flatMap(Arbitraries::shuffle);
     }
 }

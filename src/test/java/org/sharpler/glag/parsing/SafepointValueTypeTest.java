@@ -10,10 +10,8 @@ import net.jqwik.api.Arbitrary;
 import net.jqwik.api.ForAll;
 import net.jqwik.api.Property;
 import net.jqwik.api.Provide;
-import net.jqwik.api.constraints.DoubleRange;
 import net.jqwik.api.constraints.IntRange;
 import net.jqwik.api.constraints.LongRange;
-import org.junit.jupiter.api.Assertions;
 
 class SafepointValueTypeTest {
     @Property
@@ -74,19 +72,6 @@ class SafepointValueTypeTest {
         var str = prefix + type.prefix + value + type.suffix + suffix;
 
         assertEquals(value, type.parseLong(str, start, str.length() - suffix.length()));
-    }
-
-    @Property
-    void parseDouble(
-        @ForAll("types") SafepointValueType type,
-        @ForAll @DoubleRange(min = -1.0E12, max = 1.0E12) double value,
-        @ForAll @IntRange(min = 1, max = 8) int start
-    ) {
-        var prefix = "_".repeat(start);
-        var suffix = "_".repeat(start + 1);
-        var str = prefix + type.prefix + value + type.suffix + suffix;
-
-        assertEquals(value, type.parseDouble(str, start, str.length() - suffix.length()));
     }
 
     @Property
