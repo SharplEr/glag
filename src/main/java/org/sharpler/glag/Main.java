@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ import org.sharpler.glag.aggregations.SafepointLog;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 import org.sharpler.glag.index.RangeIndex;
 import org.sharpler.glag.output.ConsoleOutput;
+import org.sharpler.glag.output.HtmlOutput;
 import org.sharpler.glag.output.MdOutput;
 import org.sharpler.glag.parsing.GcParser;
 import org.sharpler.glag.parsing.SafepointParser;
@@ -69,7 +71,12 @@ final class Main implements Callable<Integer> {
         if (output == null) {
             ConsoleOutput.print(safepoints, thresholdMs);
         } else {
-            new MdOutput(output).print(RuntimeEvents.create(gclog, safepoints, thresholdMs), examples);
+            var runtimeEvents = RuntimeEvents.create(gclog, safepoints, thresholdMs);
+            if (output.toString().toLowerCase(Locale.ROOT).endsWith(".html")) {
+                new HtmlOutput(output).print(runtimeEvents, examples);
+            } else {
+                new MdOutput(output).print(runtimeEvents, examples);
+            }
         }
 
         return 0;

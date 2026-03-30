@@ -15,6 +15,7 @@
     <junit-jupiter.version>6.0.3</junit-jupiter.version>
     <jqwik.version>1.9.3</jqwik.version>
     <fastdoubleparser.version>2.0.1</fastdoubleparser.version>
+    <commonmark.version>0.27.0</commonmark.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
@@ -118,6 +119,11 @@
       <groupId>ch.randelshofer</groupId>
       <artifactId>fastdoubleparser</artifactId>
       <version>${fastdoubleparser.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark</artifactId>
+      <version>${commonmark.version}</version>
     </dependency>
 
     <dependency>
