@@ -7,14 +7,30 @@ import static org.fusesource.jansi.Ansi.ansi;
 
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
+import java.util.List;
 import java.util.Objects;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.aggregations.SafepointLog;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
+import org.sharpler.glag.distribution.CumulativeDistributionPoint;
+import org.sharpler.glag.records.SafepointLogRecord;
 
 public final class ConsoleOutput {
     public static void print(SafepointLog safepoints, int thresholdMs) {
+        printLn(
+            DEFAULT,
+            "Throughput lost based on pauses: %.3f (%%) - %.3f(%%)%n%n",
+            safepoints.events().stream().mapToLong(SafepointLogRecord::insideTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7,
+            safepoints.events().stream().mapToLong(SafepointLogRecord::totalTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7
+        );
+
+        AnsiConsole.out().println("Time inside safepoint cumulative distribution: ");
+        printDistribution(CumulativeDistributionBuilder.insideDistribution(safepoints), thresholdMs, 1);
+
+        AnsiConsole.out().println("Time to safepoint cumulative distribution: ");
+        printDistribution(CumulativeDistributionBuilder.reachingDistribution(safepoints), thresholdMs, 1);
+
         for (var e : safepoints.distributions().entrySet()) {
             var events = Objects.requireNonNull(safepoints.byTypes().get(e.getKey()));
 
@@ -24,25 +40,23 @@ public final class ConsoleOutput {
 
             AnsiConsole.out().println("\tCumulative distribution:");
 
-            for (var point : e.getValue()) {
-                var timingMs = point.value() / 1E6;
-
-                printLn(
-                    timingMs > thresholdMs ? RED : DEFAULT,
-                    "\t\ttiming = %.3f ms, probability = %.2f %%",
-                    timingMs,
-                    point.prob() * 100d
-                );
-            }
+            printDistribution(e.getValue(), thresholdMs, 2);
         }
-        AnsiConsole.out().println("Time to safepoint cumulative distribution: ");
+    }
 
-        for (var point : CumulativeDistributionBuilder.reachingDistribution(safepoints)) {
+    private static void printDistribution(List<CumulativeDistributionPoint> points, double thresholdMs, int tabCount) {
+        var indent = "\t".repeat(tabCount);
+        var maxTimingMs = points.getLast().value() / 1E6;
+        var timingIntegerWidth = Long.toString((long) maxTimingMs).length();
+        var timingWidth = timingIntegerWidth + 4;
+        for (var point : points) {
             var timingMs = point.value() / 1E6;
+            var timing = String.format("%" + timingWidth + ".3f", timingMs);
             printLn(
                 timingMs > thresholdMs ? RED : DEFAULT,
-                "\ttiming = %.3f ms, probability = %.2f %%",
-                timingMs,
+                "%stiming = %s ms, probability = %6.2f %%",
+                indent,
+                timing,
                 point.prob() * 100d
             );
         }

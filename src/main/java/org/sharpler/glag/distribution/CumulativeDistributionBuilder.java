@@ -48,6 +48,17 @@ public final class CumulativeDistributionBuilder {
         return points;
     }
 
+    public static List<CumulativeDistributionPoint> insideDistribution(SafepointLog safepoints) {
+        var builder = new CumulativeDistributionBuilder(safepoints.events().size());
+
+        safepoints.events().stream()
+            .mapToLong(SafepointLogRecord::insideTimeNs)
+            .sorted()
+            .forEach(builder::addValue);
+
+        return builder.build();
+    }
+
     public static List<CumulativeDistributionPoint> operationTimeDistribution(List<SafepointLogRecord> events) {
         var builder = new CumulativeDistributionBuilder(events.size());
         events.forEach(x -> builder.addValue(x.insideTimeNs()));
