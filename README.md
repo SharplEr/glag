@@ -1,49 +1,144 @@
 # glag
 
-glag is a Java **G**C **l**og **ag**gregator.
+`glag` is a Java GC and safepoint log aggregator.
 
-## Use cases
+Its purpose is narrow on purpose:
 
-Glag is not some console version of GC Easy
-(with all respect to GC Easy).
+- find long pauses,
+- group safepoints and GC iterations,
+- show simple distributions,
+- provide enough context to investigate the problem further.
 
-The main goal to give you enough information about GC to understand
-what you should do with your problems.
+It is not a diagnostic expert system and it does not try to guess fixes for you.
 
-It also helps you find huge pauses in logs.
-And aggregates some simple statistic.
+## What it analyzes
 
-But that's all.
-There isn't any kind of AI which find problems and give you solutions.
+`glag` reads two logs:
 
-## Short story about Java GC and safepoints
+- a safepoint log,
+- a GC log.
 
-Java has garbage collector.
+It correlates them in time and builds a report around:
 
-Any GC have to do some work under the application pause.
+- safepoint pause distributions,
+- time-to-safepoint distributions,
+- JVM operations executed at safepoints,
+- slow individual safepoints,
+- GC iterations that overlap long pauses,
+- simultaneous GC iterations when multiple GC operations overlap in time.
 
-These pauses make effect on your application behave:
-mostly add random latency, sometimes lead to troubles like connection break.
+The project targets modern HotSpot unified logging and currently assumes Java 11+ logs.
 
-To pause your application Java uses safepoints.
+## Output modes
 
-When GC need such pause JVM protects special memory page from reading.
+`glag` has three output modes.
 
-Reading of this page added in a lot of places of your application when it could be safely stopped  by JVM. 
+### Console output
 
-When thread step into this trap JVM handle signal by OS and stop this thread.
+If you do not pass `-o` or `--output`, the report is printed to the console.
 
-Eventually all thread stops and GC could do his operation.
+This mode is useful for quick inspection on the command line. It includes:
 
-## Usage
+- throughput lost due to pauses,
+- average pause period,
+- cumulative distribution of time inside a safepoint,
+- cumulative distribution of time to safepoint,
+- per-operation cumulative distributions.
 
-You could use it to analize your gc and safepoint logs.
+### Markdown report
 
-## How to run
+If `--output` points to a non-HTML file, `glag` writes a Markdown report.
+
+This is the most text-heavy format. In addition to the summary data, it includes:
+
+- built-in documentation for detected GC and safepoint topics,
+- built-in documentation for known JVM operations,
+- tables for slow safepoints and slow GC iterations,
+- raw GC log excerpts for slow GC iterations.
+
+Example:
+
+```bash
+java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
+  -s /path/to/safepoint.log \
+  -g /path/to/gc.log \
+  -o /path/to/report.md
+```
+
+### HTML report
+
+If `--output` ends with `.html`, `glag` writes a self-contained HTML report.
+
+This format contains the same core content as the Markdown report, but presents it differently:
+
+- built-in documentation is hidden behind collapsed spoilers,
+- summary sections are shown as cards,
+- cumulative distributions are rendered as charts,
+- data points are available under expandable `Show data points` sections.
+
+Example:
+
+```bash
+java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
+  -s /path/to/safepoint.log \
+  -g /path/to/gc.log \
+  -o /path/to/report.html
+```
+
+## Build and run
+
+Build the application:
 
 ```bash
 mvn package
-java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar -s /home/safepoint.log -g /home/gc.log -o /home/report.md
 ```
 
-After this you could convert `*.md` output file into `pdf` and read it as a book. 
+Run with console output:
+
+```bash
+java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
+  -s /path/to/safepoint.log \
+  -g /path/to/gc.log
+```
+
+Run with Markdown output:
+
+```bash
+java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
+  -s /path/to/safepoint.log \
+  -g /path/to/gc.log \
+  -o /path/to/report.md
+```
+
+Run with HTML output:
+
+```bash
+java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
+  -s /path/to/safepoint.log \
+  -g /path/to/gc.log \
+  -o /path/to/report.html
+```
+
+## Command-line options
+
+Current CLI options:
+
+- `-s`, `--safepoints=SAFEPOINTS`
+  Path to the safepoint log. Required.
+- `-g`, `--gc=GC`
+  Path to the GC log. Required.
+- `-o`, `--output=OUTPUT`
+  Output report path. Optional.
+  If omitted, output goes to the console.
+  If the path ends with `.html`, an HTML report is generated.
+  Otherwise, a Markdown report is generated.
+- `-t`, `--threshold=THRESHOLD`
+  Slow safepoint threshold in milliseconds. Optional. Default: `50`.
+- `--examples=EXAMPLES`
+  Number of slow-operation examples to include in the report. Optional. Default: `5`.
+
+## Notes
+
+- Unknown JVM operations are still included in the report, but they may not have built-in descriptions.
+- The HTML report is fully static. It does not require external JavaScript or a web server.
+- The Markdown report is convenient if you want to convert it to PDF later.
