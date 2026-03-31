@@ -29,7 +29,6 @@ public final class HtmlOutput {
     private static final Path DOCS_PATH = Path.of("docs");
     private static final Parser MARKDOWN_PARSER = Parser.builder().build();
     private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().build();
-    private static final int DISTRIBUTION_TABLE_PREVIEW_SIZE = 6;
 
     private final Path output;
 
@@ -275,7 +274,7 @@ public final class HtmlOutput {
         var plotWidth = width - left - right;
         var plotHeight = height - top - bottom;
         var maxTimingMs = points.getLast().value() / 1E6;
-        var normalizedMaxTimingMs = Math.max(maxTimingMs, 1d);
+        var normalizedMaxTimingMs = maxTimingMs == 0d ? 1d : maxTimingMs;
 
         html.append("<figure class='chart-card'>");
         html.append("<svg viewBox='0 0 720 260' role='img' aria-label='Cumulative distribution chart'>");
@@ -290,6 +289,9 @@ public final class HtmlOutput {
         }
 
         html.append("<polyline class='distribution-line' points='");
+        if (points.getFirst().prob() > 0d) {
+            html.append(format("%.2f,%.2f ", left, top + plotHeight));
+        }
         for (var point : points) {
             var timingMs = point.value() / 1E6;
             var x = left + point.prob() * plotWidth;
@@ -308,15 +310,7 @@ public final class HtmlOutput {
     }
 
     private static void appendDistributionTable(StringBuilder html, List<CumulativeDistributionPoint> points, double thresholdMs) {
-        if (points.size() <= DISTRIBUTION_TABLE_PREVIEW_SIZE) {
-            appendDistributionTableContent(html, points, thresholdMs);
-            return;
-        }
-
-        appendDistributionTableContent(html, points.subList(0, DISTRIBUTION_TABLE_PREVIEW_SIZE), thresholdMs);
-        html.append("<details class='doc table-details'><summary>Show all ")
-            .append(points.size())
-            .append(" rows</summary>");
+        html.append("<details class='doc table-details'><summary>Show data points</summary>");
         appendDistributionTableContent(html, points, thresholdMs);
         html.append("</details>");
     }
