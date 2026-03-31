@@ -6,13 +6,10 @@ public final class TimeUtils {
     }
 
     public static boolean match(double xStart, double xFinish, double yStart, double yFinish) {
-        if (xStart == yStart || xStart == yFinish || yFinish == yStart || yFinish == xFinish) {
-            return true;
-        }
-        if (xStart < yStart) {
-            return xFinish > yStart;
-        } else {
-            return xStart < yFinish;
-        }
+        return xStart == yStart
+            || xStart == yFinish
+            || yStart == yFinish
+            || yFinish == xFinish
+            || (xStart < yFinish && yStart < xFinish);
     }
 }

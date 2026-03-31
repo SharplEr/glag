@@ -28,11 +28,11 @@ class SafepointParserTest {
             new SafepointLogRecord(
                 3.412 - 207779 / 1E9,
                 3.412,
+                line,
                 "ICBufferFull",
                 69282L,
                 8449L,
-                207779L,
-                0
+                207779L
             ),
             result
         );
@@ -51,11 +51,11 @@ class SafepointParserTest {
             new SafepointLogRecord(
                 3.412 - 207779 / 1E9,
                 3.412,
+                line,
                 "ICBufferFull",
                 69282L,
                 8449L,
-                207779L,
-                0
+                207779L
             ),
             result
         );
@@ -74,11 +74,11 @@ class SafepointParserTest {
             new SafepointLogRecord(
                 3.412 - 207779 / 1E9,
                 3.412,
+                line,
                 "ICBufferFull",
                 69282L,
                 8449L,
-                207779L,
-                0
+                207779L
             ),
             result
         );
@@ -97,11 +97,11 @@ class SafepointParserTest {
             new SafepointLogRecord(
                 3.412 - 207779 / 1E9,
                 3.412,
+                line,
                 "ICBufferFull",
                 69282L,
                 8449L,
-                207779L,
-                0
+                207779L
             ),
             result
         );
@@ -134,11 +134,11 @@ class SafepointParserTest {
             new SafepointLogRecord(
                 expectedFinishTime - 207779 / 1E9,
                 expectedFinishTime,
+                line,
                 "ICBufferFull",
                 69282L,
                 8449L,
-                207779L,
-                0
+                207779L
             ),
             SafepointParser.parse(line, 0)
         );

@@ -12,7 +12,7 @@ import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.records.SafepointLogRecord;
 
 final class SafepointRecordBuilder {
-    private final int line;
+    private final String origin;
 
     private double startTimeSec = Double.NaN;
     private double finishTimeSec = Double.NaN;
@@ -22,9 +22,8 @@ final class SafepointRecordBuilder {
     private long insideTimeNs = -1L;
     private long totalTimeNs = -1L;
 
-    SafepointRecordBuilder(int line) {
-        assert line >= 0;
-        this.line = line;
+    SafepointRecordBuilder(String origin) {
+        this.origin = origin;
     }
 
     void addFinishTimeSec(double finishTimeSec) {
@@ -55,11 +54,11 @@ final class SafepointRecordBuilder {
         return new SafepointLogRecord(
             startTimeSec,
             finishTimeSec,
+            origin,
             builtOperationName,
             reachingTimeNs,
             insideTimeNs,
-            totalTimeNs,
-            line
+            totalTimeNs
         );
     }
 

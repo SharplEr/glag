@@ -104,27 +104,21 @@ public final class MdOutput {
                 continue;
             }
 
-            writef("#### Slow individual safepoints: threshold = %d ms, top %d%n%n", thresholdMs, examples);
-
-            writef("| line in safepoint log | operation time (ns)| time to safepoint (ns) |%n");
-            writef("| --------------------- | ------------------ | ---------------------- |%n");
-
             var topSlowVmOperations = slowSingleVmOperations
                 .stream()
                 .map(SingleVMOperation::safepointLog)
-                .sorted(Comparator.comparingLong((SafepointLogRecord x) -> x.insideTimeNs() + x.reachingTimeNs()).reversed())
+                .sorted(Comparator.comparingLong(SafepointLogRecord::totalTimeNs).reversed())
                 .limit(examples)
                 .toList();
 
-            for (var safepointLog : topSlowVmOperations) {
-                writef(
-                    "| %d | %d | %d |%n",
-                    safepointLog.line(),
-                    safepointLog.insideTimeNs(),
-                    safepointLog.reachingTimeNs()
-                );
+            if (!topSlowVmOperations.isEmpty()) {
+                writef("#### Slow individual safepoints: threshold = %d ms, top %d%n%n", thresholdMs, examples);
+                writef("```");
+                for (var safepointLog : topSlowVmOperations) {
+                    writef("%n%s%n", safepointLog.origin());
+                }
+                writef("```%n%n");
             }
-            writef("%n");
         }
 
         writef("## Time to safepoint%n%n");
@@ -161,18 +155,11 @@ public final class MdOutput {
                 writef("### GC iteration %d%n%n", slowGc.gcLog().gcNum());
 
                 writef("#### Slow safepoints%n%n");
-                writef("| line in safepoint log | operation | operation time (ns)| time to safepoint (ns) |%n");
-                writef("| --------------------- | ----------| ------------------ | ---------------------- |%n");
+                writef("```");
                 for (var safepoint : slowGc.safepointLog()) {
-                    writef(
-                        "| %d | %s | %d | %d |%n",
-                        safepoint.line(),
-                        safepoint.operationName(),
-                        safepoint.insideTimeNs(),
-                        safepoint.reachingTimeNs()
-                    );
+                    writef("%n%s%n", safepoint.origin());
                 }
-                writef("%n");
+                writef("```%n%n");
 
                 writef("#### Gc logs%n%n");
                 writef("```%n");
@@ -191,18 +178,12 @@ public final class MdOutput {
                     Arrays.toString(slowSimultaneousGc.gcs().stream().mapToInt(GcLogRecords::gcNum).toArray()));
 
                 writef("#### Slow safepoints%n%n");
-                writef("| line in safepoint log | operation | operation time (ns)| time to safepoint (ns) |%n");
-                writef("| --------------------- | ----------| ------------------ | ---------------------- |%n");
+                writef("```");
                 for (var safepoint : slowSimultaneousGc.safepointLog()) {
-                    writef(
-                        "| %d | %s | %d | %d |%n",
-                        safepoint.line(),
-                        safepoint.operationName(),
-                        safepoint.insideTimeNs(),
-                        safepoint.reachingTimeNs()
-                    );
+                    writef("%n%s%n", safepoint.origin());
                 }
-                writef("%n");
+                writef("```%n");
+
 
                 for (var slowGc : slowSimultaneousGc.gcs()) {
                     writef("#### GC %d logs%n%n", slowGc.gcNum());

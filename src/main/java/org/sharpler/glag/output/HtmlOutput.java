@@ -145,23 +145,16 @@ public final class HtmlOutput {
                 html.append("<h4>Slow single safepoints</h4>");
                 html.append("<p>threshold = ").append(runtimeEvents.thresholdMs()).append(" ms, top ").append(examples).append("</p>");
 
-                html.append("<table><thead><tr>");
-                html.append("<th>Line in safepoint log</th><th>Operation time (ns)</th><th>Time to safepoint (ns)</th>");
-                html.append("</tr></thead><tbody>");
-
                 var topSlowVmOperations = slowSingleVmOperations
                     .stream()
                     .map(SingleVMOperation::safepointLog)
-                    .sorted(Comparator.comparingLong((SafepointLogRecord x) -> x.insideTimeNs() + x.reachingTimeNs()).reversed())
+                    .sorted(Comparator.comparingLong(SafepointLogRecord::totalTimeNs).reversed())
                     .limit(examples)
                     .toList();
 
                 for (var safepointLog : topSlowVmOperations) {
-                    html.append("<tr><td>").append(safepointLog.line()).append("</td><td>")
-                        .append(safepointLog.insideTimeNs()).append("</td><td>")
-                        .append(safepointLog.reachingTimeNs()).append("</td></tr>");
+                    appendSafepointEntry(html, safepointLog, false);
                 }
-                html.append("</tbody></table>");
             }
             html.append("</section>");
         }
@@ -195,7 +188,7 @@ public final class HtmlOutput {
             for (var slowGc : slowGcs) {
                 html.append("<section class='gc-block'>");
                 html.append("<h3>GC iteration ").append(slowGc.gcLog().gcNum()).append("</h3>");
-                appendSafepointTable(html, slowGc.safepointLog());
+                appendSafepointList(html, slowGc.safepointLog());
                 appendGcLogs(html, "GC logs", slowGc.gcLog());
                 html.append("</section>");
             }
@@ -212,7 +205,7 @@ public final class HtmlOutput {
                 html.append("<h3>GC iterations ")
                     .append(escapeHtml(Arrays.toString(slowSimultaneousGc.gcs().stream().mapToInt(GcLogRecords::gcNum).toArray())))
                     .append("</h3>");
-                appendSafepointTable(html, slowSimultaneousGc.safepointLog());
+                appendSafepointList(html, slowSimultaneousGc.safepointLog());
                 for (var slowGc : slowSimultaneousGc.gcs()) {
                     appendGcLogs(html, "GC %d logs".formatted(slowGc.gcNum()), slowGc);
                 }
@@ -222,18 +215,11 @@ public final class HtmlOutput {
         }
     }
 
-    private static void appendSafepointTable(StringBuilder html, List<SafepointLogRecord> safepoints) {
+    private static void appendSafepointList(StringBuilder html, List<SafepointLogRecord> safepoints) {
         html.append("<h4>Slow safepoints</h4>");
-        html.append("<table><thead><tr>");
-        html.append("<th>Line in safepoint log</th><th>Operation</th><th>Operation time (ns)</th><th>Time to safepoint (ns)</th>");
-        html.append("</tr></thead><tbody>");
         for (var safepoint : safepoints) {
-            html.append("<tr><td>").append(safepoint.line()).append("</td><td>")
-                .append(escapeHtml(safepoint.operationName())).append("</td><td>")
-                .append(safepoint.insideTimeNs()).append("</td><td>")
-                .append(safepoint.reachingTimeNs()).append("</td></tr>");
+            appendSafepointEntry(html, safepoint, true);
         }
-        html.append("</tbody></table>");
     }
 
     private static void appendGcLogs(StringBuilder html, String title, GcLogRecords gcLog) {
@@ -243,6 +229,16 @@ public final class HtmlOutput {
             html.append(escapeHtml(gcEvent.origin())).append('\n');
         }
         html.append("</pre></details>");
+    }
+
+    private static void appendSafepointEntry(StringBuilder html, SafepointLogRecord safepoint, boolean includeOperationName) {
+        html.append("<details class='doc safepoint-entry'><summary>");
+        if (includeOperationName) {
+            html.append("operation = ").append(escapeHtml(safepoint.operationName())).append(", ");
+        }
+        html.append("total time = ").append(safepoint.totalTimeNs()).append(" ns</summary>");
+        html.append("<pre class='log-block'>").append(escapeHtml(safepoint.origin())).append("</pre>");
+        html.append("</details>");
     }
 
     private static void appendDistributionSection(
@@ -561,6 +557,16 @@ public final class HtmlOutput {
               margin-top: 14px;
               padding-top: 12px;
               border-top: 1px solid rgba(216, 205, 187, 0.85);
+            }
+            .safepoint-entry {
+              margin: 0 0 14px;
+              padding: 12px 14px;
+              border: 1px solid var(--line);
+              border-radius: 14px;
+              background: rgba(255, 255, 255, 0.45);
+            }
+            .safepoint-entry p {
+              margin-bottom: 10px;
             }
             .log-block {
               margin: 0;
