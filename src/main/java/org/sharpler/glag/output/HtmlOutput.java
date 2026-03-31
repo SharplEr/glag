@@ -265,27 +265,46 @@ public final class HtmlOutput {
     }
 
     private static void appendDistributionChart(StringBuilder html, List<CumulativeDistributionPoint> points, double thresholdMs) {
-        var width = 720d;
-        var height = 260d;
-        var left = 52d;
-        var right = 16d;
-        var top = 12d;
-        var bottom = 28d;
+        var width = 760d;
+        var height = 288d;
+        var left = 56d;
+        var right = 84d;
+        var top = 28d;
+        var bottom = 32d;
         var plotWidth = width - left - right;
         var plotHeight = height - top - bottom;
         var maxTimingMs = points.getLast().value() / 1E6;
         var normalizedMaxTimingMs = maxTimingMs == 0d ? 1d : maxTimingMs;
 
         html.append("<figure class='chart-card'>");
-        html.append("<svg viewBox='0 0 720 260' role='img' aria-label='Cumulative distribution chart'>");
-        html.append("<rect x='0' y='0' width='720' height='260' rx='14' class='chart-bg'/>");
-        html.append("<line x1='52' y1='12' x2='52' y2='232' class='axis'/>");
-        html.append("<line x1='52' y1='232' x2='704' y2='232' class='axis'/>");
+        html.append("<svg viewBox='0 0 760 288' role='img' aria-label='Cumulative distribution chart'>");
+        html.append("<rect x='0' y='0' width='760' height='288' rx='14' class='chart-bg'/>");
+        html.append("<line x1='").append(format("%.2f", left)).append("' y1='").append(format("%.2f", top)).append("' x2='")
+            .append(format("%.2f", left)).append("' y2='").append(format("%.2f", top + plotHeight)).append("' class='axis'/>");
+        html.append("<line x1='").append(format("%.2f", left)).append("' y1='").append(format("%.2f", top + plotHeight)).append("' x2='")
+            .append(format("%.2f", left + plotWidth)).append("' y2='").append(format("%.2f", top + plotHeight)).append("' class='axis'/>");
 
         if (thresholdMs > 0d && thresholdMs <= normalizedMaxTimingMs) {
             var thresholdY = top + plotHeight - (thresholdMs / normalizedMaxTimingMs) * plotHeight;
-            html.append("<line x1='52' y1='").append(format("%.2f", thresholdY)).append("' x2='704' y2='")
+            var thresholdIntersection = findThresholdIntersection(points, thresholdMs);
+            html.append("<line x1='").append(format("%.2f", left)).append("' y1='").append(format("%.2f", thresholdY)).append("' x2='")
+                .append(format("%.2f", left + plotWidth)).append("' y2='")
                 .append(format("%.2f", thresholdY)).append("' class='threshold-line'/>");
+            html.append("<text x='16' y='").append(format("%.2f", thresholdY - 6d)).append("' class='axis-label threshold-label'>")
+                .append(escapeHtml(format("%.3f ms", thresholdMs)))
+                .append("</text>");
+            if (!Double.isNaN(thresholdIntersection)) {
+                var thresholdX = left + thresholdIntersection * plotWidth;
+                var thresholdProbabilityText = format("%.2f %%", thresholdIntersection * 100d);
+                var thresholdLabelWidth = 44d;
+                var thresholdLabelX = Math.min(thresholdX + 8d, left + plotWidth - thresholdLabelWidth);
+                html.append("<circle cx='").append(format("%.2f", thresholdX)).append("' cy='")
+                    .append(format("%.2f", thresholdY)).append("' r='4' class='threshold-point'/>");
+                html.append("<text x='").append(format("%.2f", thresholdLabelX)).append("' y='")
+                    .append(format("%.2f", thresholdY - 8d)).append("' class='axis-label threshold-label'>")
+                    .append(escapeHtml(thresholdProbabilityText))
+                    .append("</text>");
+            }
         }
 
         html.append("<polyline class='distribution-line' points='");
@@ -300,13 +319,34 @@ public final class HtmlOutput {
         }
         html.append("'/>");
 
-        html.append("<text x='52' y='248' class='axis-label'>0%</text>");
-        html.append("<text x='688' y='248' class='axis-label'>100%</text>");
-        html.append("<text x='16' y='22' class='axis-label'>").append(escapeHtml(format("%.3f ms", normalizedMaxTimingMs))).append("</text>");
-        html.append("<text x='28' y='236' class='axis-label'>0</text>");
+        html.append("<text x='").append(format("%.2f", left)).append("' y='").append(format("%.2f", top + plotHeight + 16d)).append("' class='axis-label'>0%</text>");
+        html.append("<text x='").append(format("%.2f", left + plotWidth - 26d)).append("' y='")
+            .append(format("%.2f", top + plotHeight + 16d)).append("' class='axis-label'>100%</text>");
+        html.append("<text x='12' y='").append(format("%.2f", top - 6d)).append("' class='axis-label'>")
+            .append(escapeHtml(format("%.3f ms", normalizedMaxTimingMs))).append("</text>");
+        html.append("<text x='32' y='").append(format("%.2f", top + plotHeight + 4d)).append("' class='axis-label'>0</text>");
         html.append("</svg>");
         html.append("<figcaption>Probability on X axis, timing in ms on Y axis.</figcaption>");
         html.append("</figure>");
+    }
+
+    private static double findThresholdIntersection(List<CumulativeDistributionPoint> points, double thresholdMs) {
+        var previousProbability = 0d;
+        var previousTimingMs = 0d;
+        for (var point : points) {
+            var currentProbability = point.prob();
+            var currentTimingMs = point.value() / 1E6;
+            if (thresholdMs <= currentTimingMs) {
+                if (currentTimingMs == previousTimingMs) {
+                    return currentProbability;
+                }
+                var ratio = (thresholdMs - previousTimingMs) / (currentTimingMs - previousTimingMs);
+                return previousProbability + ratio * (currentProbability - previousProbability);
+            }
+            previousProbability = currentProbability;
+            previousTimingMs = currentTimingMs;
+        }
+        return Double.NaN;
     }
 
     private static void appendDistributionTable(StringBuilder html, List<CumulativeDistributionPoint> points, double thresholdMs) {
@@ -485,6 +525,13 @@ public final class HtmlOutput {
               stroke: var(--warn);
               stroke-width: 1.5;
               stroke-dasharray: 5 5;
+            }
+            .threshold-point {
+              fill: var(--warn);
+            }
+            .threshold-label {
+              fill: var(--warn);
+              font-weight: 700;
             }
             table {
               width: 100%;
