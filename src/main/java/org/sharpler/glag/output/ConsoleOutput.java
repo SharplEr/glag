@@ -20,16 +20,16 @@ public final class ConsoleOutput {
     public static void print(SafepointLog safepoints, int thresholdMs) {
         printLn(
             DEFAULT,
-            "Throughput lost based on pauses: %.3f (%%) - %.3f(%%)%n",
+            "Throughput lost due to pauses: %.3f (%%) - %.3f (%%)%n",
             safepoints.events().stream().mapToLong(SafepointLogRecord::insideTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7,
             safepoints.events().stream().mapToLong(SafepointLogRecord::totalTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7
         );
-        AnsiConsole.out().printf("Pauses period: %.3f (sec/op)%n%n", safepoints.totalLogTimeSec() / safepoints.events().size());
+        AnsiConsole.out().printf("Average pause period: %.3f sec/op%n%n", safepoints.totalLogTimeSec() / safepoints.events().size());
 
-        AnsiConsole.out().println("Time inside safepoint cumulative distribution: ");
+        AnsiConsole.out().println("Cumulative distribution of time inside a safepoint:");
         printDistribution(CumulativeDistributionBuilder.insideDistribution(safepoints), thresholdMs, 1);
 
-        AnsiConsole.out().println("Time to safepoint cumulative distribution: ");
+        AnsiConsole.out().println("Cumulative distribution of time to safepoint:");
         printDistribution(CumulativeDistributionBuilder.reachingDistribution(safepoints), thresholdMs, 1);
 
         AnsiConsole.out().println();

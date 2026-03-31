@@ -45,14 +45,14 @@ public final class HtmlOutput {
         appendOverview(html, safepoints);
         appendDistributionSection(
             html,
-            "Time inside safepoint cumulative distribution",
+            "Cumulative distribution of time inside a safepoint",
             CumulativeDistributionBuilder.insideDistribution(safepoints),
             thresholdMs,
             1
         );
         appendDistributionSection(
             html,
-            "Time to safepoint cumulative distribution",
+            "Cumulative distribution of time to safepoint",
             CumulativeDistributionBuilder.reachingDistribution(safepoints),
             thresholdMs,
             1
@@ -80,12 +80,12 @@ public final class HtmlOutput {
         );
         appendMetric(
             html,
-            "Throughput lost by total pauses",
+            "Throughput lost due to total pauses",
             format("%.3f %%", safepoints.events().stream().mapToLong(SafepointLogRecord::totalTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7)
         );
         appendMetric(
             html,
-            "Pauses period",
+            "Average pause period",
             format("%.3f sec/op", safepoints.totalLogTimeSec() / safepoints.events().size())
         );
         html.append("</div>");
@@ -143,7 +143,7 @@ public final class HtmlOutput {
             var slowSingleVmOperations = runtimeEvents.slowSingleVmOperations().getOrDefault(operationName, List.of());
             if (!slowSingleVmOperations.isEmpty()) {
                 html.append("<h4>Slow single safepoints</h4>");
-                html.append("<p>threshold = ").append(runtimeEvents.thresholdMs()).append(" ms, top size = ").append(examples).append("</p>");
+                html.append("<p>threshold = ").append(runtimeEvents.thresholdMs()).append(" ms, top ").append(examples).append("</p>");
 
                 html.append("<table><thead><tr>");
                 html.append("<th>Line in safepoint log</th><th>Operation time (ns)</th><th>Time to safepoint (ns)</th>");
@@ -190,8 +190,8 @@ public final class HtmlOutput {
             .toList();
         if (!slowGcs.isEmpty()) {
             html.append("<section>");
-            html.append("<h2>GC iteration with long pauses</h2>");
-            html.append("<p>threshold = ").append(runtimeEvents.thresholdMs()).append(" ms, top size = ").append(examples).append("</p>");
+            html.append("<h2>GC iterations with long pauses</h2>");
+            html.append("<p>threshold = ").append(runtimeEvents.thresholdMs()).append(" ms, top ").append(examples).append("</p>");
             for (var slowGc : slowGcs) {
                 html.append("<section class='gc-block'>");
                 html.append("<h3>GC iteration ").append(slowGc.gcLog().gcNum()).append("</h3>");
@@ -205,7 +205,7 @@ public final class HtmlOutput {
         var slowSimultaneousGcs = runtimeEvents.slowSimultaneousGcs();
         if (!slowSimultaneousGcs.isEmpty()) {
             html.append("<section>");
-            html.append("<h2>Simultaneous GC iteration with long pauses</h2>");
+            html.append("<h2>Simultaneous GC iterations with long pauses</h2>");
             html.append("<p>threshold = ").append(runtimeEvents.thresholdMs()).append(" ms</p>");
             for (var slowSimultaneousGc : slowSimultaneousGcs) {
                 html.append("<section class='gc-block'>");
@@ -326,7 +326,7 @@ public final class HtmlOutput {
             .append(escapeHtml(format("%.3f ms", normalizedMaxTimingMs))).append("</text>");
         html.append("<text x='32' y='").append(format("%.2f", top + plotHeight + 4d)).append("' class='axis-label'>0</text>");
         html.append("</svg>");
-        html.append("<figcaption>Probability on X axis, timing in ms on Y axis.</figcaption>");
+        html.append("<figcaption>Probability on the X axis, timing in ms on the Y axis.</figcaption>");
         html.append("</figure>");
     }
 
