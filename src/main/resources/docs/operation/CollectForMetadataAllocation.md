@@ -16,7 +16,7 @@ This operation tries several recovery steps:
 
 So this operation is a **recovery path for failing metadata allocation**, not a normal steady-state young GC.
 
-## Why it may be slow
+##### Why it may be slow
 
 1. **Heavy class loading or class generation.** Frameworks, proxies, bytecode generation, or redeploy-style workloads can put strong pressure on Metaspace.
 2. **Class unloading is not reclaiming enough space.** This may happen if class loaders stay reachable for too long or unloading cannot make enough progress.

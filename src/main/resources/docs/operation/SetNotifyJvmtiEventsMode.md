@@ -14,7 +14,7 @@ not about reclaiming memory or doing GC work.
 You are most likely to see it when a process is being observed by tooling that uses JVMTI,
 for example a debugger, a profiler, or some other diagnostic agent.
 
-## Why it may be slow
+##### Why it may be slow
 
 1. **The pause includes reaching a safepoint.** For this kind of operation, a long pause is often more about stopping threads than about the body of the operation itself.
 2. **A debugger or agent is actively changing event subscriptions.** Tooling-heavy workloads can cause more serviceability-related VM work.

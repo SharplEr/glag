@@ -14,7 +14,7 @@ For example:
 If the start is accepted, G1 performs a stop-the-world collection pause that initiates the concurrent cycle.
 So in logs this operation is usually a **Concurrent Start** style pause rather than "purely concurrent work with no pause".
 
-## Why it may be slow
+##### Why it may be slow
 
 1. **The pause that starts concurrent marking is itself expensive.** It is still a stop-the-world G1 pause.
 2. **The heap occupancy is already high.** Starting marking under pressure usually means more work and less slack.

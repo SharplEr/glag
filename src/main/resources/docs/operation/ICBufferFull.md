@@ -11,7 +11,7 @@ This is part of HotSpot runtime and JIT machinery, not a GC-specific operation.
 So if you see **ICBufferFull** in the safepoint log, it usually means the JVM needed a safepoint
 to process inline-cache-related state.
 
-## Why it may be slow
+##### Why it may be slow
 
 1. **Reaching the safepoint is slow.** As with other small VM operations, this is often the main reason.
 2. **The application is generating a lot of dynamic call-site activity.** Heavy compilation, deoptimization, or inline cache updates can make this operation appear more often.

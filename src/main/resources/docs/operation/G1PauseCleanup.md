@@ -8,7 +8,7 @@ At this point G1 finalizes information produced by concurrent marking and prepar
 In practical terms, this is part of the transition from "we have marked the heap"
 to "we know which old regions are worth reclaiming next".
 
-## Why it may be slow
+##### Why it may be slow
 
 1. **The marking cycle produced a lot of bookkeeping work.** Large heaps and many regions increase cleanup effort.
 2. **There are many candidate old regions to process.** Cleanup needs to finalize region-level information before mixed collections can proceed.

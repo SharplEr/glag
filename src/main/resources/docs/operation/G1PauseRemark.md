@@ -16,7 +16,7 @@ into
 This pause is usually much smaller than a major stop-the-world collection,
 but it is still latency-sensitive because all Java threads are stopped.
 
-## Why it may be slow
+##### Why it may be slow
 
 1. **There is a lot of live data and heap metadata to finalize.** Bigger heaps and busier marking cycles usually make remark heavier.
 2. **SATB / marking buffers accumulated a lot of work.** If concurrent marking fell behind, more work is left for the pause.

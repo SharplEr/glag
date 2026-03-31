@@ -42,6 +42,7 @@ public final class MdOutput {
             safepoints.events().stream().mapToLong(SafepointLogRecord::insideTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7,
             safepoints.events().stream().mapToLong(SafepointLogRecord::totalTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7
         );
+        writef("Pauses period: %.3f (sec/op)%n%n", safepoints.totalLogTimeSec() / safepoints.events().size());
 
         if (runtimeEvents.gcName() != null) {
             var name = runtimeEvents.gcName().getName();

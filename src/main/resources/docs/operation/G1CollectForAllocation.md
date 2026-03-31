@@ -15,7 +15,7 @@ This operation may also be used with allocation size `0`, which means:
 So **G1CollectForAllocation** should be understood as
 **"G1 had to stop and reclaim space in order to move forward with allocation-related work"**.
 
-## Why it may be slow
+##### Why it may be slow
 
 1. **The heap is under real memory pressure.** There is not enough free space for normal allocation progress.
 2. **Evacuation is expensive.** Large live data, large collection sets, or costly remembered-set processing can stretch the pause.
