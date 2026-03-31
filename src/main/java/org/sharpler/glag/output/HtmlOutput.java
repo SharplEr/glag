@@ -24,6 +24,7 @@ import org.sharpler.glag.records.GcLogRecords;
 import org.sharpler.glag.records.GcName;
 import org.sharpler.glag.records.SafepointLogRecord;
 import org.sharpler.glag.records.SingleVMOperation;
+import org.sharpler.glag.util.TimeUtils;
 
 public final class HtmlOutput {
     private static final Path DOCS_PATH = Path.of("docs");
@@ -236,7 +237,7 @@ public final class HtmlOutput {
         if (includeOperationName) {
             html.append("operation = ").append(escapeHtml(safepoint.operationName())).append(", ");
         }
-        html.append("total time = ").append(safepoint.totalTimeNs()).append(" ns</summary>");
+        html.append("total time = ").append(TimeUtils.formatDuration(safepoint.totalTimeNs())).append("</summary>");
         html.append("<pre class='log-block'>").append(escapeHtml(safepoint.origin())).append("</pre>");
         html.append("</details>");
     }
