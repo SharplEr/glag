@@ -18,12 +18,13 @@ public record GcLog(
         GcName gcName = null;
 
         for (var line : lines) {
+            if (gcName == null) {
+                gcName = GcName.findGcName(line);
+            }
+
             var logRecord = GcParser.parse(line);
             if (logRecord == null) {
                 continue;
-            }
-            if (gcName == null) {
-                gcName = GcName.findGcName(logRecord.origin());
             }
             gcIteration
                 .computeIfAbsent(logRecord.gcNum(), key -> new GcLogRecords(new ArrayList<>(), key))
