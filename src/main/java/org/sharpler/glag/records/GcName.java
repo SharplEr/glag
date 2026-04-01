@@ -1,6 +1,6 @@
 package org.sharpler.glag.records;
 
-import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 public enum GcName {
     Serial("Serial"),
@@ -9,7 +9,7 @@ public enum GcName {
     Shenandoah("Shenandoah"),
     Z("ZGC"),
     ;
-    public static final List<GcName> VALUES = List.of(values());
+    private static final GcName[] VALUES = values();
 
     private final String name;
 
@@ -19,5 +19,14 @@ public enum GcName {
 
     public String getName() {
         return name;
+    }
+
+    public static @Nullable GcName findGcName(String line) {
+        for (var gc : GcName.VALUES) {
+            if (line.contains(gc.name)) {
+                return gc;
+            }
+        }
+        return null;
     }
 }

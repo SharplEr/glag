@@ -1,6 +1,5 @@
 package org.sharpler.glag;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,14 +15,10 @@ import org.sharpler.glag.aggregations.GcLog;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.aggregations.SafepointLog;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
-import org.sharpler.glag.index.RangeIndex;
 import org.sharpler.glag.output.ConsoleOutput;
 import org.sharpler.glag.output.HtmlOutput;
 import org.sharpler.glag.output.MdOutput;
-import org.sharpler.glag.parsing.GcParser;
 import org.sharpler.glag.parsing.SafepointParser;
-import org.sharpler.glag.records.GcLogRecords;
-import org.sharpler.glag.records.GcName;
 import org.sharpler.glag.records.SafepointLogRecord;
 import picocli.CommandLine;
 
@@ -66,7 +61,7 @@ final class Main implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         var safepoints = readSafepoints(safepointsPath);
-        var gclog = readGcLog(gcPath);
+        var gclog = GcLog.parse(Files.readAllLines(gcPath));
 
         if (output == null) {
             ConsoleOutput.print(safepoints, thresholdMs);
@@ -80,34 +75,6 @@ final class Main implements Callable<Integer> {
         }
 
         return 0;
-    }
-
-    private static GcLog readGcLog(Path path) throws IOException {
-        var gcIteration = new Int2ObjectOpenHashMap<GcLogRecords>();
-        GcName gcName = null;
-
-        for (var line : Files.readAllLines(path)) {
-            var logRecord = GcParser.parse(line);
-            if (logRecord == null) {
-                continue;
-            }
-            if (gcName == null) {
-                for (var gc : GcName.VALUES) {
-                    if (logRecord.origin().contains(gc.getName())) {
-                        gcName = gc;
-                        break;
-                    }
-                }
-            }
-            gcIteration
-                .computeIfAbsent(logRecord.gcNum(), key -> new GcLogRecords(new ArrayList<>(), key))
-                .records()
-                .add(logRecord);
-        }
-
-        var index = new RangeIndex<>(gcIteration.values().stream().map(GcLogRecords::withRange).toList());
-
-        return new GcLog(gcName, index);
     }
 
     private static SafepointLog readSafepoints(Path path) throws IOException {
