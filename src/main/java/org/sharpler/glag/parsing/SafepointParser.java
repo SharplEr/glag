@@ -7,7 +7,7 @@ public final class SafepointParser {
         // No-op
     }
 
-    public static SafepointLogRecord parse(String line, int lineNum) {
+    public static SafepointLogRecord parse(String line) {
         var builder = new SafepointRecordBuilder(line);
 
         var finishTimeSec = UptimeDecorators.parseMostPreciseTimestampSec(line);

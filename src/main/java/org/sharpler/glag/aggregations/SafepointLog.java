@@ -1,33 +1,41 @@
 package org.sharpler.glag.aggregations;
 
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 import org.sharpler.glag.index.RangeIndex;
-import org.sharpler.glag.index.ValueWithRange;
+import org.sharpler.glag.parsing.SafepointParser;
 import org.sharpler.glag.records.SafepointLogRecord;
 
 public record SafepointLog(
     List<SafepointLogRecord> events,
     Map<String, List<SafepointLogRecord>> byTypes,
     Map<String, List<CumulativeDistributionPoint>> distributions,
-
     RangeIndex<SafepointLogRecord> timeIndex,
-
     double totalLogTimeSec
 ) {
-    public static RangeIndex<SafepointLogRecord> buildIndex(List<SafepointLogRecord> events) {
-        var ranges = new ArrayList<ValueWithRange<SafepointLogRecord>>(events.size());
+    public static SafepointLog parse(List<String> lines) {
+        var events = lines.stream().map(SafepointParser::parse).toList();
 
-        for (var event : events) {
-            ranges.add(new ValueWithRange<>(
-                event,
-                event.finishTimeSec() - event.totalTimeNs() / 1E9,
-                event.finishTimeSec()
-            ));
+        var operations2events = events.stream()
+            .collect(Collectors.groupingBy(SafepointLogRecord::operationName));
+
+        for (var entry : operations2events.entrySet()) {
+            entry.getValue().sort(Comparator.comparingLong(SafepointLogRecord::insideTimeNs));
         }
 
-        return new RangeIndex<>(ranges);
+        var operations2stat = operations2events.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, x -> CumulativeDistributionBuilder.operationTimeDistribution(x.getValue())));
+
+        return new SafepointLog(
+            events,
+            operations2events,
+            operations2stat,
+            RangeIndex.create(events, SafepointLogRecord::withRange),
+            events.getLast().finishTimeSec() - events.getFirst().startTimeSec()
+        );
     }
 }

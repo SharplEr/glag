@@ -1,15 +1,21 @@
 package org.sharpler.glag.index;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 import org.sharpler.glag.util.TimeUtils;
 
 public final class RangeIndex<T> {
     private final List<ValueWithRange<T>> valuesByStart;
     private final double[] prefixMaxFinish;
 
-    public RangeIndex(List<ValueWithRange<T>> values) {
+    public static <T> RangeIndex<T> create(Collection<? extends T> values, Function<? super T, ValueWithRange<T>> converter) {
+        return new RangeIndex<>(values.stream().map(converter).toList());
+    }
+
+    RangeIndex(List<ValueWithRange<T>> values) {
         valuesByStart = values.stream()
             .sorted(Comparator.comparingDouble(ValueWithRange::start))
             .toList();

@@ -1,25 +1,17 @@
 package org.sharpler.glag;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.aggregations.GcLog;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.aggregations.SafepointLog;
-import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 import org.sharpler.glag.output.ConsoleOutput;
 import org.sharpler.glag.output.HtmlOutput;
 import org.sharpler.glag.output.MdOutput;
-import org.sharpler.glag.parsing.SafepointParser;
-import org.sharpler.glag.records.SafepointLogRecord;
 import picocli.CommandLine;
 
 final class Main implements Callable<Integer> {
@@ -60,7 +52,7 @@ final class Main implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        var safepoints = readSafepoints(safepointsPath);
+        var safepoints = SafepointLog.parse(Files.readAllLines(safepointsPath));
         var gclog = GcLog.parse(Files.readAllLines(gcPath));
 
         if (output == null) {
@@ -75,32 +67,5 @@ final class Main implements Callable<Integer> {
         }
 
         return 0;
-    }
-
-    private static SafepointLog readSafepoints(Path path) throws IOException {
-        var lines = Files.readAllLines(path);
-
-        var events = new ArrayList<SafepointLogRecord>(lines.size());
-        for (var i = 0; i < lines.size(); i++) {
-            events.add(SafepointParser.parse(lines.get(i), i));
-        }
-
-        var operations2events = events.stream()
-            .collect(Collectors.groupingBy(SafepointLogRecord::operationName));
-
-        for (var entry : operations2events.entrySet()) {
-            entry.getValue().sort(Comparator.comparingLong(SafepointLogRecord::insideTimeNs));
-        }
-
-        var operations2stat = operations2events.entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, x -> CumulativeDistributionBuilder.operationTimeDistribution(x.getValue())));
-
-        return new SafepointLog(
-            events,
-            operations2events,
-            operations2stat,
-            SafepointLog.buildIndex(events),
-            events.getLast().finishTimeSec() - events.getFirst().startTimeSec()
-        );
     }
 }

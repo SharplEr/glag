@@ -22,7 +22,7 @@ class SafepointParserTest {
                 "Safepoint \"ICBufferFull\", Time since last: 177611286 ns, Reaching safepoint: 69282 ns, Cleanup: 130048 ns, " +
                 "At safepoint: 8449 ns, Total: 207779 ns";
 
-        var result = SafepointParser.parse(line, 0);
+        var result = SafepointParser.parse(line);
 
         Assertions.assertEquals(
             new SafepointLogRecord(
@@ -45,7 +45,7 @@ class SafepointParserTest {
                 "Safepoint \"ICBufferFull\", Time since last: 177611286 ns, Reaching safepoint: 69282 ns, Cleanup: 130048 ns, " +
                 "At safepoint: 8449 ns, Total: 207779 ns";
 
-        var result = SafepointParser.parse(line, 0);
+        var result = SafepointParser.parse(line);
 
         Assertions.assertEquals(
             new SafepointLogRecord(
@@ -68,7 +68,7 @@ class SafepointParserTest {
                 "Safepoint \"ICBufferFull\", Time since last: 177611286 ns, Reaching safepoint: 69282 ns, Cleanup: 130048 ns, " +
                 "At safepoint: 8449 ns, Total: 207779 ns";
 
-        var result = SafepointParser.parse(line, 0);
+        var result = SafepointParser.parse(line);
 
         Assertions.assertEquals(
             new SafepointLogRecord(
@@ -91,7 +91,7 @@ class SafepointParserTest {
                 "Safepoint \"ICBufferFull\", Time since last: 177611286 ns, Reaching safepoint: 69282 ns, Cleanup: 130048 ns, " +
                 "At safepoint: 8449 ns, Total: 207779 ns";
 
-        var result = SafepointParser.parse(line, 0);
+        var result = SafepointParser.parse(line);
 
         Assertions.assertEquals(
             new SafepointLogRecord(
@@ -140,7 +140,7 @@ class SafepointParserTest {
                 8449L,
                 207779L
             ),
-            SafepointParser.parse(line, 0)
+            SafepointParser.parse(line)
         );
     }
 

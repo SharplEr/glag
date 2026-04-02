@@ -32,8 +32,6 @@ public record GcLog(
                 .add(logRecord);
         }
 
-        var index = new RangeIndex<>(gcIteration.values().stream().map(GcLogRecords::withRange).toList());
-
-        return new GcLog(gcName, index);
+        return new GcLog(gcName, RangeIndex.create(gcIteration.values(), GcLogRecords::withRange));
     }
 }
