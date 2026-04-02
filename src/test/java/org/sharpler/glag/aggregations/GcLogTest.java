@@ -1,5 +1,8 @@
 package org.sharpler.glag.aggregations;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
@@ -14,9 +17,7 @@ import org.sharpler.glag.records.GcName;
 class GcLogTest {
     @ParameterizedTest
     @MethodSource("fixtures")
-    void parseReadsRealGcLogs(
-        GcLogFixture fixture
-    ) throws IOException {
+    void parseReadsRealGcLogs(GcLogFixture fixture) throws IOException {
         var lines = readLines(fixture.resourcePath());
         var gcLog = GcLog.parse(lines);
         var gcIterations = gcLog.timeIndex()
@@ -26,10 +27,10 @@ class GcLogTest {
             .sorted(Comparator.comparingInt(GcLogRecords::gcNum))
             .toList();
 
-        Assertions.assertAll(
-            () -> Assertions.assertEquals(fixture.expectedGcName(), gcLog.gcName()),
-            () -> Assertions.assertEquals(fixture.expectedGcIterations(), gcIterations.size()),
-            () -> Assertions.assertEquals(
+        assertAll(
+            () -> assertEquals(fixture.expectedGcName(), gcLog.gcName()),
+            () -> assertEquals(fixture.expectedGcIterations(), gcIterations.size()),
+            () -> assertEquals(
                 fixture.expectedParsedLines(),
                 gcIterations.stream().mapToInt(gcIteration -> gcIteration.records().size()).sum()
             )
