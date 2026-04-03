@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.sharpler.glag.records.GcLogRecords;
@@ -23,7 +22,6 @@ class GcLogTest {
         var gcIterations = gcLog.timeIndex()
             .findByRange(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY)
             .stream()
-            .map(value -> value.value())
             .sorted(Comparator.comparingInt(GcLogRecords::gcNum))
             .toList();
 

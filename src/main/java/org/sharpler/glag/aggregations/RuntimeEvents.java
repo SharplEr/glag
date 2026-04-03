@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.jspecify.annotations.Nullable;
-import org.sharpler.glag.index.ValueWithRange;
 import org.sharpler.glag.records.GcIteration;
 import org.sharpler.glag.records.GcLogRecords;
 import org.sharpler.glag.records.GcName;
@@ -39,26 +38,24 @@ public record RuntimeEvents(
                 } else if (gcs.size() == 1) {
                     var gc = gcs.getFirst();
                     var safepointsWithGc = safepointLog.timeIndex()
-                        .findByRange(gc.start(), gc.finish())
+                        .findByRange(gc.startTimeSec(), gc.finishTimeSec())
                         .stream()
-                        .map(ValueWithRange::value)
                         .toList();
-                    slowGcs.add(new GcIteration(safepointsWithGc, gc.value()));
+                    slowGcs.add(new GcIteration(safepointsWithGc, gc));
                 } else {
                     var start = Double.POSITIVE_INFINITY;
                     var finish = Double.NEGATIVE_INFINITY;
                     for (var gc : gcs) {
-                        start = Math.min(start, gc.start());
-                        finish = Math.max(finish, gc.finish());
+                        start = Math.min(start, gc.startTimeSec());
+                        finish = Math.max(finish, gc.finishTimeSec());
                     }
 
                     slowSimultaneousGcs.add(new SimultaneousGcIterations(
                         safepointLog.timeIndex()
                             .findByRange(start, finish)
                             .stream()
-                            .map(ValueWithRange::value)
                             .toList(),
-                        gcs.stream().map(ValueWithRange::value).sorted(Comparator.comparingInt(GcLogRecords::gcNum)).toList()
+                        gcs.stream().sorted(Comparator.comparingInt(GcLogRecords::gcNum)).toList()
                     ));
                 }
             }

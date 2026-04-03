@@ -1,6 +1,6 @@
 package org.sharpler.glag.records;
 
-import org.sharpler.glag.index.ValueWithRange;
+import org.sharpler.glag.index.WithTimeRange;
 
 public record SafepointLogRecord(
     double startTimeSec,
@@ -10,12 +10,5 @@ public record SafepointLogRecord(
     long reachingTimeNs,
     long insideTimeNs,
     long totalTimeNs
-) {
-    public ValueWithRange<SafepointLogRecord> withRange() {
-        return new ValueWithRange<>(
-            this,
-            finishTimeSec() - totalTimeNs() / 1E9,
-            finishTimeSec()
-        );
-    }
+) implements WithTimeRange {
 }

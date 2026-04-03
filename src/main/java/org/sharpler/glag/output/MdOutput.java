@@ -145,7 +145,7 @@ public final class MdOutput {
 
         var slowGcs = runtimeEvents.slowGcs()
             .stream()
-            .sorted(Comparator.comparingDouble(x -> x.gcLog().withRange().finish() - x.gcLog().withRange().start()))
+            .sorted(Comparator.comparingDouble(x -> x.gcLog().finishTimeSec() - x.gcLog().startTimeSec()))
             .limit(examples)
             .toList();
         if (!slowGcs.isEmpty()) {

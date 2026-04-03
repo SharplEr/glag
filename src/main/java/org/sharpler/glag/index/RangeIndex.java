@@ -4,31 +4,26 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Function;
 import org.sharpler.glag.util.TimeUtils;
 
-public final class RangeIndex<T> {
-    private final List<ValueWithRange<T>> valuesByStart;
+public final class RangeIndex<T extends WithTimeRange> {
+    private final List<T> valuesByStart;
     private final double[] prefixMaxFinish;
 
-    public static <T> RangeIndex<T> create(Collection<? extends T> values, Function<? super T, ValueWithRange<T>> converter) {
-        return new RangeIndex<>(values.stream().map(converter).toList());
-    }
-
-    RangeIndex(List<ValueWithRange<T>> values) {
+    public RangeIndex(Collection<T> values) {
         valuesByStart = values.stream()
-            .sorted(Comparator.comparingDouble(ValueWithRange::start))
+            .sorted(Comparator.comparingDouble(WithTimeRange::startTimeSec))
             .toList();
 
         prefixMaxFinish = new double[valuesByStart.size()];
         var maxFinish = Double.NEGATIVE_INFINITY;
         for (var i = 0; i < valuesByStart.size(); i++) {
-            maxFinish = Math.max(maxFinish, valuesByStart.get(i).finish());
+            maxFinish = Math.max(maxFinish, valuesByStart.get(i).finishTimeSec());
             prefixMaxFinish[i] = maxFinish;
         }
     }
 
-    public List<ValueWithRange<T>> findByRange(double start, double finish) {
+    public List<T> findByRange(double start, double finish) {
         var toExclusive = firstIndexWithStartGreaterThan(finish);
         if (toExclusive == 0) {
             return List.of();
@@ -39,10 +34,10 @@ public final class RangeIndex<T> {
             return List.of();
         }
 
-        var result = new ArrayList<ValueWithRange<T>>();
+        var result = new ArrayList<T>();
         for (var i = fromInclusive; i < toExclusive; i++) {
             var value = valuesByStart.get(i);
-            if (TimeUtils.match(start, finish, value.start(), value.finish())) {
+            if (TimeUtils.match(start, finish, value.startTimeSec(), value.finishTimeSec())) {
                 result.add(value);
             }
         }
@@ -54,7 +49,7 @@ public final class RangeIndex<T> {
         var high = valuesByStart.size();
         while (low < high) {
             var mid = (low + high) >>> 1;
-            if (valuesByStart.get(mid).start() > finish) {
+            if (valuesByStart.get(mid).startTimeSec() > finish) {
                 high = mid;
             } else {
                 low = mid + 1;

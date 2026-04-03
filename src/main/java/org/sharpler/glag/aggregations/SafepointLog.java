@@ -34,7 +34,7 @@ public record SafepointLog(
             events,
             operations2events,
             operations2stat,
-            RangeIndex.create(events, SafepointLogRecord::withRange),
+            new RangeIndex<>(events),
             events.getLast().finishTimeSec() - events.getFirst().startTimeSec()
         );
     }

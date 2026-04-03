@@ -11,10 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 import org.sharpler.glag.parsing.SafepointParser;
 import org.sharpler.glag.records.SafepointLogRecord;
 
@@ -53,7 +51,6 @@ class SafepointLogTest {
             var indexed = safepointLog.timeIndex()
                 .findByRange(event.startTimeSec(), event.finishTimeSec())
                 .stream()
-                .map(value -> value.value())
                 .toList();
             assertTrue(indexed.contains(event));
         }
