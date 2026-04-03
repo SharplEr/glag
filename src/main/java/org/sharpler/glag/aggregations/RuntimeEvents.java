@@ -22,6 +22,8 @@ public record RuntimeEvents(
     List<GcIteration> slowGcs,
     List<SimultaneousGcIterations> slowSimultaneousGcs
 ) {
+    private static final long GC_DURATION_MATCHING_TOLERANCE_NS = TimeUnit.MILLISECONDS.toNanos(50);
+
     public static RuntimeEvents create(GcLog gcLog, SafepointLog safepointLog, int thresholdMs) {
         var thresholdNs = TimeUnit.MILLISECONDS.toNanos(thresholdMs);
 
@@ -30,7 +32,10 @@ public record RuntimeEvents(
         var slowSimultaneousGcs = new ArrayList<SimultaneousGcIterations>();
         for (var safepoint : safepointLog.events().values()) {
             if (safepoint.totalTimeNs() > thresholdNs) {
-                var gcs = gcLog.timeIndex().findByRange(safepoint.startTimeSec(), safepoint.finishTimeSec());
+                var gcs = gcLog.timeIndex().findByRange(safepoint.startTimeSec(), safepoint.finishTimeSec())
+                    .stream()
+                    .filter(gc -> matchesSafepointDuration(gc, safepoint.totalTimeNs()))
+                    .toList();
                 if (gcs.isEmpty()) {
                     slowSingleVmOperations
                         .computeIfAbsent(safepoint.operationName(), key -> new ArrayList<>())
@@ -69,5 +74,10 @@ public record RuntimeEvents(
             slowGcs,
             slowSimultaneousGcs
         );
+    }
+
+    private static boolean matchesSafepointDuration(GcLogRecords gc, long safepointTotalTimeNs) {
+        var gcDurationNs = Math.round((gc.finishTimeSec() - gc.startTimeSec()) * 1E9);
+        return gcDurationNs + GC_DURATION_MATCHING_TOLERANCE_NS >= safepointTotalTimeNs;
     }
 }
