@@ -14,7 +14,6 @@ import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.aggregations.SafepointLog;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 import org.sharpler.glag.distribution.CumulativeDistributionPoint;
-import org.sharpler.glag.records.SafepointLogRecord;
 
 public final class ConsoleOutput {
     public static void print(SafepointLog safepoints, int thresholdMs) {
@@ -22,17 +21,17 @@ public final class ConsoleOutput {
             printLn(
                 DEFAULT,
                 "Throughput lost due to pauses: %.3f (%%) - %.3f (%%)%n",
-                safepoints.events().stream().mapToLong(SafepointLogRecord::insideTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7,
-                safepoints.events().stream().mapToLong(SafepointLogRecord::totalTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7
+                safepoints.insideSafepointThroughputLoss(),
+                safepoints.totalPauseThroughputLoss()
             );
         } else {
             printLn(
                 DEFAULT,
                 "Throughput lost due to total pauses: %.3f (%%)%n",
-                safepoints.events().stream().mapToLong(SafepointLogRecord::totalTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7
+                safepoints.totalPauseThroughputLoss()
             );
         }
-        AnsiConsole.out().printf("Average pause period: %.3f sec/op%n%n", safepoints.totalLogTimeSec() / safepoints.events().size());
+        AnsiConsole.out().printf("Average pause period: %.3f sec/op%n%n", safepoints.averagePausePeriodSec());
 
         if (safepoints.hasInsideTimeNs()) {
             AnsiConsole.out().println("Cumulative distribution of time inside a safepoint:");

@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -101,20 +100,18 @@ public final class HtmlOutput {
             appendMetric(
                 html,
                 "Throughput lost inside safepoint",
-                format("%.3f %%",
-                    safepoints.events().stream().mapToLong(SafepointLogRecord::insideTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7)
+                format("%.3f %%", safepoints.insideSafepointThroughputLoss())
             );
         }
         appendMetric(
             html,
             "Throughput lost due to total pauses",
-            format("%.3f %%",
-                safepoints.events().stream().mapToLong(SafepointLogRecord::totalTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7)
+            format("%.3f %%", safepoints.totalPauseThroughputLoss())
         );
         appendMetric(
             html,
             "Average pause period",
-            format("%.3f sec/op", safepoints.totalLogTimeSec() / safepoints.events().size())
+            format("%.3f sec/op", safepoints.averagePausePeriodSec())
         );
         html.append("</div>");
         html.append("</section>");

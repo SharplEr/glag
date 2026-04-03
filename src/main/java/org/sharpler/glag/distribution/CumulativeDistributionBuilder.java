@@ -49,9 +49,9 @@ public final class CumulativeDistributionBuilder {
     }
 
     public static List<CumulativeDistributionPoint> insideDistribution(SafepointLog safepoints) {
-        var builder = new CumulativeDistributionBuilder(safepoints.events().size());
+        var builder = new CumulativeDistributionBuilder(safepoints.events().values().size());
 
-        safepoints.events().stream()
+        safepoints.events().values().stream()
             .mapToLong(SafepointLogRecord::insideTimeNs)
             .sorted()
             .forEach(builder::addValue);
@@ -66,9 +66,9 @@ public final class CumulativeDistributionBuilder {
     }
 
     public static List<CumulativeDistributionPoint> reachingDistribution(SafepointLog safepoints) {
-        var builder = new CumulativeDistributionBuilder(safepoints.events().size());
+        var builder = new CumulativeDistributionBuilder(safepoints.events().values().size());
 
-        safepoints.events().stream()
+        safepoints.events().values().stream()
             .mapToLong(SafepointLogRecord::reachingTimeNs)
             .sorted()
             .forEach(builder::addValue);
@@ -77,9 +77,9 @@ public final class CumulativeDistributionBuilder {
     }
 
     public static List<CumulativeDistributionPoint> cleanupDistribution(SafepointLog safepoints) {
-        var builder = new CumulativeDistributionBuilder(safepoints.events().size());
+        var builder = new CumulativeDistributionBuilder(safepoints.events().values().size());
 
-        safepoints.events().stream()
+        safepoints.events().values().stream()
             .mapToLong(SafepointLogRecord::cleanupTimeNs)
             .sorted()
             .forEach(builder::addValue);
@@ -88,9 +88,9 @@ public final class CumulativeDistributionBuilder {
     }
 
     public static List<CumulativeDistributionPoint> leavingDistribution(SafepointLog safepoints) {
-        var builder = new CumulativeDistributionBuilder(safepoints.events().size());
+        var builder = new CumulativeDistributionBuilder(safepoints.events().values().size());
 
-        safepoints.events().stream()
+        safepoints.events().values().stream()
             .mapToLong(SafepointLogRecord::leavingTimeNs)
             .sorted()
             .forEach(builder::addValue);

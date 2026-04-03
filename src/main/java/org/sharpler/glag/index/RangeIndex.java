@@ -23,6 +23,10 @@ public final class RangeIndex<T extends WithTimeRange> {
         }
     }
 
+    public List<T> values() {
+        return valuesByStart;
+    }
+
     public List<T> findByRange(double start, double finish) {
         var toExclusive = firstIndexWithStartGreaterThan(finish);
         if (toExclusive == 0) {

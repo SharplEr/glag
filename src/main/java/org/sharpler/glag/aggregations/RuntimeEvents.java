@@ -28,7 +28,7 @@ public record RuntimeEvents(
         var slowGcs = new ArrayList<GcIteration>();
         var slowSingleVmOperations = new HashMap<String, List<SingleVMOperation>>();
         var slowSimultaneousGcs = new ArrayList<SimultaneousGcIterations>();
-        for (var safepoint : safepointLog.events()) {
+        for (var safepoint : safepointLog.events().values()) {
             if (safepoint.totalTimeNs() > thresholdNs) {
                 var gcs = gcLog.timeIndex().findByRange(safepoint.startTimeSec(), safepoint.finishTimeSec());
                 if (gcs.isEmpty()) {
@@ -37,7 +37,7 @@ public record RuntimeEvents(
                         .add(new SingleVMOperation(safepoint));
                 } else if (gcs.size() == 1) {
                     var gc = gcs.getFirst();
-                    var safepointsWithGc = safepointLog.timeIndex()
+                    var safepointsWithGc = safepointLog.events()
                         .findByRange(gc.startTimeSec(), gc.finishTimeSec())
                         .stream()
                         .toList();
@@ -51,7 +51,7 @@ public record RuntimeEvents(
                     }
 
                     slowSimultaneousGcs.add(new SimultaneousGcIterations(
-                        safepointLog.timeIndex()
+                        safepointLog.events()
                             .findByRange(start, finish)
                             .stream()
                             .toList(),

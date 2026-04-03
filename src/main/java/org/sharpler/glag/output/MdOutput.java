@@ -7,7 +7,6 @@ import com.google.errorprone.annotations.FormatString;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -15,7 +14,6 @@ import java.util.Objects;
 import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
-import org.sharpler.glag.records.GcLogRecords;
 import org.sharpler.glag.records.SafepointLogRecord;
 import org.sharpler.glag.records.SingleVMOperation;
 import org.sharpler.glag.util.TimeUtils;
@@ -41,16 +39,16 @@ public final class MdOutput {
         if (safepoints.hasInsideTimeNs()) {
             writef(
                 "Throughput lost due to pauses: %.3f (%%) - %.3f (%%)%n%n",
-                safepoints.events().stream().mapToLong(SafepointLogRecord::insideTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7,
-                safepoints.events().stream().mapToLong(SafepointLogRecord::totalTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7
+                safepoints.insideSafepointThroughputLoss(),
+                safepoints.totalPauseThroughputLoss()
             );
         } else {
             writef(
                 "Throughput lost due to total pauses: %.3f (%%)%n%n",
-                safepoints.events().stream().mapToLong(SafepointLogRecord::totalTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7
+                safepoints.totalPauseThroughputLoss()
             );
         }
-        writef("Average pause period: %.3f sec/op%n%n", safepoints.totalLogTimeSec() / safepoints.events().size());
+        writef("Average pause period: %.3f sec/op%n%n", safepoints.averagePausePeriodSec());
 
         if (runtimeEvents.gcName() != null) {
             var name = runtimeEvents.gcName().getName();

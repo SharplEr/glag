@@ -25,8 +25,8 @@ class SafepointLogTest {
         var safepointLog = SafepointLog.parse(lines);
 
         assertAll(
-            () -> assertEquals(expectedEvents, safepointLog.events()),
-            () -> assertEquals(fixture.expectedOperationCounts(), countsByOperation(safepointLog.events())),
+            () -> assertEquals(expectedEvents, safepointLog.events().values()),
+            () -> assertEquals(fixture.expectedOperationCounts(), countsByOperation(safepointLog.events().values())),
             () -> assertEquals(fixture.expectedOperationCounts().keySet(), safepointLog.byTypes().keySet()),
             () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasReachingTimeNs), safepointLog.hasReachingTimeNs()),
             () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasCleanupTimeNs), safepointLog.hasCleanupTimeNs()),
@@ -52,7 +52,7 @@ class SafepointLogTest {
         }
 
         for (var event : expectedEvents) {
-            var indexed = safepointLog.timeIndex()
+            var indexed = safepointLog.events()
                 .findByRange(event.startTimeSec(), event.finishTimeSec())
                 .stream()
                 .toList();
@@ -67,7 +67,7 @@ class SafepointLogTest {
         );
 
         var safepointLog = SafepointLog.parse(lines);
-        var event = safepointLog.events().getFirst();
+        var event = safepointLog.events().values().getFirst();
 
         assertAll(
             () -> assertEquals(SafepointLogRecord.NO_TIME, event.reachingTimeNs()),
