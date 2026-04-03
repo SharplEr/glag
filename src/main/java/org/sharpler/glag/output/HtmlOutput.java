@@ -62,6 +62,24 @@ public final class HtmlOutput {
                 1
             );
         }
+        if (safepoints.hasCleanupTimeNs()) {
+            appendDistributionSection(
+                html,
+                "Cumulative distribution of cleanup time",
+                CumulativeDistributionBuilder.cleanupDistribution(safepoints),
+                thresholdMs,
+                1
+            );
+        }
+        if (safepoints.hasLeavingTimeNs()) {
+            appendDistributionSection(
+                html,
+                "Cumulative distribution of time to leave safepoint",
+                CumulativeDistributionBuilder.leavingDistribution(safepoints),
+                thresholdMs,
+                1
+            );
+        }
 
         appendGcSection(html, runtimeEvents.gcName());
         appendSafepointSection(html);

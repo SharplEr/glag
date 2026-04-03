@@ -44,6 +44,16 @@ public final class ConsoleOutput {
             printDistribution(CumulativeDistributionBuilder.reachingDistribution(safepoints), thresholdMs, 1);
         }
 
+        if (safepoints.hasCleanupTimeNs()) {
+            AnsiConsole.out().println("Cumulative distribution of cleanup time:");
+            printDistribution(CumulativeDistributionBuilder.cleanupDistribution(safepoints), thresholdMs, 1);
+        }
+
+        if (safepoints.hasLeavingTimeNs()) {
+            AnsiConsole.out().println("Cumulative distribution of time to leave safepoint:");
+            printDistribution(CumulativeDistributionBuilder.leavingDistribution(safepoints), thresholdMs, 1);
+        }
+
         AnsiConsole.out().println();
         for (var e : safepoints.byTypes().entrySet()) {
             var events = e.getValue();

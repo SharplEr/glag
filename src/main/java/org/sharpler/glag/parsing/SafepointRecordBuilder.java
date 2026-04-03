@@ -2,6 +2,7 @@ package org.sharpler.glag.parsing;
 
 import static org.sharpler.glag.parsing.SafepointValueType.AT_SAFEPOINT;
 import static org.sharpler.glag.parsing.SafepointValueType.CLEANUP;
+import static org.sharpler.glag.parsing.SafepointValueType.LEAVING_SAFEPOINT;
 import static org.sharpler.glag.parsing.SafepointValueType.REACHING_SAFEPOINT;
 import static org.sharpler.glag.parsing.SafepointValueType.SAFEPOINT_NAME;
 import static org.sharpler.glag.parsing.SafepointValueType.TIME_SINCE_LAST;
@@ -20,6 +21,7 @@ final class SafepointRecordBuilder {
     private long reachingTimeNs = SafepointLogRecord.NO_TIME;
     private long cleanupTimeNs = SafepointLogRecord.NO_TIME;
     private long insideTimeNs = SafepointLogRecord.NO_TIME;
+    private long leavingTimeNs = SafepointLogRecord.NO_TIME;
     private long totalTimeNs = SafepointLogRecord.NO_TIME;
 
     SafepointRecordBuilder(String origin) {
@@ -39,6 +41,7 @@ final class SafepointRecordBuilder {
             case REACHING_SAFEPOINT -> addReachingTimeNs(REACHING_SAFEPOINT.parseLong(line, start, end));
             case CLEANUP -> addCleanupTimeNs(CLEANUP.parseLong(line, start, end));
             case AT_SAFEPOINT -> addInsideTimeNs(AT_SAFEPOINT.parseLong(line, start, end));
+            case LEAVING_SAFEPOINT -> addLeavingTimeNs(LEAVING_SAFEPOINT.parseLong(line, start, end));
             case TOTAL -> addTotalTimeNs(TOTAL.parseLong(line, start, end));
         }
     }
@@ -55,7 +58,9 @@ final class SafepointRecordBuilder {
             origin,
             builtOperationName,
             reachingTimeNs,
+            cleanupTimeNs,
             insideTimeNs,
+            leavingTimeNs,
             totalTimeNs
         );
     }
@@ -87,6 +92,12 @@ final class SafepointRecordBuilder {
         assert this.insideTimeNs == SafepointLogRecord.NO_TIME;
         assert insideTimeNs >= 0L;
         this.insideTimeNs = insideTimeNs;
+    }
+
+    private void addLeavingTimeNs(long leavingTimeNs) {
+        assert this.leavingTimeNs == SafepointLogRecord.NO_TIME;
+        assert leavingTimeNs >= 0L;
+        this.leavingTimeNs = leavingTimeNs;
     }
 
     private void addTotalTimeNs(long totalTimeNs) {

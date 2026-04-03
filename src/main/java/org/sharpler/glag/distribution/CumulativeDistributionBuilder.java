@@ -75,4 +75,26 @@ public final class CumulativeDistributionBuilder {
 
         return builder.build();
     }
+
+    public static List<CumulativeDistributionPoint> cleanupDistribution(SafepointLog safepoints) {
+        var builder = new CumulativeDistributionBuilder(safepoints.events().size());
+
+        safepoints.events().stream()
+            .mapToLong(SafepointLogRecord::cleanupTimeNs)
+            .sorted()
+            .forEach(builder::addValue);
+
+        return builder.build();
+    }
+
+    public static List<CumulativeDistributionPoint> leavingDistribution(SafepointLog safepoints) {
+        var builder = new CumulativeDistributionBuilder(safepoints.events().size());
+
+        safepoints.events().stream()
+            .mapToLong(SafepointLogRecord::leavingTimeNs)
+            .sorted()
+            .forEach(builder::addValue);
+
+        return builder.build();
+    }
 }

@@ -31,7 +31,9 @@ class SafepointParserTest {
                 line,
                 "ICBufferFull",
                 69282L,
+                130048L,
                 8449L,
+                SafepointLogRecord.NO_TIME,
                 207779L
             ),
             result
@@ -54,7 +56,9 @@ class SafepointParserTest {
                 line,
                 "ICBufferFull",
                 69282L,
+                130048L,
                 8449L,
+                SafepointLogRecord.NO_TIME,
                 207779L
             ),
             result
@@ -77,7 +81,9 @@ class SafepointParserTest {
                 line,
                 "ICBufferFull",
                 69282L,
+                130048L,
                 8449L,
+                SafepointLogRecord.NO_TIME,
                 207779L
             ),
             result
@@ -100,7 +106,9 @@ class SafepointParserTest {
                 line,
                 "ICBufferFull",
                 69282L,
+                130048L,
                 8449L,
+                SafepointLogRecord.NO_TIME,
                 207779L
             ),
             result
@@ -137,10 +145,37 @@ class SafepointParserTest {
                 line,
                 "ICBufferFull",
                 69282L,
+                130048L,
                 8449L,
+                SafepointLogRecord.NO_TIME,
                 207779L
             ),
             SafepointParser.parse(line)
+        );
+    }
+
+    @Test
+    void parseWithLeavingSafepoint() {
+        var line =
+            "[3.412s][info][safepoint] " +
+                "Safepoint \"Cleanup\", Time since last: 177611286 ns, Reaching safepoint: 69282 ns, Cleanup: 130048 ns, " +
+                "At safepoint: 8449 ns, Leaving safepoint: 20000 ns, Total: 227779 ns";
+
+        var result = SafepointParser.parse(line);
+
+        Assertions.assertEquals(
+            new SafepointLogRecord(
+                3.412 - 227779 / 1E9,
+                3.412,
+                line,
+                "Cleanup",
+                69282L,
+                130048L,
+                8449L,
+                20000L,
+                227779L
+            ),
+            result
         );
     }
 

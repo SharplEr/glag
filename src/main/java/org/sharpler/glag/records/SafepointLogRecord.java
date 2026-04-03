@@ -9,7 +9,9 @@ public record SafepointLogRecord(
     String origin,
     String operationName,
     long reachingTimeNs,
+    long cleanupTimeNs,
     long insideTimeNs,
+    long leavingTimeNs,
     long totalTimeNs
 ) implements WithTimeRange {
     public static final long NO_TIME = -1L;
@@ -26,8 +28,14 @@ public record SafepointLogRecord(
         if (reachingTimeNs < 0L && reachingTimeNs != NO_TIME) {
             throw new IllegalStateException("Safepoint reaching time should be non-negative or NO_TIME");
         }
+        if (cleanupTimeNs < 0L && cleanupTimeNs != NO_TIME) {
+            throw new IllegalStateException("Safepoint cleanup time should be non-negative or NO_TIME");
+        }
         if (insideTimeNs < 0L && insideTimeNs != NO_TIME) {
             throw new IllegalStateException("Safepoint inside time should be non-negative or NO_TIME");
+        }
+        if (leavingTimeNs < 0L && leavingTimeNs != NO_TIME) {
+            throw new IllegalStateException("Safepoint leaving time should be non-negative or NO_TIME");
         }
     }
 
@@ -37,5 +45,13 @@ public record SafepointLogRecord(
 
     public boolean hasInsideTimeNs() {
         return insideTimeNs != NO_TIME;
+    }
+
+    public boolean hasCleanupTimeNs() {
+        return cleanupTimeNs != NO_TIME;
+    }
+
+    public boolean hasLeavingTimeNs() {
+        return leavingTimeNs != NO_TIME;
     }
 }

@@ -28,8 +28,10 @@ class SafepointLogTest {
             () -> assertEquals(expectedEvents, safepointLog.events()),
             () -> assertEquals(fixture.expectedOperationCounts(), countsByOperation(safepointLog.events())),
             () -> assertEquals(fixture.expectedOperationCounts().keySet(), safepointLog.byTypes().keySet()),
-            () -> assertTrue(safepointLog.hasReachingTimeNs()),
-            () -> assertTrue(safepointLog.hasInsideTimeNs()),
+            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasReachingTimeNs), safepointLog.hasReachingTimeNs()),
+            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasCleanupTimeNs), safepointLog.hasCleanupTimeNs()),
+            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasInsideTimeNs), safepointLog.hasInsideTimeNs()),
+            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasLeavingTimeNs), safepointLog.hasLeavingTimeNs()),
             () -> assertEquals(fixture.expectedOperationCounts().keySet(), safepointLog.distributions().keySet()),
             () -> assertEquals(
                 expectedEvents.getLast().finishTimeSec() - expectedEvents.getFirst().startTimeSec(),
@@ -69,9 +71,13 @@ class SafepointLogTest {
 
         assertAll(
             () -> assertEquals(SafepointLogRecord.NO_TIME, event.reachingTimeNs()),
+            () -> assertEquals(SafepointLogRecord.NO_TIME, event.cleanupTimeNs()),
             () -> assertEquals(SafepointLogRecord.NO_TIME, event.insideTimeNs()),
+            () -> assertEquals(SafepointLogRecord.NO_TIME, event.leavingTimeNs()),
             () -> assertFalse(safepointLog.hasReachingTimeNs()),
+            () -> assertFalse(safepointLog.hasCleanupTimeNs()),
             () -> assertFalse(safepointLog.hasInsideTimeNs()),
+            () -> assertFalse(safepointLog.hasLeavingTimeNs()),
             () -> assertFalse(safepointLog.distributions().isEmpty())
         );
     }

@@ -9,6 +9,7 @@ enum SafepointValueType {
     REACHING_SAFEPOINT(" Reaching safepoint: ", " ns"),
     CLEANUP(" Cleanup: ", " ns"),
     AT_SAFEPOINT(" At safepoint: ", " ns"),
+    LEAVING_SAFEPOINT(" Leaving safepoint: ", " ns"),
     TOTAL(" Total: ", " ns"),
     ;
     static final List<SafepointValueType> VALUES = List.of(values());

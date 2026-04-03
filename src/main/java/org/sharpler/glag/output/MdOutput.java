@@ -154,6 +154,42 @@ public final class MdOutput {
             }
         }
 
+        if (safepoints.hasCleanupTimeNs()) {
+            writef("%n## Cleanup time%n%n");
+            writef("### Cumulative distribution%n%n");
+            writef("| Timing (ms) | Probability (%%)|%n");
+            writef("| ----------- | -------------- |%n");
+
+            for (var point : CumulativeDistributionBuilder.cleanupDistribution(safepoints)) {
+                var timingMs = point.value() / 1E6;
+                writef(
+                    timingMs > thresholdMs ?
+                        "| **%.3f** | **%.2f** |%n" :
+                        "| %.3f | %.2f |%n",
+                    timingMs,
+                    point.prob() * 100d
+                );
+            }
+        }
+
+        if (safepoints.hasLeavingTimeNs()) {
+            writef("%n## Time to leave safepoint%n%n");
+            writef("### Cumulative distribution%n%n");
+            writef("| Timing (ms) | Probability (%%)|%n");
+            writef("| ----------- | -------------- |%n");
+
+            for (var point : CumulativeDistributionBuilder.leavingDistribution(safepoints)) {
+                var timingMs = point.value() / 1E6;
+                writef(
+                    timingMs > thresholdMs ?
+                        "| **%.3f** | **%.2f** |%n" :
+                        "| %.3f | %.2f |%n",
+                    timingMs,
+                    point.prob() * 100d
+                );
+            }
+        }
+
         var slowGcs = runtimeEvents.slowGcs()
             .stream()
             .sorted(Comparator.comparingDouble((org.sharpler.glag.records.GcIteration x) -> x.gcLog().finishTimeSec() - x.gcLog().startTimeSec()).reversed())
