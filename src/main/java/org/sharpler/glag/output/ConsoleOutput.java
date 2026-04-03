@@ -18,31 +18,44 @@ import org.sharpler.glag.records.SafepointLogRecord;
 
 public final class ConsoleOutput {
     public static void print(SafepointLog safepoints, int thresholdMs) {
-        printLn(
-            DEFAULT,
-            "Throughput lost due to pauses: %.3f (%%) - %.3f (%%)%n",
-            safepoints.events().stream().mapToLong(SafepointLogRecord::insideTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7,
-            safepoints.events().stream().mapToLong(SafepointLogRecord::totalTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7
-        );
+        if (safepoints.hasInsideTimeNs()) {
+            printLn(
+                DEFAULT,
+                "Throughput lost due to pauses: %.3f (%%) - %.3f (%%)%n",
+                safepoints.events().stream().mapToLong(SafepointLogRecord::insideTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7,
+                safepoints.events().stream().mapToLong(SafepointLogRecord::totalTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7
+            );
+        } else {
+            printLn(
+                DEFAULT,
+                "Throughput lost due to total pauses: %.3f (%%)%n",
+                safepoints.events().stream().mapToLong(SafepointLogRecord::totalTimeNs).sum() / safepoints.totalLogTimeSec() / 1E7
+            );
+        }
         AnsiConsole.out().printf("Average pause period: %.3f sec/op%n%n", safepoints.totalLogTimeSec() / safepoints.events().size());
 
-        AnsiConsole.out().println("Cumulative distribution of time inside a safepoint:");
-        printDistribution(CumulativeDistributionBuilder.insideDistribution(safepoints), thresholdMs, 1);
+        if (safepoints.hasInsideTimeNs()) {
+            AnsiConsole.out().println("Cumulative distribution of time inside a safepoint:");
+            printDistribution(CumulativeDistributionBuilder.insideDistribution(safepoints), thresholdMs, 1);
+        }
 
-        AnsiConsole.out().println("Cumulative distribution of time to safepoint:");
-        printDistribution(CumulativeDistributionBuilder.reachingDistribution(safepoints), thresholdMs, 1);
+        if (safepoints.hasReachingTimeNs()) {
+            AnsiConsole.out().println("Cumulative distribution of time to safepoint:");
+            printDistribution(CumulativeDistributionBuilder.reachingDistribution(safepoints), thresholdMs, 1);
+        }
 
         AnsiConsole.out().println();
-        for (var e : safepoints.distributions().entrySet()) {
-            var events = Objects.requireNonNull(safepoints.byTypes().get(e.getKey()));
+        for (var e : safepoints.byTypes().entrySet()) {
+            var events = e.getValue();
 
             AnsiConsole.out().println(ansi().a("Operation: ").fg(GREEN).a(e.getKey()).reset());
 
             AnsiConsole.out().printf("\tPeriod: %.3f (sec/op)%n", safepoints.totalLogTimeSec() / events.size());
 
-            AnsiConsole.out().println("\tCumulative distribution:");
-
-            printDistribution(e.getValue(), thresholdMs, 2);
+            if (safepoints.hasInsideTimeNs()) {
+                AnsiConsole.out().println("\tCumulative distribution:");
+                printDistribution(Objects.requireNonNull(safepoints.distributions().get(e.getKey())), thresholdMs, 2);
+            }
         }
     }
 

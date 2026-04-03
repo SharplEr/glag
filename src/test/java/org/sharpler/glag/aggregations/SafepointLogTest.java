@@ -28,6 +28,8 @@ class SafepointLogTest {
             () -> assertEquals(expectedEvents, safepointLog.events()),
             () -> assertEquals(fixture.expectedOperationCounts(), countsByOperation(safepointLog.events())),
             () -> assertEquals(fixture.expectedOperationCounts().keySet(), safepointLog.byTypes().keySet()),
+            () -> assertTrue(safepointLog.hasReachingTimeNs()),
+            () -> assertTrue(safepointLog.hasInsideTimeNs()),
             () -> assertEquals(fixture.expectedOperationCounts().keySet(), safepointLog.distributions().keySet()),
             () -> assertEquals(
                 expectedEvents.getLast().finishTimeSec() - expectedEvents.getFirst().startTimeSec(),
@@ -38,8 +40,8 @@ class SafepointLogTest {
         for (var entry : safepointLog.byTypes().entrySet()) {
             var operationEvents = entry.getValue();
             assertEquals(
-                operationEvents.stream().map(SafepointLogRecord::insideTimeNs).sorted().toList(),
-                operationEvents.stream().map(SafepointLogRecord::insideTimeNs).toList()
+                operationEvents.stream().map(SafepointLogRecord::totalTimeNs).sorted().toList(),
+                operationEvents.stream().map(SafepointLogRecord::totalTimeNs).toList()
             );
 
             var distribution = Objects.requireNonNull(safepointLog.distributions().get(entry.getKey()));
@@ -54,6 +56,24 @@ class SafepointLogTest {
                 .toList();
             assertTrue(indexed.contains(event));
         }
+    }
+
+    @org.junit.jupiter.api.Test
+    void parseMarksMissingReachingAndInsideTimesAsUnavailable() {
+        var lines = List.of(
+            "[3.412s][info][safepoint] Safepoint \"Cleanup\", Time since last: 177611286 ns, Total: 207779 ns"
+        );
+
+        var safepointLog = SafepointLog.parse(lines);
+        var event = safepointLog.events().getFirst();
+
+        assertAll(
+            () -> assertEquals(SafepointLogRecord.NO_TIME, event.reachingTimeNs()),
+            () -> assertEquals(SafepointLogRecord.NO_TIME, event.insideTimeNs()),
+            () -> assertFalse(safepointLog.hasReachingTimeNs()),
+            () -> assertFalse(safepointLog.hasInsideTimeNs()),
+            () -> assertFalse(safepointLog.distributions().isEmpty())
+        );
     }
 
     private static Stream<SafepointLogFixture> fixtures() {

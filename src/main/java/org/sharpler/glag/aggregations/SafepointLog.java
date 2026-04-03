@@ -14,17 +14,21 @@ public record SafepointLog(
     List<SafepointLogRecord> events,
     Map<String, List<SafepointLogRecord>> byTypes,
     Map<String, List<CumulativeDistributionPoint>> distributions,
+    boolean hasReachingTimeNs,
+    boolean hasInsideTimeNs,
     RangeIndex<SafepointLogRecord> timeIndex,
     double totalLogTimeSec
 ) {
     public static SafepointLog parse(List<String> lines) {
         var events = lines.stream().map(SafepointParser::parse).toList();
+        var hasReachingTimeNs = events.stream().allMatch(SafepointLogRecord::hasReachingTimeNs);
+        var hasInsideTimeNs = events.stream().allMatch(SafepointLogRecord::hasInsideTimeNs);
 
         var operations2events = events.stream()
             .collect(Collectors.groupingBy(SafepointLogRecord::operationName));
 
         for (var entry : operations2events.entrySet()) {
-            entry.getValue().sort(Comparator.comparingLong(SafepointLogRecord::insideTimeNs));
+            entry.getValue().sort(Comparator.comparingLong(SafepointLogRecord::totalTimeNs));
         }
 
         var operations2stat = operations2events.entrySet().stream()
@@ -34,6 +38,8 @@ public record SafepointLog(
             events,
             operations2events,
             operations2stat,
+            hasReachingTimeNs,
+            hasInsideTimeNs,
             new RangeIndex<>(events),
             events.getLast().finishTimeSec() - events.getFirst().startTimeSec()
         );
