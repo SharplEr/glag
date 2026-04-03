@@ -227,7 +227,11 @@ public final class HtmlOutput {
             html.append("<p>threshold = ").append(runtimeEvents.thresholdMs()).append(" ms, top ").append(examples).append("</p>");
             for (var slowGc : slowGcs) {
                 html.append("<section class='gc-block'>");
-                html.append("<h3>GC iteration ").append(slowGc.gcLog().gcNum()).append("</h3>");
+                html.append("<h3>GC iteration ")
+                    .append(slowGc.gcLog().gcNum())
+                    .append(" (")
+                    .append(escapeHtml(TimeUtils.formatDuration(Math.round((slowGc.gcLog().finishTimeSec() - slowGc.gcLog().startTimeSec()) * 1E9))))
+                    .append(")</h3>");
                 appendSafepointList(html, slowGc.safepointLog());
                 appendGcLogs(html, "GC logs", slowGc.gcLog());
                 html.append("</section>");
@@ -243,7 +247,13 @@ public final class HtmlOutput {
             for (var slowSimultaneousGc : slowSimultaneousGcs) {
                 html.append("<section class='gc-block'>");
                 html.append("<h3>GC iterations ")
-                    .append(escapeHtml(Arrays.toString(slowSimultaneousGc.gcs().stream().mapToInt(GcLogRecords::gcNum).toArray())))
+                    .append(escapeHtml(slowSimultaneousGc.gcs().stream()
+                        .map(gc -> "%d (%s)".formatted(
+                            gc.gcNum(),
+                            TimeUtils.formatDuration(Math.round((gc.finishTimeSec() - gc.startTimeSec()) * 1E9))
+                        ))
+                        .toList()
+                        .toString()))
                     .append("</h3>");
                 appendSafepointList(html, slowSimultaneousGc.safepointLog());
                 for (var slowGc : slowSimultaneousGc.gcs()) {

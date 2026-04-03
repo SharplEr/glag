@@ -18,6 +18,7 @@ import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 import org.sharpler.glag.records.GcLogRecords;
 import org.sharpler.glag.records.SafepointLogRecord;
 import org.sharpler.glag.records.SingleVMOperation;
+import org.sharpler.glag.util.TimeUtils;
 
 public final class MdOutput {
     private static final Path DOCS_PATH = Path.of("docs");
@@ -199,7 +200,11 @@ public final class MdOutput {
             writef("## GC iterations with long pauses: threshold = %d ms, top %d%n%n", thresholdMs, examples);
 
             for (var slowGc : slowGcs) {
-                writef("### GC iteration %d%n%n", slowGc.gcLog().gcNum());
+                writef(
+                    "### GC iteration %d (%s)%n%n",
+                    slowGc.gcLog().gcNum(),
+                    TimeUtils.formatDuration(Math.round((slowGc.gcLog().finishTimeSec() - slowGc.gcLog().startTimeSec()) * 1E9))
+                );
 
                 writef("#### Slow safepoints%n%n");
                 writef("```");
@@ -221,8 +226,15 @@ public final class MdOutput {
             writef("## Simultaneous GC iterations with long pauses: threshold = %d ms%n%n", thresholdMs);
 
             for (var slowSimultaneousGc : slowSimultaneousGcs) {
-                writef("### GC iterations %s%n%n",
-                    Arrays.toString(slowSimultaneousGc.gcs().stream().mapToInt(GcLogRecords::gcNum).toArray()));
+                writef(
+                    "### GC iterations %s%n%n",
+                    slowSimultaneousGc.gcs().stream()
+                        .map(gc -> "%d (%s)".formatted(
+                            gc.gcNum(),
+                            TimeUtils.formatDuration(Math.round((gc.finishTimeSec() - gc.startTimeSec()) * 1E9))
+                        ))
+                        .toList()
+                );
 
                 writef("#### Slow safepoints%n%n");
                 writef("```");
