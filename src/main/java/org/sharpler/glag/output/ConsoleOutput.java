@@ -44,10 +44,18 @@ public final class ConsoleOutput {
 
             AnsiConsole.out().println(ansi().a("Operation: ").fg(GREEN).a(e.getKey()).reset());
             AnsiConsole.out().printf("\tPeriod: %.3f (sec/op)%n", operationAggregate.averagePausePeriodSec());
-            AnsiConsole.out().printf(
-                "\tThroughput lost due to total pauses: %.3f (%%)%n",
-                operationAggregate.totalPauseThroughputLoss()
-            );
+            if (operationAggregate.hasInsideTimeNs()) {
+                AnsiConsole.out().printf(
+                    "\tThroughput lost due to pauses: %.3f (%%) - %.3f (%%)%n",
+                    operationAggregate.insideSafepointThroughputLoss(),
+                    operationAggregate.totalPauseThroughputLoss()
+                );
+            } else {
+                AnsiConsole.out().printf(
+                    "\tThroughput lost due to total pauses: %.3f (%%)%n",
+                    operationAggregate.totalPauseThroughputLoss()
+                );
+            }
             printAggregateDistributions(operationAggregate, thresholdMs, 1);
         }
     }

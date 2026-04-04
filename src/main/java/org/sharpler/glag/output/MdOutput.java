@@ -96,10 +96,18 @@ public final class MdOutput {
             }
 
             writef("Period: %.3f (sec/op)%n%n", operationAggregate.averagePausePeriodSec());
-            writef(
-                "Throughput lost due to total pauses: %.3f (%%)%n%n",
-                operationAggregate.totalPauseThroughputLoss()
-            );
+            if (operationAggregate.hasInsideTimeNs()) {
+                writef(
+                    "Throughput lost due to pauses: %.3f (%%) - %.3f (%%)%n%n",
+                    operationAggregate.insideSafepointThroughputLoss(),
+                    operationAggregate.totalPauseThroughputLoss()
+                );
+            } else {
+                writef(
+                    "Throughput lost due to total pauses: %.3f (%%)%n%n",
+                    operationAggregate.totalPauseThroughputLoss()
+                );
+            }
             writeAggregateSection("Total time", operationAggregate.totalTimeDistribution(), thresholdMs, 4);
             writeAggregateSection("Time inside a safepoint", operationAggregate.insideTimeDistribution(), thresholdMs, 4);
             writeAggregateSection("Time to safepoint", operationAggregate.reachingTimeDistribution(), thresholdMs, 4);

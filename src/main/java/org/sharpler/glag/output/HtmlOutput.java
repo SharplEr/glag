@@ -126,9 +126,17 @@ public final class HtmlOutput {
             html.append("<p>Period: <strong>")
                 .append(format("%.3f", operationAggregate.averagePausePeriodSec()))
                 .append("</strong> sec/op</p>");
-            html.append("<p>Throughput lost due to total pauses: <strong>")
-                .append(format("%.3f", operationAggregate.totalPauseThroughputLoss()))
-                .append("</strong> %</p>");
+            if (operationAggregate.hasInsideTimeNs()) {
+                html.append("<p>Throughput lost due to pauses: <strong>")
+                    .append(format("%.3f", operationAggregate.insideSafepointThroughputLoss()))
+                    .append("</strong> % - <strong>")
+                    .append(format("%.3f", operationAggregate.totalPauseThroughputLoss()))
+                    .append("</strong> %</p>");
+            } else {
+                html.append("<p>Throughput lost due to total pauses: <strong>")
+                    .append(format("%.3f", operationAggregate.totalPauseThroughputLoss()))
+                    .append("</strong> %</p>");
+            }
 
             var description = DOCS_PATH.resolve("operation").resolve(operationName + ".md");
             if (docExists(description)) {
