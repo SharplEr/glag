@@ -1,0 +1,70 @@
+package org.sharpler.glag.aggregations;
+
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.sharpler.glag.records.SafepointLogRecord;
+
+final class SafepointAggregateTest {
+    @Test
+    void fromBuildsAllDistributionsWhenAllTimesAreAvailable() {
+        var events = List.of(
+            new SafepointLogRecord(1.0, 1.1, "a", "Cleanup", 10, 20, 30, 40, 90),
+            new SafepointLogRecord(2.0, 2.2, "b", "Cleanup", 15, 25, 35, 45, 120)
+        );
+
+        var aggregate = SafepointAggregate.from(events);
+
+        assertAll(
+            () -> assertEquals(1.2, aggregate.totalLogTimeSec(), 1E-9),
+            () -> assertFalse(aggregate.totalTimeDistribution().isEmpty()),
+            () -> assertFalse(aggregate.reachingTimeDistribution().isEmpty()),
+            () -> assertFalse(aggregate.cleanupTimeDistribution().isEmpty()),
+            () -> assertFalse(aggregate.insideTimeDistribution().isEmpty()),
+            () -> assertFalse(aggregate.leavingTimeDistribution().isEmpty()),
+            () -> assertEquals(1d, aggregate.totalTimeDistribution().getLast().prob()),
+            () -> assertEquals(120, aggregate.totalTimeDistribution().getLast().value()),
+            () -> assertEquals(15, aggregate.reachingTimeDistribution().getLast().value()),
+            () -> assertEquals(25, aggregate.cleanupTimeDistribution().getLast().value()),
+            () -> assertEquals(35, aggregate.insideTimeDistribution().getLast().value()),
+            () -> assertEquals(45, aggregate.leavingTimeDistribution().getLast().value())
+        );
+    }
+
+    @Test
+    void fromUsesEmptyDistributionForOptionalMissingTimes() {
+        var events = List.of(
+            new SafepointLogRecord(
+                1.0,
+                1.1,
+                "a",
+                "Cleanup",
+                SafepointLogRecord.NO_TIME,
+                20,
+                30,
+                40,
+                90
+            )
+        );
+
+        var aggregate = SafepointAggregate.from(events);
+
+        assertAll(
+            () -> assertFalse(aggregate.totalTimeDistribution().isEmpty()),
+            () -> assertTrue(aggregate.reachingTimeDistribution().isEmpty()),
+            () -> assertFalse(aggregate.cleanupTimeDistribution().isEmpty()),
+            () -> assertFalse(aggregate.insideTimeDistribution().isEmpty()),
+            () -> assertFalse(aggregate.leavingTimeDistribution().isEmpty())
+        );
+    }
+
+    @Test
+    void fromRejectsEmptyEvents() {
+        assertThrows(IllegalArgumentException.class, () -> SafepointAggregate.from(List.of()));
+    }
+}

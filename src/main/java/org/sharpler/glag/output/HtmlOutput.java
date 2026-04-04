@@ -16,8 +16,8 @@ import org.commonmark.renderer.html.HtmlRenderer;
 import org.fusesource.jansi.AnsiConsole;
 import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.aggregations.RuntimeEvents;
+import org.sharpler.glag.aggregations.SafepointAggregate;
 import org.sharpler.glag.aggregations.SafepointLog;
-import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 import org.sharpler.glag.records.GcLogRecords;
 import org.sharpler.glag.records.GcName;
@@ -43,45 +43,8 @@ public final class HtmlOutput {
 
         appendPageStart(html);
         appendOverview(html, safepoints);
-        if (safepoints.hasInsideTimeNs()) {
-            appendDistributionSection(
-                html,
-                "Cumulative distribution of time inside a safepoint",
-                CumulativeDistributionBuilder.insideDistribution(safepoints),
-                thresholdMs,
-                1
-            );
-        }
-        if (safepoints.hasReachingTimeNs()) {
-            appendDistributionSection(
-                html,
-                "Cumulative distribution of time to safepoint",
-                CumulativeDistributionBuilder.reachingDistribution(safepoints),
-                thresholdMs,
-                1
-            );
-        }
-        if (safepoints.hasCleanupTimeNs()) {
-            appendDistributionSection(
-                html,
-                "Cumulative distribution of cleanup time",
-                CumulativeDistributionBuilder.cleanupDistribution(safepoints),
-                thresholdMs,
-                1
-            );
-        }
-        if (safepoints.hasLeavingTimeNs()) {
-            appendDistributionSection(
-                html,
-                "Cumulative distribution of time to leave safepoint",
-                CumulativeDistributionBuilder.leavingDistribution(safepoints),
-                thresholdMs,
-                1
-            );
-        }
-
         appendGcSection(html, runtimeEvents.gcName());
-        appendSafepointSection(html);
+        appendSafepointSection(html, safepoints, thresholdMs);
         appendOperationsSection(html, runtimeEvents, examples);
         appendTimeToSafepointSection(html, safepoints, thresholdMs);
         appendSlowGcSections(html, runtimeEvents, examples);
@@ -132,10 +95,14 @@ public final class HtmlOutput {
         html.append("</section>");
     }
 
-    private void appendSafepointSection(StringBuilder html) throws IOException {
+    private void appendSafepointSection(StringBuilder html, SafepointLog safepoints, int thresholdMs) throws IOException {
         html.append("<section>");
         html.append("<h2>Safepoints</h2>");
         appendDocDetails(html, "What is a safepoint", DOCS_PATH.resolve("safepoint").resolve("safepoint.md"), null);
+        appendDistributionSection(html, "Cumulative distribution of total safepoint time", safepoints.aggregate().totalTimeDistribution(), thresholdMs, 3);
+        appendDistributionSection(html, "Cumulative distribution of time inside a safepoint", safepoints.aggregate().insideTimeDistribution(), thresholdMs, 3);
+        appendDistributionSection(html, "Cumulative distribution of cleanup time", safepoints.aggregate().cleanupTimeDistribution(), thresholdMs, 3);
+        appendDistributionSection(html, "Cumulative distribution of time to leave safepoint", safepoints.aggregate().leavingTimeDistribution(), thresholdMs, 3);
         html.append("</section>");
     }
 
@@ -150,6 +117,7 @@ public final class HtmlOutput {
         for (var e : safepoints.byTypes().entrySet()) {
             var operationName = e.getKey();
             var events = e.getValue();
+            var aggregate = Objects.requireNonNull(safepoints.aggregatesByType().get(operationName));
 
             html.append("<section class='operation'>");
             html.append("<h3>Operation <code>").append(escapeHtml(operationName)).append("</code></h3>");
@@ -164,15 +132,8 @@ public final class HtmlOutput {
                 AnsiConsole.err().printf("GC operation '%s' is unknown%n", operationName);
             }
 
-            if (safepoints.hasInsideTimeNs()) {
-                appendDistributionSection(
-                    html,
-                    "Cumulative distribution",
-                    Objects.requireNonNull(safepoints.distributions().get(operationName)),
-                    thresholdMs,
-                    2
-                );
-            }
+            appendDistributionSection(html, "Cumulative distribution of total time", aggregate.totalTimeDistribution(), thresholdMs, 4);
+            appendOptionalAggregateDistributions(html, aggregate, thresholdMs, 4);
 
             var slowSingleVmOperations = runtimeEvents.slowSingleVmOperations().getOrDefault(operationName, List.of());
             if (!slowSingleVmOperations.isEmpty()) {
@@ -196,7 +157,7 @@ public final class HtmlOutput {
     }
 
     private void appendTimeToSafepointSection(StringBuilder html, SafepointLog safepoints, int thresholdMs) throws IOException {
-        if (!safepoints.hasReachingTimeNs()) {
+        if (safepoints.aggregate().reachingTimeDistribution().isEmpty()) {
             return;
         }
         html.append("<section>");
@@ -205,11 +166,23 @@ public final class HtmlOutput {
         appendDistributionSection(
             html,
             "Cumulative distribution",
-            CumulativeDistributionBuilder.reachingDistribution(safepoints),
+            safepoints.aggregate().reachingTimeDistribution(),
             thresholdMs,
             2
         );
         html.append("</section>");
+    }
+
+    private static void appendOptionalAggregateDistributions(
+        StringBuilder html,
+        SafepointAggregate aggregate,
+        int thresholdMs,
+        int headingLevel
+    ) {
+        appendDistributionSection(html, "Cumulative distribution of time inside a safepoint", aggregate.insideTimeDistribution(), thresholdMs, headingLevel);
+        appendDistributionSection(html, "Cumulative distribution of time to safepoint", aggregate.reachingTimeDistribution(), thresholdMs, headingLevel);
+        appendDistributionSection(html, "Cumulative distribution of cleanup time", aggregate.cleanupTimeDistribution(), thresholdMs, headingLevel);
+        appendDistributionSection(html, "Cumulative distribution of time to leave safepoint", aggregate.leavingTimeDistribution(), thresholdMs, headingLevel);
     }
 
     private static void appendSlowGcSections(StringBuilder html, RuntimeEvents runtimeEvents, int examples) {

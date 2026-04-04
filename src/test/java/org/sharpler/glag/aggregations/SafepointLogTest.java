@@ -32,7 +32,8 @@ class SafepointLogTest {
             () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasCleanupTimeNs), safepointLog.hasCleanupTimeNs()),
             () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasInsideTimeNs), safepointLog.hasInsideTimeNs()),
             () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasLeavingTimeNs), safepointLog.hasLeavingTimeNs()),
-            () -> assertEquals(fixture.expectedOperationCounts().keySet(), safepointLog.distributions().keySet()),
+            () -> assertFalse(safepointLog.aggregate().totalTimeDistribution().isEmpty()),
+            () -> assertEquals(fixture.expectedOperationCounts().keySet(), safepointLog.aggregatesByType().keySet()),
             () -> assertEquals(
                 expectedEvents.getLast().finishTimeSec() - expectedEvents.getFirst().startTimeSec(),
                 safepointLog.totalLogTimeSec()
@@ -46,9 +47,9 @@ class SafepointLogTest {
                 operationEvents.stream().map(SafepointLogRecord::totalTimeNs).toList()
             );
 
-            var distribution = Objects.requireNonNull(safepointLog.distributions().get(entry.getKey()));
-            assertFalse(distribution.isEmpty());
-            assertEquals(1d, distribution.getLast().prob());
+            var aggregate = Objects.requireNonNull(safepointLog.aggregatesByType().get(entry.getKey()));
+            assertFalse(aggregate.totalTimeDistribution().isEmpty());
+            assertEquals(1d, aggregate.totalTimeDistribution().getLast().prob());
         }
 
         for (var event : expectedEvents) {
@@ -78,7 +79,7 @@ class SafepointLogTest {
             () -> assertFalse(safepointLog.hasCleanupTimeNs()),
             () -> assertFalse(safepointLog.hasInsideTimeNs()),
             () -> assertFalse(safepointLog.hasLeavingTimeNs()),
-            () -> assertFalse(safepointLog.distributions().isEmpty())
+            () -> assertFalse(safepointLog.aggregate().totalTimeDistribution().isEmpty())
         );
     }
 

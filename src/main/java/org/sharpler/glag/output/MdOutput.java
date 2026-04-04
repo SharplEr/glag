@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Objects;
 import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.aggregations.RuntimeEvents;
-import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
+import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 import org.sharpler.glag.records.SafepointLogRecord;
 import org.sharpler.glag.records.SingleVMOperation;
 import org.sharpler.glag.util.TimeUtils;
@@ -68,11 +68,16 @@ public final class MdOutput {
         writef("## Safepoints%n%n");
         writeDoc(DOCS_PATH.resolve("safepoint").resolve("safepoint.md"));
         writef("%n%n");
+        writeAggregateSection("Total safepoint time", safepoints.aggregate().totalTimeDistribution(), thresholdMs, 2);
+        writeAggregateSection("Time inside a safepoint", safepoints.aggregate().insideTimeDistribution(), thresholdMs, 2);
+        writeAggregateSection("Cleanup time", safepoints.aggregate().cleanupTimeDistribution(), thresholdMs, 2);
+        writeAggregateSection("Time to leave safepoint", safepoints.aggregate().leavingTimeDistribution(), thresholdMs, 2);
         writef("## JVM operations in safepoint%n%n");
 
         var unknownOperations = new HashSet<String>();
         for (var e : safepoints.byTypes().entrySet()) {
             var events = e.getValue();
+            var aggregate = Objects.requireNonNull(safepoints.aggregatesByType().get(e.getKey()));
 
             writef("### Operation '%s'%n%n", e.getKey());
             var description = DOCS_PATH.resolve("operation").resolve(e.getKey() + ".md");
@@ -87,24 +92,11 @@ public final class MdOutput {
             }
 
             writef("Period: %.3f (sec/op)%n%n", safepoints.totalLogTimeSec() / events.size());
-
-            if (safepoints.hasInsideTimeNs()) {
-                writef("#### Cumulative distribution:%n%n");
-
-                writef("| Timing (ms) | Probability (%%)|%n");
-                writef("| ----------- | -------------- |%n");
-                for (var point : Objects.requireNonNull(safepoints.distributions().get(e.getKey()))) {
-                    var timingMs = point.value() / 1E6;
-
-                    writef(
-                        timingMs > thresholdMs ? "| **%.3f** | **%.2f** |%n" : "| %.3f | %.2f |%n",
-                        timingMs,
-                        point.prob() * 100d
-                    );
-                }
-
-                writef("%n");
-            }
+            writeAggregateSection("Total time", aggregate.totalTimeDistribution(), thresholdMs, 4);
+            writeAggregateSection("Time inside a safepoint", aggregate.insideTimeDistribution(), thresholdMs, 4);
+            writeAggregateSection("Time to safepoint", aggregate.reachingTimeDistribution(), thresholdMs, 4);
+            writeAggregateSection("Cleanup time", aggregate.cleanupTimeDistribution(), thresholdMs, 4);
+            writeAggregateSection("Time to leave safepoint", aggregate.leavingTimeDistribution(), thresholdMs, 4);
 
             var slowSingleVmOperations = runtimeEvents.slowSingleVmOperations().getOrDefault(e.getKey(), List.of());
 
@@ -129,64 +121,11 @@ public final class MdOutput {
             }
         }
 
-        if (safepoints.hasReachingTimeNs()) {
+        if (!safepoints.aggregate().reachingTimeDistribution().isEmpty()) {
             writef("## Time to safepoint%n%n");
-
             writeDoc(DOCS_PATH.resolve("safepoint").resolve("time_to_safepoint.md"));
-
             writef("%n%n");
-
-            writef("### Cumulative distribution%n%n");
-
-            writef("| Timing (ms) | Probability (%%)|%n");
-            writef("| ----------- | -------------- |%n");
-
-            for (var point : CumulativeDistributionBuilder.reachingDistribution(safepoints)) {
-                var timingMs = point.value() / 1E6;
-                writef(
-                    timingMs > thresholdMs ?
-                        "| **%.3f** | **%.2f** |%n" :
-                        "| %.3f | %.2f |%n",
-                    timingMs,
-                    point.prob() * 100d
-                );
-            }
-        }
-
-        if (safepoints.hasCleanupTimeNs()) {
-            writef("%n## Cleanup time%n%n");
-            writef("### Cumulative distribution%n%n");
-            writef("| Timing (ms) | Probability (%%)|%n");
-            writef("| ----------- | -------------- |%n");
-
-            for (var point : CumulativeDistributionBuilder.cleanupDistribution(safepoints)) {
-                var timingMs = point.value() / 1E6;
-                writef(
-                    timingMs > thresholdMs ?
-                        "| **%.3f** | **%.2f** |%n" :
-                        "| %.3f | %.2f |%n",
-                    timingMs,
-                    point.prob() * 100d
-                );
-            }
-        }
-
-        if (safepoints.hasLeavingTimeNs()) {
-            writef("%n## Time to leave safepoint%n%n");
-            writef("### Cumulative distribution%n%n");
-            writef("| Timing (ms) | Probability (%%)|%n");
-            writef("| ----------- | -------------- |%n");
-
-            for (var point : CumulativeDistributionBuilder.leavingDistribution(safepoints)) {
-                var timingMs = point.value() / 1E6;
-                writef(
-                    timingMs > thresholdMs ?
-                        "| **%.3f** | **%.2f** |%n" :
-                        "| %.3f | %.2f |%n",
-                    timingMs,
-                    point.prob() * 100d
-                );
-            }
+            writeAggregateSection("Cumulative distribution", safepoints.aggregate().reachingTimeDistribution(), thresholdMs, 3);
         }
 
         var slowGcs = runtimeEvents.slowGcs()
@@ -258,6 +197,30 @@ public final class MdOutput {
     @FormatMethod
     private void writef(@FormatString String format, Object... args) throws IOException {
         Files.writeString(output, String.format(format, args), APPEND);
+    }
+
+    private void writeAggregateSection(
+        String title,
+        List<CumulativeDistributionPoint> points,
+        int thresholdMs,
+        int headingLevel
+    ) throws IOException {
+        if (points.isEmpty()) {
+            return;
+        }
+
+        writef("%s %s%n%n", "#".repeat(headingLevel), title);
+        writef("| Timing (ms) | Probability (%%)|%n");
+        writef("| ----------- | -------------- |%n");
+        for (var point : points) {
+            var timingMs = point.value() / 1E6;
+            writef(
+                timingMs > thresholdMs ? "| **%.3f** | **%.2f** |%n" : "| %.3f | %.2f |%n",
+                timingMs,
+                point.prob() * 100d
+            );
+        }
+        writef("%n");
     }
 
     private boolean docExists(Path docPath) throws IOException {

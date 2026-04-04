@@ -27,7 +27,8 @@ final class RuntimeEventsTest {
         var safepointLog = new SafepointLog(
             new RangeIndex<>(List.of(safepoint)),
             java.util.Map.of("Cleanup", List.of(safepoint)),
-            java.util.Map.of("Cleanup", List.of()),
+            SafepointAggregate.from(List.of(safepoint)),
+            java.util.Map.of("Cleanup", SafepointAggregate.from(List.of(safepoint))),
             false,
             false,
             false,

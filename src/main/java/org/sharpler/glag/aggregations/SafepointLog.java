@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
-import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
-import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 import org.sharpler.glag.index.RangeIndex;
 import org.sharpler.glag.parsing.SafepointParser;
 import org.sharpler.glag.records.SafepointLogRecord;
@@ -14,7 +12,8 @@ import org.sharpler.glag.records.SafepointLogRecord;
 public record SafepointLog(
     RangeIndex<SafepointLogRecord> events,
     Map<String, List<SafepointLogRecord>> byTypes,
-    Map<String, List<CumulativeDistributionPoint>> distributions,
+    SafepointAggregate aggregate,
+    Map<String, SafepointAggregate> aggregatesByType,
     boolean hasReachingTimeNs,
     boolean hasCleanupTimeNs,
     boolean hasInsideTimeNs,
@@ -48,15 +47,16 @@ public record SafepointLog(
             entry.getValue().sort(Comparator.comparingLong(SafepointLogRecord::totalTimeNs));
         }
 
-        var operations2stat = operations2events.entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, x -> CumulativeDistributionBuilder.operationTimeDistribution(x.getValue())));
-
         var events = new RangeIndex<>(parsedEvents);
+        var aggregate = SafepointAggregate.from(parsedEvents);
+        var aggregatesByType = operations2events.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, x -> SafepointAggregate.from(x.getValue())));
 
         return new SafepointLog(
             events,
             operations2events,
-            operations2stat,
+            aggregate,
+            aggregatesByType,
             hasReachingTimeNs,
             hasCleanupTimeNs,
             hasInsideTimeNs,
