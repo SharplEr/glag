@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -27,21 +28,24 @@ class SafepointLogTest {
         assertAll(
             () -> assertEquals(expectedEvents, safepointLog.events().values()),
             () -> assertEquals(fixture.expectedOperationCounts(), countsByOperation(safepointLog.events().values())),
-            () -> assertEquals(fixture.expectedOperationCounts().keySet(), safepointLog.byTypes().keySet()),
-            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasReachingTimeNs), safepointLog.hasReachingTimeNs()),
-            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasCleanupTimeNs), safepointLog.hasCleanupTimeNs()),
-            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasInsideTimeNs), safepointLog.hasInsideTimeNs()),
-            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasLeavingTimeNs), safepointLog.hasLeavingTimeNs()),
+            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasReachingTimeNs), safepointLog.aggregate().hasReachingTimeNs()),
+            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasCleanupTimeNs), safepointLog.aggregate().hasCleanupTimeNs()),
+            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasInsideTimeNs), safepointLog.aggregate().hasInsideTimeNs()),
+            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasLeavingTimeNs), safepointLog.aggregate().hasLeavingTimeNs()),
             () -> assertFalse(safepointLog.aggregate().totalTimeDistribution().isEmpty()),
             () -> assertEquals(fixture.expectedOperationCounts().keySet(), safepointLog.aggregatesByType().keySet()),
             () -> assertEquals(
                 expectedEvents.getLast().finishTimeSec() - expectedEvents.getFirst().startTimeSec(),
-                safepointLog.totalLogTimeSec()
+                safepointLog.aggregate().totalLogTimeSec()
             )
         );
 
-        for (var entry : safepointLog.byTypes().entrySet()) {
-            var operationEvents = entry.getValue();
+        var eventsByOperation = safepointLog.events().values().stream()
+            .collect(Collectors.groupingBy(SafepointLogRecord::operationName));
+        for (var entry : eventsByOperation.entrySet()) {
+            var operationEvents = entry.getValue().stream()
+                .sorted(java.util.Comparator.comparingLong(SafepointLogRecord::totalTimeNs))
+                .toList();
             assertEquals(
                 operationEvents.stream().map(SafepointLogRecord::totalTimeNs).sorted().toList(),
                 operationEvents.stream().map(SafepointLogRecord::totalTimeNs).toList()
@@ -75,10 +79,10 @@ class SafepointLogTest {
             () -> assertEquals(SafepointLogRecord.NO_TIME, event.cleanupTimeNs()),
             () -> assertEquals(SafepointLogRecord.NO_TIME, event.insideTimeNs()),
             () -> assertEquals(SafepointLogRecord.NO_TIME, event.leavingTimeNs()),
-            () -> assertFalse(safepointLog.hasReachingTimeNs()),
-            () -> assertFalse(safepointLog.hasCleanupTimeNs()),
-            () -> assertFalse(safepointLog.hasInsideTimeNs()),
-            () -> assertFalse(safepointLog.hasLeavingTimeNs()),
+            () -> assertFalse(safepointLog.aggregate().hasReachingTimeNs()),
+            () -> assertFalse(safepointLog.aggregate().hasCleanupTimeNs()),
+            () -> assertFalse(safepointLog.aggregate().hasInsideTimeNs()),
+            () -> assertFalse(safepointLog.aggregate().hasLeavingTimeNs()),
             () -> assertFalse(safepointLog.aggregate().totalTimeDistribution().isEmpty())
         );
     }

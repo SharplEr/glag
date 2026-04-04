@@ -18,7 +18,7 @@ import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 public final class ConsoleOutput {
     public static void print(SafepointLog safepoints, int thresholdMs) {
         var aggregate = safepoints.aggregate();
-        if (safepoints.hasInsideTimeNs()) {
+        if (aggregate.hasInsideTimeNs()) {
             printLn(
                 DEFAULT,
                 "Throughput lost due to pauses: %.3f (%%) - %.3f (%%)%n",
@@ -46,7 +46,7 @@ public final class ConsoleOutput {
             AnsiConsole.out().printf("\tPeriod: %.3f (sec/op)%n", operationAggregate.averagePausePeriodSec());
             AnsiConsole.out().printf(
                 "\tThroughput lost due to total pauses: %.3f (%%)%n",
-                operationAggregate.totalPauseThroughputLoss(aggregate.totalLogTimeSec())
+                operationAggregate.totalPauseThroughputLoss()
             );
             printAggregateDistributions(operationAggregate, thresholdMs, 1);
         }
@@ -58,22 +58,22 @@ public final class ConsoleOutput {
         var distributionTabCount = tabCount + 1;
         printDistribution(aggregate.totalTimeDistribution(), thresholdMs, distributionTabCount);
 
-        if (!aggregate.insideTimeDistribution().isEmpty()) {
+        if (aggregate.hasInsideTimeNs()) {
             AnsiConsole.out().println(indent + "Cumulative distribution of time inside a safepoint:");
             printDistribution(aggregate.insideTimeDistribution(), thresholdMs, distributionTabCount);
         }
 
-        if (!aggregate.reachingTimeDistribution().isEmpty()) {
+        if (aggregate.hasReachingTimeNs()) {
             AnsiConsole.out().println(indent + "Cumulative distribution of time to safepoint:");
             printDistribution(aggregate.reachingTimeDistribution(), thresholdMs, distributionTabCount);
         }
 
-        if (!aggregate.cleanupTimeDistribution().isEmpty()) {
+        if (aggregate.hasCleanupTimeNs()) {
             AnsiConsole.out().println(indent + "Cumulative distribution of cleanup time:");
             printDistribution(aggregate.cleanupTimeDistribution(), thresholdMs, distributionTabCount);
         }
 
-        if (!aggregate.leavingTimeDistribution().isEmpty()) {
+        if (aggregate.hasLeavingTimeNs()) {
             AnsiConsole.out().println(indent + "Cumulative distribution of time to leave safepoint:");
             printDistribution(aggregate.leavingTimeDistribution(), thresholdMs, distributionTabCount);
         }

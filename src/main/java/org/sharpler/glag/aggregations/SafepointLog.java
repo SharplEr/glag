@@ -10,21 +10,12 @@ import org.sharpler.glag.records.SafepointLogRecord;
 
 public record SafepointLog(
     RangeIndex<SafepointLogRecord> events,
-    Map<String, List<SafepointLogRecord>> byTypes,
     SafepointAggregate aggregate,
-    Map<String, SafepointAggregate> aggregatesByType,
-    boolean hasReachingTimeNs,
-    boolean hasCleanupTimeNs,
-    boolean hasInsideTimeNs,
-    boolean hasLeavingTimeNs,
-    double totalLogTimeSec
+    Map<String, SafepointAggregate> aggregatesByType
 ) {
     public static SafepointLog parse(List<String> lines) {
         var parsedEvents = lines.stream().map(SafepointParser::parse).toList();
-        var hasReachingTimeNs = parsedEvents.stream().allMatch(SafepointLogRecord::hasReachingTimeNs);
-        var hasCleanupTimeNs = parsedEvents.stream().allMatch(SafepointLogRecord::hasCleanupTimeNs);
-        var hasInsideTimeNs = parsedEvents.stream().allMatch(SafepointLogRecord::hasInsideTimeNs);
-        var hasLeavingTimeNs = parsedEvents.stream().allMatch(SafepointLogRecord::hasLeavingTimeNs);
+        var totalLogTimeSec = parsedEvents.getLast().finishTimeSec() - parsedEvents.getFirst().startTimeSec();
 
         var operations2events = parsedEvents.stream()
             .collect(Collectors.groupingBy(SafepointLogRecord::operationName));
@@ -34,20 +25,14 @@ public record SafepointLog(
         }
 
         var events = new RangeIndex<>(parsedEvents);
-        var aggregate = SafepointAggregate.from(parsedEvents);
+        var aggregate = SafepointAggregate.from(totalLogTimeSec, parsedEvents);
         var aggregatesByType = operations2events.entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, x -> SafepointAggregate.from(x.getValue())));
+            .collect(Collectors.toMap(Map.Entry::getKey, x -> SafepointAggregate.from(totalLogTimeSec, x.getValue())));
 
         return new SafepointLog(
             events,
-            operations2events,
             aggregate,
-            aggregatesByType,
-            hasReachingTimeNs,
-            hasCleanupTimeNs,
-            hasInsideTimeNs,
-            hasLeavingTimeNs,
-            parsedEvents.getLast().finishTimeSec() - parsedEvents.getFirst().startTimeSec()
+            aggregatesByType
         );
     }
 }

@@ -26,14 +26,8 @@ final class RuntimeEventsTest {
         );
         var safepointLog = new SafepointLog(
             new RangeIndex<>(List.of(safepoint)),
-            java.util.Map.of("Cleanup", List.of(safepoint)),
-            SafepointAggregate.from(List.of(safepoint)),
-            java.util.Map.of("Cleanup", SafepointAggregate.from(List.of(safepoint))),
-            false,
-            false,
-            false,
-            false,
-            0.2
+            SafepointAggregate.from(0.2, List.of(safepoint)),
+            java.util.Map.of("Cleanup", SafepointAggregate.from(0.2, List.of(safepoint)))
         );
         var shortGc = new GcLogRecords(
             List.of(
