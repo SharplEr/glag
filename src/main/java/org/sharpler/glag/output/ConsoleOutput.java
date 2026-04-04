@@ -11,12 +11,12 @@ import java.util.List;
 import java.util.Objects;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
+import org.sharpler.glag.aggregations.Aggregates;
 import org.sharpler.glag.aggregations.SafepointAggregate;
-import org.sharpler.glag.aggregations.SafepointLog;
 import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 
 public final class ConsoleOutput {
-    public static void print(SafepointLog safepoints, int thresholdMs) {
+    public static void print(Aggregates safepoints, int thresholdMs) {
         var aggregate = safepoints.aggregate();
         if (aggregate.hasInsideTimeNs()) {
             printLn(

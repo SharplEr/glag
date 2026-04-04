@@ -6,12 +6,14 @@ import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 import org.jspecify.annotations.Nullable;
+import org.sharpler.glag.aggregations.Aggregates;
 import org.sharpler.glag.aggregations.GcLog;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.aggregations.SafepointLog;
 import org.sharpler.glag.output.ConsoleOutput;
 import org.sharpler.glag.output.HtmlOutput;
 import org.sharpler.glag.output.MdOutput;
+import org.sharpler.glag.parsing.SafepointParser;
 import picocli.CommandLine;
 
 final class Main implements Callable<Integer> {
@@ -52,12 +54,13 @@ final class Main implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        var safepoints = SafepointLog.parse(Files.readAllLines(safepointsPath));
-        var gclog = GcLog.parse(Files.readAllLines(gcPath));
+        var safepointRecords = SafepointParser.parseAll(Files.readAllLines(safepointsPath));
 
         if (output == null) {
-            ConsoleOutput.print(safepoints, thresholdMs);
+            ConsoleOutput.print(Aggregates.from(safepointRecords), thresholdMs);
         } else {
+            var safepoints = SafepointLog.from(safepointRecords);
+            var gclog = GcLog.parse(Files.readAllLines(gcPath));
             var runtimeEvents = RuntimeEvents.create(gclog, safepoints, thresholdMs);
             if (output.toString().toLowerCase(Locale.ROOT).endsWith(".html")) {
                 new HtmlOutput(output).print(runtimeEvents, examples);
