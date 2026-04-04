@@ -10,10 +10,13 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.aggregations.RuntimeEvents;
+import org.sharpler.glag.aggregations.SafepointAggregate;
+import org.sharpler.glag.aggregations.SafepointLog;
 import org.sharpler.glag.distribution.CumulativeDistributionPoint;
+import org.sharpler.glag.records.GcIteration;
 import org.sharpler.glag.records.SafepointLogRecord;
 import org.sharpler.glag.records.SingleVMOperation;
 import org.sharpler.glag.util.TimeUtils;
@@ -30,6 +33,7 @@ public final class MdOutput {
     public void print(RuntimeEvents runtimeEvents, int examples) throws IOException {
         var thresholdMs = runtimeEvents.thresholdMs();
         var safepoints = runtimeEvents.safepointLog();
+        var aggregate = safepoints.aggregate();
 
         Files.deleteIfExists(output);
         Files.createFile(output);
@@ -39,16 +43,16 @@ public final class MdOutput {
         if (safepoints.hasInsideTimeNs()) {
             writef(
                 "Throughput lost due to pauses: %.3f (%%) - %.3f (%%)%n%n",
-                safepoints.insideSafepointThroughputLoss(),
-                safepoints.totalPauseThroughputLoss()
+                aggregate.insideSafepointThroughputLoss(),
+                aggregate.totalPauseThroughputLoss()
             );
         } else {
             writef(
                 "Throughput lost due to total pauses: %.3f (%%)%n%n",
-                safepoints.totalPauseThroughputLoss()
+                aggregate.totalPauseThroughputLoss()
             );
         }
-        writef("Average pause period: %.3f sec/op%n%n", safepoints.averagePausePeriodSec());
+        writef("Average pause period: %.3f sec/op%n%n", aggregate.averagePausePeriodSec());
 
         if (runtimeEvents.gcName() != null) {
             var name = runtimeEvents.gcName().getName();
@@ -75,30 +79,34 @@ public final class MdOutput {
         writef("## JVM operations in safepoint%n%n");
 
         var unknownOperations = new HashSet<String>();
-        for (var e : safepoints.byTypes().entrySet()) {
-            var events = e.getValue();
-            var aggregate = Objects.requireNonNull(safepoints.aggregatesByType().get(e.getKey()));
+        for (var e : sortedOperationAggregates(safepoints)) {
+            var operationName = e.getKey();
+            var operationAggregate = e.getValue();
 
-            writef("### Operation '%s'%n%n", e.getKey());
-            var description = DOCS_PATH.resolve("operation").resolve(e.getKey() + ".md");
+            writef("### Operation '%s'%n%n", operationName);
+            var description = DOCS_PATH.resolve("operation").resolve(operationName + ".md");
             if (docExists(description)) {
                 writef("#### Description%n%n");
                 writeDoc(description);
                 writef("%n%n");
             } else {
-                if (unknownOperations.add(e.getKey())) {
-                    AnsiConsole.err().printf("GC operation '%s' is unknown%n", e.getKey());
+                if (unknownOperations.add(operationName)) {
+                    AnsiConsole.err().printf("GC operation '%s' is unknown%n", operationName);
                 }
             }
 
-            writef("Period: %.3f (sec/op)%n%n", safepoints.totalLogTimeSec() / events.size());
-            writeAggregateSection("Total time", aggregate.totalTimeDistribution(), thresholdMs, 4);
-            writeAggregateSection("Time inside a safepoint", aggregate.insideTimeDistribution(), thresholdMs, 4);
-            writeAggregateSection("Time to safepoint", aggregate.reachingTimeDistribution(), thresholdMs, 4);
-            writeAggregateSection("Cleanup time", aggregate.cleanupTimeDistribution(), thresholdMs, 4);
-            writeAggregateSection("Time to leave safepoint", aggregate.leavingTimeDistribution(), thresholdMs, 4);
+            writef("Period: %.3f (sec/op)%n%n", operationAggregate.averagePausePeriodSec());
+            writef(
+                "Throughput lost due to total pauses: %.3f (%%)%n%n",
+                operationAggregate.totalPauseThroughputLoss(aggregate.totalLogTimeSec())
+            );
+            writeAggregateSection("Total time", operationAggregate.totalTimeDistribution(), thresholdMs, 4);
+            writeAggregateSection("Time inside a safepoint", operationAggregate.insideTimeDistribution(), thresholdMs, 4);
+            writeAggregateSection("Time to safepoint", operationAggregate.reachingTimeDistribution(), thresholdMs, 4);
+            writeAggregateSection("Cleanup time", operationAggregate.cleanupTimeDistribution(), thresholdMs, 4);
+            writeAggregateSection("Time to leave safepoint", operationAggregate.leavingTimeDistribution(), thresholdMs, 4);
 
-            var slowSingleVmOperations = runtimeEvents.slowSingleVmOperations().getOrDefault(e.getKey(), List.of());
+            var slowSingleVmOperations = runtimeEvents.slowSingleVmOperations().getOrDefault(operationName, List.of());
 
             if (slowSingleVmOperations.isEmpty()) {
                 continue;
@@ -130,7 +138,7 @@ public final class MdOutput {
 
         var slowGcs = runtimeEvents.slowGcs()
             .stream()
-            .sorted(Comparator.comparingDouble((org.sharpler.glag.records.GcIteration x) -> x.gcLog().finishTimeSec() - x.gcLog().startTimeSec()).reversed())
+            .sorted(Comparator.comparingDouble((GcIteration x) -> x.gcLog().finishTimeSec() - x.gcLog().startTimeSec()).reversed())
             .limit(examples)
             .toList();
         if (!slowGcs.isEmpty()) {
@@ -221,6 +229,12 @@ public final class MdOutput {
             );
         }
         writef("%n");
+    }
+
+    private static List<Map.Entry<String, SafepointAggregate>> sortedOperationAggregates(SafepointLog safepoints) {
+        return safepoints.aggregatesByType().entrySet().stream()
+            .sorted((left, right) -> Long.compare(right.getValue().totalTimeNsSum(), left.getValue().totalTimeNsSum()))
+            .toList();
     }
 
     private boolean docExists(Path docPath) throws IOException {

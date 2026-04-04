@@ -17,33 +17,38 @@ import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 
 public final class ConsoleOutput {
     public static void print(SafepointLog safepoints, int thresholdMs) {
+        var aggregate = safepoints.aggregate();
         if (safepoints.hasInsideTimeNs()) {
             printLn(
                 DEFAULT,
                 "Throughput lost due to pauses: %.3f (%%) - %.3f (%%)%n",
-                safepoints.insideSafepointThroughputLoss(),
-                safepoints.totalPauseThroughputLoss()
+                aggregate.insideSafepointThroughputLoss(),
+                aggregate.totalPauseThroughputLoss()
             );
         } else {
             printLn(
                 DEFAULT,
                 "Throughput lost due to total pauses: %.3f (%%)%n",
-                safepoints.totalPauseThroughputLoss()
+                aggregate.totalPauseThroughputLoss()
             );
         }
-        AnsiConsole.out().printf("Average pause period: %.3f sec/op%n%n", safepoints.averagePausePeriodSec());
+        AnsiConsole.out().printf("Average pause period: %.3f sec/op%n%n", aggregate.averagePausePeriodSec());
 
-        printAggregateDistributions(safepoints.aggregate(), thresholdMs, 0);
+        printAggregateDistributions(aggregate, thresholdMs, 0);
 
         AnsiConsole.out().println();
-        for (var e : safepoints.byTypes().entrySet()) {
-            var events = e.getValue();
-            var aggregate = Objects.requireNonNull(safepoints.aggregatesByType().get(e.getKey()));
+        for (var e : safepoints.aggregatesByType().entrySet().stream()
+            .sorted((left, right) -> Long.compare(right.getValue().totalTimeNsSum(), left.getValue().totalTimeNsSum()))
+            .toList()) {
+            var operationAggregate = Objects.requireNonNull(safepoints.aggregatesByType().get(e.getKey()));
 
             AnsiConsole.out().println(ansi().a("Operation: ").fg(GREEN).a(e.getKey()).reset());
-
-            AnsiConsole.out().printf("\tPeriod: %.3f (sec/op)%n", safepoints.totalLogTimeSec() / events.size());
-            printAggregateDistributions(aggregate, thresholdMs, 1);
+            AnsiConsole.out().printf("\tPeriod: %.3f (sec/op)%n", operationAggregate.averagePausePeriodSec());
+            AnsiConsole.out().printf(
+                "\tThroughput lost due to total pauses: %.3f (%%)%n",
+                operationAggregate.totalPauseThroughputLoss(aggregate.totalLogTimeSec())
+            );
+            printAggregateDistributions(operationAggregate, thresholdMs, 1);
         }
     }
 

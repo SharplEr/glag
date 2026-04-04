@@ -3,7 +3,6 @@ package org.sharpler.glag.aggregations;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 import org.sharpler.glag.index.RangeIndex;
 import org.sharpler.glag.parsing.SafepointParser;
@@ -20,19 +19,6 @@ public record SafepointLog(
     boolean hasLeavingTimeNs,
     double totalLogTimeSec
 ) {
-    public double totalPauseThroughputLoss() {
-        return sumTimeNs(SafepointLogRecord::totalTimeNs) / totalLogTimeSec / 1E7;
-    }
-
-    public double insideSafepointThroughputLoss() {
-        assert hasInsideTimeNs;
-        return sumTimeNs(SafepointLogRecord::insideTimeNs) / totalLogTimeSec / 1E7;
-    }
-
-    public double averagePausePeriodSec() {
-        return totalLogTimeSec / events.values().size();
-    }
-
     public static SafepointLog parse(List<String> lines) {
         var parsedEvents = lines.stream().map(SafepointParser::parse).toList();
         var hasReachingTimeNs = parsedEvents.stream().allMatch(SafepointLogRecord::hasReachingTimeNs);
@@ -63,9 +49,5 @@ public record SafepointLog(
             hasLeavingTimeNs,
             parsedEvents.getLast().finishTimeSec() - parsedEvents.getFirst().startTimeSec()
         );
-    }
-
-    private long sumTimeNs(ToLongFunction<SafepointLogRecord> metric) {
-        return events.values().stream().mapToLong(metric).sum();
     }
 }

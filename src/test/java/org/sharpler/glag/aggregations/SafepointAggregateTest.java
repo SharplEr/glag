@@ -22,6 +22,12 @@ final class SafepointAggregateTest {
 
         assertAll(
             () -> assertEquals(1.2, aggregate.totalLogTimeSec(), 1E-9),
+            () -> assertEquals(2, aggregate.eventsCount()),
+            () -> assertEquals(210, aggregate.totalTimeNsSum()),
+            () -> assertEquals(65, aggregate.insideTimeNsSum()),
+            () -> assertEquals(1.75E-5, aggregate.totalPauseThroughputLoss(), 1E-12),
+            () -> assertEquals(5.416666666666666E-6, aggregate.insideSafepointThroughputLoss(), 1E-12),
+            () -> assertEquals(0.6, aggregate.averagePausePeriodSec(), 1E-9),
             () -> assertFalse(aggregate.totalTimeDistribution().isEmpty()),
             () -> assertFalse(aggregate.reachingTimeDistribution().isEmpty()),
             () -> assertFalse(aggregate.cleanupTimeDistribution().isEmpty()),
@@ -56,6 +62,9 @@ final class SafepointAggregateTest {
 
         assertAll(
             () -> assertFalse(aggregate.totalTimeDistribution().isEmpty()),
+            () -> assertEquals(1, aggregate.eventsCount()),
+            () -> assertEquals(90, aggregate.totalTimeNsSum()),
+            () -> assertEquals(30, aggregate.insideTimeNsSum()),
             () -> assertTrue(aggregate.reachingTimeDistribution().isEmpty()),
             () -> assertFalse(aggregate.cleanupTimeDistribution().isEmpty()),
             () -> assertFalse(aggregate.insideTimeDistribution().isEmpty()),
