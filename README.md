@@ -13,12 +13,9 @@ It is not a diagnostic expert system and it does not try to guess fixes for you.
 
 ## What it analyzes
 
-`glag` reads two logs:
+`glag` always reads a safepoint log and can optionally read a GC log.
 
-- a safepoint log,
-- a GC log.
-
-It correlates them in time and builds a report around:
+If a GC log is present, it correlates both logs in time and builds a report around:
 
 - safepoint pause distributions,
 - time-to-safepoint distributions,
@@ -26,6 +23,13 @@ It correlates them in time and builds a report around:
 - slow individual safepoints,
 - GC iterations that overlap long pauses,
 - simultaneous GC iterations when multiple GC operations overlap in time.
+
+If a GC log is not present, `glag` still builds safepoint-only reports with:
+
+- safepoint pause distributions,
+- time-to-safepoint distributions,
+- JVM operations executed at safepoints,
+- per-operation statistics and distributions.
 
 The project targets modern HotSpot unified logging and currently assumes Java 11+ logs.
 
@@ -45,11 +49,15 @@ This mode is useful for quick inspection on the command line. It includes:
 - cumulative distribution of time to safepoint,
 - per-operation cumulative distributions.
 
+This mode only requires the safepoint log.
+
 ### Markdown report
 
 If `--output` points to a non-HTML file, `glag` writes a Markdown report.
 
-This is the most text-heavy format. In addition to the summary data, it includes:
+Without a GC log, this is a safepoint-only report.
+
+If a GC log is present, in addition to the summary data, it includes:
 
 - built-in documentation for detected GC and safepoint topics,
 - built-in documentation for known JVM operations,
@@ -57,6 +65,14 @@ This is the most text-heavy format. In addition to the summary data, it includes
 - raw GC log excerpts for slow GC iterations.
 
 Example:
+
+```bash
+java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
+  -s /path/to/safepoint.log \
+  -o /path/to/report.md
+```
+
+Example with GC correlation:
 
 ```bash
 java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
@@ -69,6 +85,8 @@ java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
 
 If `--output` ends with `.html`, `glag` writes a self-contained HTML report.
 
+Without a GC log, this is a safepoint-only report.
+
 This format contains the same core content as the Markdown report, but presents it differently:
 
 - built-in documentation is hidden behind collapsed spoilers,
@@ -77,6 +95,14 @@ This format contains the same core content as the Markdown report, but presents 
 - data points are available under expandable `Show data points` sections.
 
 Example:
+
+```bash
+java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
+  -s /path/to/safepoint.log \
+  -o /path/to/report.html
+```
+
+Example with GC correlation:
 
 ```bash
 java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
@@ -97,8 +123,7 @@ Run with console output:
 
 ```bash
 java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
-  -s /path/to/safepoint.log \
-  -g /path/to/gc.log
+  -s /path/to/safepoint.log
 ```
 
 Run with Markdown output:
@@ -106,7 +131,6 @@ Run with Markdown output:
 ```bash
 java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
   -s /path/to/safepoint.log \
-  -g /path/to/gc.log \
   -o /path/to/report.md
 ```
 
@@ -115,7 +139,6 @@ Run with HTML output:
 ```bash
 java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
   -s /path/to/safepoint.log \
-  -g /path/to/gc.log \
   -o /path/to/report.html
 ```
 
@@ -126,7 +149,8 @@ Current CLI options:
 - `-s`, `--safepoints=SAFEPOINTS`
   Path to the safepoint log. Required.
 - `-g`, `--gc=GC`
-  Path to the GC log. Required.
+  Path to the GC log. Optional.
+  If omitted, `glag` produces safepoint-only output without GC correlation.
 - `-o`, `--output=OUTPUT`
   Output report path. Optional.
   If omitted, output goes to the console.

@@ -11,7 +11,9 @@ import org.sharpler.glag.aggregations.GcLog;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.aggregations.SafepointLog;
 import org.sharpler.glag.output.ConsoleOutput;
+import org.sharpler.glag.output.HtmlAggregatesOutput;
 import org.sharpler.glag.output.HtmlOutput;
+import org.sharpler.glag.output.MdAggregatesOutput;
 import org.sharpler.glag.output.MdOutput;
 import org.sharpler.glag.parsing.SafepointParser;
 import picocli.CommandLine;
@@ -22,8 +24,9 @@ final class Main implements Callable<Integer> {
     private Path safepointsPath = Paths.get(".");
 
     @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
-    @CommandLine.Option(names = {"-g", "--gc"}, paramLabel = "GC", description = "gc log", required = true)
-    private Path gcPath = Paths.get(".");
+    @CommandLine.Option(names = {"-g", "--gc"}, paramLabel = "GC", description = "gc log", required = false)
+    @Nullable
+    private Path gcPath = null;
 
     @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
     @CommandLine.Option(
@@ -59,13 +62,22 @@ final class Main implements Callable<Integer> {
         if (output == null) {
             ConsoleOutput.print(Aggregates.from(safepointRecords), thresholdMs);
         } else {
-            var safepoints = SafepointLog.from(safepointRecords);
-            var gclog = GcLog.parse(Files.readAllLines(gcPath));
-            var runtimeEvents = RuntimeEvents.create(gclog, safepoints, thresholdMs);
-            if (output.toString().toLowerCase(Locale.ROOT).endsWith(".html")) {
-                new HtmlOutput(output).print(runtimeEvents, examples);
+            var useHtml = output.toString().toLowerCase(Locale.ROOT).endsWith(".html");
+            if (gcPath == null) {
+                if (useHtml) {
+                    new HtmlAggregatesOutput(output).print(Aggregates.from(safepointRecords), thresholdMs);
+                } else {
+                    new MdAggregatesOutput(output).print(Aggregates.from(safepointRecords), thresholdMs);
+                }
             } else {
-                new MdOutput(output).print(runtimeEvents, examples);
+                var safepoints = SafepointLog.from(safepointRecords);
+                var gclog = GcLog.parse(Files.readAllLines(gcPath));
+                var runtimeEvents = RuntimeEvents.create(gclog, safepoints, thresholdMs);
+                if (useHtml) {
+                    new HtmlOutput(output).print(runtimeEvents, examples);
+                } else {
+                    new MdOutput(output).print(runtimeEvents, examples);
+                }
             }
         }
 
