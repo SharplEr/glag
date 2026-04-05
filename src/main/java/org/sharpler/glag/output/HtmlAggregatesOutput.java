@@ -19,7 +19,7 @@ public final class HtmlAggregatesOutput {
         var aggregate = aggregates.aggregate();
         var html = new StringBuilder(96 * 1024);
 
-        HtmlOutputUtils.appendPageStart(html, HtmlOutputUtils.AGGREGATES_PAGE_STYLES);
+        HtmlOutputUtils.appendPageStart(html, getClass(), HtmlOutputUtils.AGGREGATES_PAGE_STYLES_PATH);
         HtmlOutputUtils.appendOverview(
             html,
             aggregate,

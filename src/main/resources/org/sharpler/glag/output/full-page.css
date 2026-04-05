@@ -1,0 +1,195 @@
+:root {
+  --bg: #f4f1ea;
+  --paper: #fffaf2;
+  --paper-2: #fdf6eb;
+  --ink: #1f241f;
+  --muted: #5f675d;
+  --line: #d8cdbb;
+  --accent: #174c3c;
+  --accent-soft: #dceee6;
+  --warn: #a83c32;
+  --warn-soft: #fbe2de;
+  --shadow: 0 10px 35px rgba(35, 34, 29, 0.08);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(23, 76, 60, 0.10), transparent 26%),
+    linear-gradient(180deg, #f8f5ef 0%, var(--bg) 100%);
+  color: var(--ink);
+  font: 16px/1.55 Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+}
+main {
+  width: min(1180px, calc(100vw - 32px));
+  margin: 24px auto 48px;
+}
+section, .hero {
+  background: color-mix(in srgb, var(--paper) 94%, white);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 22px 24px;
+  margin-bottom: 18px;
+}
+.hero {
+  padding: 32px 24px;
+  background:
+    linear-gradient(135deg, rgba(23, 76, 60, 0.95), rgba(31, 36, 31, 0.92)),
+    var(--paper);
+  color: #fdf8f1;
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: auto -120px -120px auto;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 72%);
+  pointer-events: none;
+}
+h1, h2, h3, h4 {
+  margin: 0 0 12px;
+  line-height: 1.15;
+  font-family: "Avenir Next Condensed", "Franklin Gothic Medium", "Arial Narrow", sans-serif;
+  letter-spacing: 0.02em;
+}
+h1 { font-size: clamp(2rem, 4vw, 3.4rem); }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.45rem; }
+h4 { font-size: 1.1rem; margin-top: 16px; }
+p { margin: 0 0 12px; color: var(--muted); }
+code, pre { font-family: "SFMono-Regular", "Menlo", "Consolas", monospace; }
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+.metric {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.16);
+}
+.metric-name {
+  display: block;
+  color: rgba(253, 248, 241, 0.82);
+  font-size: 0.88rem;
+  margin-bottom: 6px;
+}
+details.doc {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+}
+details.doc > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 12px 14px;
+  font-weight: 700;
+  background: var(--paper-2);
+}
+details.doc[open] > summary {
+  border-bottom: 1px solid var(--line);
+}
+.doc-body {
+  padding: 14px;
+}
+.doc-body > :first-child { margin-top: 0; }
+.distribution-grid {
+  display: grid;
+  grid-template-columns: minmax(360px, 1.5fr) minmax(260px, 1fr);
+  gap: 16px;
+  align-items: start;
+  margin-top: 12px;
+}
+.chart-card {
+  margin: 0;
+  padding: 10px;
+  border-radius: 16px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+}
+.chart-card figcaption {
+  color: var(--muted);
+  font-size: 0.9rem;
+  padding: 0 6px 4px;
+}
+.chart-bg { fill: rgba(255,255,255,0.65); }
+.axis { stroke: #b39d80; stroke-width: 1; }
+.axis-label { fill: #756954; font-size: 12px; }
+.distribution-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.threshold-line {
+  stroke: var(--warn);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 5;
+}
+.threshold-point {
+  fill: var(--warn);
+}
+.threshold-label {
+  fill: var(--warn);
+  font-weight: 700;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+th, td {
+  padding: 9px 12px;
+  border-bottom: 1px solid rgba(216, 205, 187, 0.75);
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  background: var(--paper-2);
+  font-size: 0.9rem;
+}
+tr:last-child td { border-bottom: none; }
+.over-threshold td {
+  color: var(--warn);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--warn-soft) 45%, white);
+}
+.operation, .gc-block {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(216, 205, 187, 0.85);
+}
+.safepoint-entry {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.45);
+}
+.safepoint-entry p {
+  margin-bottom: 10px;
+}
+.log-block {
+  margin: 0;
+  padding: 14px;
+  overflow-x: auto;
+  background: #1f241f;
+  color: #f3efe6;
+}
+@media (max-width: 900px) {
+  main { width: min(100vw - 18px, 100%); margin-top: 10px; }
+  section, .hero { padding: 16px; border-radius: 16px; }
+  .distribution-grid { grid-template-columns: 1fr; }
+}

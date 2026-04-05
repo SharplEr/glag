@@ -32,7 +32,7 @@ public final class HtmlOutput {
         var aggregate = safepoints.aggregate();
         var html = new StringBuilder(128 * 1024);
 
-        HtmlOutputUtils.appendPageStart(html, HtmlOutputUtils.FULL_PAGE_STYLES);
+        HtmlOutputUtils.appendPageStart(html, getClass(), HtmlOutputUtils.FULL_PAGE_STYLES_PATH);
         HtmlOutputUtils.appendOverview(
             html,
             aggregate,

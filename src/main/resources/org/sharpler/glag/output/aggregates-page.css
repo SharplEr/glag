@@ -1,0 +1,173 @@
+:root {
+  --bg: #f4f1ea;
+  --paper: #fffaf2;
+  --paper-2: #fdf6eb;
+  --ink: #1f241f;
+  --muted: #5f675d;
+  --line: #d8cdbb;
+  --accent: #174c3c;
+  --accent-soft: #dceee6;
+  --warn: #a83c32;
+  --warn-soft: #fbe2de;
+  --shadow: 0 10px 35px rgba(35, 34, 29, 0.08);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(23, 76, 60, 0.12), transparent 30%),
+    linear-gradient(180deg, #f8f4ec 0%, var(--bg) 100%);
+}
+main {
+  width: min(1200px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 24px 0 56px;
+}
+section {
+  background: rgba(255, 250, 242, 0.92);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+}
+.hero {
+  padding: 32px 24px;
+  background:
+    linear-gradient(135deg, rgba(23, 76, 60, 0.95), rgba(31, 36, 31, 0.92)),
+    var(--paper);
+  color: #fdf8f1;
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: auto -120px -120px auto;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 72%);
+  pointer-events: none;
+}
+h1, h2, h3, h4, summary {
+  font-family: "IBM Plex Serif", "Georgia", serif;
+  letter-spacing: 0.01em;
+}
+h1 { margin: 0 0 12px; font-size: clamp(2.2rem, 4vw, 3.6rem); }
+h2 { margin-top: 0; font-size: clamp(1.6rem, 2.5vw, 2.2rem); }
+h3 { margin-top: 0; font-size: 1.35rem; }
+h4 { margin-bottom: 8px; font-size: 1.05rem; }
+p, li, summary, table { font-size: 0.97rem; line-height: 1.6; }
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+}
+.metric {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 18px;
+  padding: 16px 18px;
+}
+.metric-name {
+  display: block;
+  color: rgba(253, 248, 241, 0.82);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+code {
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+  background: rgba(23, 76, 60, 0.08);
+  padding: 0.15em 0.35em;
+  border-radius: 0.45em;
+}
+.distribution-grid {
+  display: grid;
+  grid-template-columns: 1.35fr minmax(250px, 0.85fr);
+  gap: 16px;
+  align-items: start;
+}
+.chart-card {
+  margin: 0;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+}
+.chart-card figcaption {
+  color: var(--muted);
+  margin-top: 10px;
+  font-size: 0.87rem;
+}
+.chart-bg { fill: #fffdf8; }
+.axis { stroke: #b7aa96; stroke-width: 1.2; }
+.axis-label {
+  fill: #726854;
+  font-size: 12px;
+  font-family: "IBM Plex Mono", monospace;
+}
+.distribution-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.threshold-line {
+  stroke: var(--warn);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+}
+.threshold-point { fill: var(--warn); }
+.threshold-label { fill: var(--warn); }
+details.doc, .table-details {
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 0 16px;
+}
+details.doc summary, .table-details summary {
+  cursor: pointer;
+  padding: 14px 0;
+  list-style: none;
+}
+details.doc[open] summary, .table-details[open] summary {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+}
+.doc-body { padding-bottom: 16px; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+}
+th, td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #eadfce;
+}
+th {
+  background: #f7f0e4;
+  font-weight: 600;
+}
+tr.over-threshold td {
+  background: var(--warn-soft);
+  color: #7c231a;
+  font-weight: 600;
+}
+.operation {
+  border-style: dashed;
+}
+@media (max-width: 900px) {
+  .distribution-grid { grid-template-columns: 1fr; }
+  section { padding: 18px; border-radius: 18px; }
+  main { width: min(100vw - 20px, 1200px); }
+}
