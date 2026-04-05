@@ -13,35 +13,50 @@ import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.aggregations.SafepointAggregate;
 import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 
-final class HtmlOutputUtils {
+final class HtmlWriter {
     static final Path FULL_PAGE_STYLES_PATH = Path.of("org", "sharpler", "glag", "output", "full-page.css");
     static final Path AGGREGATES_PAGE_STYLES_PATH = Path.of("org", "sharpler", "glag", "output", "aggregates-page.css");
 
     private static final Parser MARKDOWN_PARSER = Parser.builder().build();
     private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().build();
 
-    private HtmlOutputUtils() {
+    private final StringBuilder html;
+
+    HtmlWriter(StringBuilder html) {
+        this.html = html;
     }
 
-    static void appendOverview(StringBuilder html, SafepointAggregate aggregate, String description) {
+    HtmlWriter append(String value) {
+        html.append(value);
+        return this;
+    }
+
+    HtmlWriter append(char value) {
+        html.append(value);
+        return this;
+    }
+
+    HtmlWriter append(int value) {
+        html.append(value);
+        return this;
+    }
+
+    void appendOverview(SafepointAggregate aggregate, String description) {
         html.append("<section class='hero'>");
         html.append("<h1>glag report</h1>");
         html.append("<p>").append(description).append("</p>");
         html.append("<div class='metrics'>");
         if (aggregate.hasInsideTimeNs()) {
             appendMetric(
-                html,
                 "Throughput lost inside safepoint",
                 format("%.3f %%", aggregate.insideSafepointThroughputLoss())
             );
         }
         appendMetric(
-            html,
             "Throughput lost due to total pauses",
             format("%.3f %%", aggregate.totalPauseThroughputLoss())
         );
         appendMetric(
-            html,
             "Average pause period",
             format("%.3f sec/op", aggregate.averagePausePeriodSec())
         );
@@ -49,20 +64,18 @@ final class HtmlOutputUtils {
         html.append("</section>");
     }
 
-    static void appendOptionalAggregateDistributions(
-        StringBuilder html,
+    void appendOptionalAggregateDistributions(
         SafepointAggregate aggregate,
         int thresholdMs,
         int headingLevel
     ) {
-        appendDistributionSection(html, "Cumulative distribution of time inside a safepoint", aggregate.insideTimeDistribution(), thresholdMs, headingLevel);
-        appendDistributionSection(html, "Cumulative distribution of time to safepoint", aggregate.reachingTimeDistribution(), thresholdMs, headingLevel);
-        appendDistributionSection(html, "Cumulative distribution of cleanup time", aggregate.cleanupTimeDistribution(), thresholdMs, headingLevel);
-        appendDistributionSection(html, "Cumulative distribution of time to leave safepoint", aggregate.leavingTimeDistribution(), thresholdMs, headingLevel);
+        appendDistributionSection("Cumulative distribution of time inside a safepoint", aggregate.insideTimeDistribution(), thresholdMs, headingLevel);
+        appendDistributionSection("Cumulative distribution of time to safepoint", aggregate.reachingTimeDistribution(), thresholdMs, headingLevel);
+        appendDistributionSection("Cumulative distribution of cleanup time", aggregate.cleanupTimeDistribution(), thresholdMs, headingLevel);
+        appendDistributionSection("Cumulative distribution of time to leave safepoint", aggregate.leavingTimeDistribution(), thresholdMs, headingLevel);
     }
 
-    static void appendDistributionSection(
-        StringBuilder html,
+    void appendDistributionSection(
         String title,
         List<CumulativeDistributionPoint> points,
         double thresholdMs,
@@ -75,13 +88,12 @@ final class HtmlOutputUtils {
             .append(escapeHtml(title))
             .append("</h").append(headingLevel).append('>');
         html.append("<div class='distribution-grid'>");
-        appendDistributionChart(html, points, thresholdMs);
-        appendDistributionTable(html, points, thresholdMs);
+        appendDistributionChart(points, thresholdMs);
+        appendDistributionTable(points, thresholdMs);
         html.append("</div>");
     }
 
-    static void appendDocDetails(
-        StringBuilder html,
+    void appendDocDetails(
         Class<?> owner,
         String summary,
         Path docPath,
@@ -99,7 +111,7 @@ final class HtmlOutputUtils {
         html.append("</details>");
     }
 
-    static void appendPageStart(StringBuilder html, Class<?> owner, Path stylesPath) throws IOException {
+    void appendPageStart(Class<?> owner, Path stylesPath) throws IOException {
         html.append("""
             <!DOCTYPE html>
             <html lang='en'>
@@ -118,11 +130,11 @@ final class HtmlOutputUtils {
             """);
     }
 
-    static void appendPageEnd(StringBuilder html) {
+    void appendPageEnd() {
         html.append("</main></body></html>");
     }
 
-    static String escapeHtml(String value) {
+    String escapeHtml(String value) {
         return value
             .replace("&", "&amp;")
             .replace("<", "&lt;")
@@ -131,11 +143,16 @@ final class HtmlOutputUtils {
     }
 
     @FormatMethod
-    static String format(@FormatString String format, Object... args) {
+    String format(@FormatString String format, Object... args) {
         return String.format(Locale.ROOT, format, args);
     }
 
-    private static void appendDistributionChart(StringBuilder html, List<CumulativeDistributionPoint> points, double thresholdMs) {
+    @Override
+    public String toString() {
+        return html.toString();
+    }
+
+    private void appendDistributionChart(List<CumulativeDistributionPoint> points, double thresholdMs) {
         var width = 760d;
         var height = 288d;
         var left = 56d;
@@ -202,7 +219,7 @@ final class HtmlOutputUtils {
         html.append("</figure>");
     }
 
-    private static double findThresholdIntersection(List<CumulativeDistributionPoint> points, double thresholdMs) {
+    private double findThresholdIntersection(List<CumulativeDistributionPoint> points, double thresholdMs) {
         var previousProbability = 0d;
         var previousTimingMs = 0d;
         for (var point : points) {
@@ -221,13 +238,13 @@ final class HtmlOutputUtils {
         return Double.NaN;
     }
 
-    private static void appendDistributionTable(StringBuilder html, List<CumulativeDistributionPoint> points, double thresholdMs) {
+    private void appendDistributionTable(List<CumulativeDistributionPoint> points, double thresholdMs) {
         html.append("<details class='doc table-details'><summary>Show data points</summary>");
-        appendDistributionTableContent(html, points, thresholdMs);
+        appendDistributionTableContent(points, thresholdMs);
         html.append("</details>");
     }
 
-    private static void appendDistributionTableContent(StringBuilder html, List<CumulativeDistributionPoint> points, double thresholdMs) {
+    private void appendDistributionTableContent(List<CumulativeDistributionPoint> points, double thresholdMs) {
         html.append("<table><thead><tr><th>Timing (ms)</th><th>Probability (%)</th></tr></thead><tbody>");
         for (var point : points) {
             var timingMs = point.value() / 1E6;
@@ -244,7 +261,7 @@ final class HtmlOutputUtils {
         html.append("</tbody></table>");
     }
 
-    private static void appendMetric(StringBuilder html, String name, String value) {
+    private void appendMetric(String name, String value) {
         html.append("<div class='metric'><span class='metric-name'>")
             .append(escapeHtml(name))
             .append("</span><strong>")
@@ -252,7 +269,7 @@ final class HtmlOutputUtils {
             .append("</strong></div>");
     }
 
-    private static String renderMarkdown(String markdown) {
+    private String renderMarkdown(String markdown) {
         return HTML_RENDERER.render(MARKDOWN_PARSER.parse(markdown));
     }
 }
