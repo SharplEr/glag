@@ -38,6 +38,7 @@ final class Main implements Callable<Integer> {
     )
     private int thresholdMs = 50;
 
+    @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
     @CommandLine.Option(
         names = {"--examples"},
         paramLabel = "EXAMPLES",
@@ -47,6 +48,7 @@ final class Main implements Callable<Integer> {
     )
     private int examples = 5;
 
+    @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
     @CommandLine.Option(names = {"-o", "--output"}, paramLabel = "OUTPUT", description = "Report output path", required = false)
     @Nullable
     private Path output = null;

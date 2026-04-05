@@ -97,7 +97,10 @@ public final class CumulativeDistributionBuilder {
         return builder.build();
     }
 
-    public static List<CumulativeDistributionPoint> distribution(List<SafepointLogRecord> events, ToLongFunction<SafepointLogRecord> metric) {
+    public static List<CumulativeDistributionPoint> distribution(
+        List<SafepointLogRecord> events,
+        ToLongFunction<SafepointLogRecord> metric
+    ) {
         var builder = new CumulativeDistributionBuilder(events.size());
         events.stream()
             .mapToLong(metric)

@@ -69,10 +69,30 @@ final class HtmlWriter {
         int thresholdMs,
         int headingLevel
     ) {
-        appendDistributionSection("Cumulative distribution of time inside a safepoint", aggregate.insideTimeDistribution(), thresholdMs, headingLevel);
-        appendDistributionSection("Cumulative distribution of time to safepoint", aggregate.reachingTimeDistribution(), thresholdMs, headingLevel);
-        appendDistributionSection("Cumulative distribution of cleanup time", aggregate.cleanupTimeDistribution(), thresholdMs, headingLevel);
-        appendDistributionSection("Cumulative distribution of time to leave safepoint", aggregate.leavingTimeDistribution(), thresholdMs, headingLevel);
+        appendDistributionSection(
+            "Cumulative distribution of time inside a safepoint",
+            aggregate.insideTimeDistribution(),
+            thresholdMs,
+            headingLevel
+        );
+        appendDistributionSection(
+            "Cumulative distribution of time to safepoint",
+            aggregate.reachingTimeDistribution(),
+            thresholdMs,
+            headingLevel
+        );
+        appendDistributionSection(
+            "Cumulative distribution of cleanup time",
+            aggregate.cleanupTimeDistribution(),
+            thresholdMs,
+            headingLevel
+        );
+        appendDistributionSection(
+            "Cumulative distribution of time to leave safepoint",
+            aggregate.leavingTimeDistribution(),
+            thresholdMs,
+            headingLevel
+        );
     }
 
     void appendDistributionSection(
