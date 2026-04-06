@@ -20,7 +20,6 @@ public final class MdOutput {
     }
 
     public void print(RuntimeEvents runtimeEvents, int examples) throws IOException {
-        var thresholdMs = runtimeEvents.thresholdMs();
         var safepoints = runtimeEvents.safepointLog();
         var aggregate = safepoints.aggregate();
 
@@ -57,6 +56,7 @@ public final class MdOutput {
             AnsiConsole.err().println("Failed to detect GC by logs");
         }
 
+        var thresholdMs = runtimeEvents.thresholdMs();
         writer.writef("## Safepoints%n%n");
         writer.writeDoc(getClass(), OutputUtils.DOCS_PATH.resolve("safepoint").resolve("safepoint.writer"));
         writer.writef("%n%n");
