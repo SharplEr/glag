@@ -11,6 +11,7 @@ import static org.sharpler.glag.parsing.SafepointValueType.TOTAL;
 import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.records.SafepointLogRecord;
+import org.sharpler.glag.util.TimeUtils;
 
 final class SafepointRecordBuilder {
     private final String origin;
@@ -30,7 +31,7 @@ final class SafepointRecordBuilder {
 
     void addFinishTimeSec(double finishTimeSec) {
         assert Double.isNaN(this.finishTimeSec);
-        assert !Double.isNaN(finishTimeSec);
+        assert TimeUtils.isTime(finishTimeSec) : "Ivalid finish time '%f'".formatted(startTimeSec);
         this.finishTimeSec = finishTimeSec;
     }
 
@@ -67,7 +68,7 @@ final class SafepointRecordBuilder {
 
     private void addStartTimeSec(double startTimeSec) {
         assert Double.isNaN(this.startTimeSec);
-        assert !Double.isNaN(startTimeSec);
+        assert TimeUtils.isTime(startTimeSec) : "Ivalid start time '%f'".formatted(startTimeSec);
         this.startTimeSec = startTimeSec;
     }
 

@@ -10,12 +10,12 @@ import net.jqwik.api.Combinators;
 import net.jqwik.api.ForAll;
 import net.jqwik.api.Property;
 import net.jqwik.api.Provide;
-import net.jqwik.api.constraints.DoubleRange;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.sharpler.glag.records.SafepointLogRecord;
 
 class SafepointParserTest {
+    private static final double TOTAL_TIME_SEC = 207779 / 1E9;
 
     @Test
     void parse() {
@@ -119,9 +119,10 @@ class SafepointParserTest {
 
     @Property
     void parsePrefersMostPreciseTimestampDecorator(
-        @ForAll @DoubleRange(min = 0.0, max = 1_000_000.0) double seconds,
+        @ForAll("validFinishTimesNs") long finishTimeNs,
         @ForAll("decoratorCombinations") List<String> decoratorKinds
     ) {
+        var seconds = finishTimeNs / 1_000_000_000d;
         var decorators = decoratorKinds.stream()
             .map(kind -> switch (kind) {
                 case "s" -> "[%.3fs]".formatted(seconds);
@@ -137,13 +138,11 @@ class SafepointParserTest {
 
         var expectedFinishTime = decoratorKinds.contains("ns")
             ? Math.round(seconds * 1_000_000_000d) / 1_000_000_000d
-            : decoratorKinds.contains("ms")
-            ? Math.round(seconds * 1_000d) / 1_000d
-            : seconds;
+            : Math.round(seconds * 1_000d) / 1_000d;
 
         assertEquals(
             new SafepointLogRecord(
-                expectedFinishTime - 207779 / 1E9,
+                expectedFinishTime - TOTAL_TIME_SEC,
                 expectedFinishTime,
                 line,
                 "ICBufferFull",
@@ -205,6 +204,11 @@ class SafepointParserTest {
             ),
             result
         );
+    }
+
+    @Provide
+    Arbitrary<Long> validFinishTimesNs() {
+        return Arbitraries.longs().between(1_000_000L, 1_000_000_000_000_000L);
     }
 
     @Provide

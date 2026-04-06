@@ -24,9 +24,7 @@ public final class SafepointParser {
     public static SafepointLogRecord parse(String line) {
         var builder = new SafepointRecordBuilder(line);
 
-        var finishTimeSec = UptimeDecorators.parseMostPreciseTimestampSec(line);
-        assert !Double.isNaN(finishTimeSec);
-        builder.addFinishTimeSec(finishTimeSec);
+        builder.addFinishTimeSec(UptimeDecorators.parseMostPreciseTimestampSec(line));
 
         var start = UptimeDecorators.skipLeadingDecorators(line);
         while (start < line.length()) {

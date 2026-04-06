@@ -12,11 +12,19 @@ public final class TimeUtils {
         // No-op.
     }
 
+    /// Returns whether a numeric value can be used as a timestamp or duration.
+    ///
+    /// @param value time-like value to validate
+    /// @return `true` if `value` is finite and non-negative
+    public static boolean isTime(double value) {
+        return Double.isFinite(value) && value >= 0d;
+    }
+
     /// Returns whether two time ranges overlap or touch at their boundaries.
     ///
-    /// @param firstStart start of the first range in seconds
-    /// @param firstFinish finish of the first range in seconds
-    /// @param secondStart start of the second range in seconds
+    /// @param firstStart   start of the first range in seconds
+    /// @param firstFinish  finish of the first range in seconds
+    /// @param secondStart  start of the second range in seconds
     /// @param secondFinish finish of the second range in seconds
     /// @return `true` if the ranges match or overlap
     public static boolean match(double firstStart, double firstFinish, double secondStart, double secondFinish) {

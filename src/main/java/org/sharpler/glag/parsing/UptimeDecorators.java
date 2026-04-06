@@ -2,6 +2,7 @@ package org.sharpler.glag.parsing;
 
 import ch.randelshofer.fastdoubleparser.JavaDoubleParser;
 import org.jspecify.annotations.Nullable;
+import org.sharpler.glag.util.TimeUtils;
 
 final class UptimeDecorators {
     private UptimeDecorators() {
@@ -31,13 +32,16 @@ final class UptimeDecorators {
             }
             start = end + 1;
         }
-        if (!Double.isNaN(nanos)) {
+
+        if (TimeUtils.isTime(nanos)) {
             return nanos;
-        }
-        if (!Double.isNaN(millis)) {
+        } else if (TimeUtils.isTime(millis)) {
             return millis;
+        } else if (TimeUtils.isTime(seconds)) {
+            return seconds;
         }
-        return seconds;
+
+        return Double.NaN;
     }
 
     static int skipLeadingDecorators(String line) {
