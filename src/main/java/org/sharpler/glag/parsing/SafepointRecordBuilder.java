@@ -5,7 +5,6 @@ import static org.sharpler.glag.parsing.SafepointValueType.CLEANUP;
 import static org.sharpler.glag.parsing.SafepointValueType.LEAVING_SAFEPOINT;
 import static org.sharpler.glag.parsing.SafepointValueType.REACHING_SAFEPOINT;
 import static org.sharpler.glag.parsing.SafepointValueType.SAFEPOINT_NAME;
-import static org.sharpler.glag.parsing.SafepointValueType.TIME_SINCE_LAST;
 import static org.sharpler.glag.parsing.SafepointValueType.TOTAL;
 
 import java.util.Objects;
@@ -34,15 +33,14 @@ final class SafepointRecordBuilder {
         this.finishTimeSec = finishTimeSec;
     }
 
-    void addValue(SafepointValueType type, String line, int start, int end) {
+    void addValue(SafepointValueType type, int start, int end) {
         switch (type) {
-            case SAFEPOINT_NAME -> addOperationName(SAFEPOINT_NAME.parseString(line, start, end));
-            case TIME_SINCE_LAST -> TIME_SINCE_LAST.parseLong(line, start, end);
-            case REACHING_SAFEPOINT -> addReachingTimeNs(REACHING_SAFEPOINT.parseLong(line, start, end));
-            case CLEANUP -> addCleanupTimeNs(CLEANUP.parseLong(line, start, end));
-            case AT_SAFEPOINT -> addInsideTimeNs(AT_SAFEPOINT.parseLong(line, start, end));
-            case LEAVING_SAFEPOINT -> addLeavingTimeNs(LEAVING_SAFEPOINT.parseLong(line, start, end));
-            case TOTAL -> addTotalTimeNs(TOTAL.parseLong(line, start, end));
+            case SAFEPOINT_NAME -> addOperationName(SAFEPOINT_NAME.parseString(origin, start, end));
+            case REACHING_SAFEPOINT -> addReachingTimeNs(REACHING_SAFEPOINT.parseLong(origin, start, end));
+            case CLEANUP -> addCleanupTimeNs(CLEANUP.parseLong(origin, start, end));
+            case AT_SAFEPOINT -> addInsideTimeNs(AT_SAFEPOINT.parseLong(origin, start, end));
+            case LEAVING_SAFEPOINT -> addLeavingTimeNs(LEAVING_SAFEPOINT.parseLong(origin, start, end));
+            case TOTAL -> addTotalTimeNs(TOTAL.parseLong(origin, start, end));
         }
     }
 

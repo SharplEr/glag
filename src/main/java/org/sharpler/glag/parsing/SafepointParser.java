@@ -34,7 +34,7 @@ public final class SafepointParser {
             }
             var type = SafepointValueType.resolveType(line, start);
             if (type != null) {
-                builder.addValue(type, line, start, commaIndex);
+                builder.addValue(type, start, commaIndex);
             }
             start = commaIndex + 1;
         }

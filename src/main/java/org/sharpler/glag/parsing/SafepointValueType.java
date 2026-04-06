@@ -6,7 +6,6 @@ import org.jspecify.annotations.Nullable;
 
 enum SafepointValueType {
     SAFEPOINT_NAME(" Safepoint \"", "\""),
-    TIME_SINCE_LAST(" Time since last: ", " ns"),
     REACHING_SAFEPOINT(" Reaching safepoint: ", " ns"),
     CLEANUP(" Cleanup: ", " ns"),
     AT_SAFEPOINT(" At safepoint: ", " ns"),
