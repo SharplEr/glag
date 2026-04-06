@@ -12,6 +12,7 @@ import net.jqwik.api.Property;
 import net.jqwik.api.Provide;
 import net.jqwik.api.constraints.IntRange;
 import net.jqwik.api.constraints.LongRange;
+import org.junit.jupiter.api.Test;
 
 class SafepointValueTypeTest {
     @Property
@@ -21,9 +22,7 @@ class SafepointValueTypeTest {
         @ForAll @IntRange(min = 1, max = 8) int start
     ) {
         var prefix = "_".repeat(start);
-        var str = prefix + type.prefix + value + type.suffix;
-
-        assertTrue(type.isMatch(str, start));
+        assertTrue(type.isMatch(prefix + type.prefix + value + type.suffix, start));
     }
 
     @Property
@@ -31,9 +30,7 @@ class SafepointValueTypeTest {
         @ForAll("types") SafepointValueType type,
         @ForAll("payloads") String value
     ) {
-        var str = type.prefix + value + type.suffix;
-
-        assertFalse(type.isMatch(str, 1));
+        assertFalse(type.isMatch(type.prefix + value + type.suffix, 1));
     }
 
     @Property
@@ -43,9 +40,7 @@ class SafepointValueTypeTest {
         @ForAll @IntRange(min = 1, max = 8) int start
     ) {
         var prefix = "_".repeat(start);
-        var str = prefix + type.prefix + value;
-
-        assertFalse(type.isMatch(str, start));
+        assertFalse(type.isMatch(prefix + type.prefix + value, start));
     }
 
     @Property
@@ -70,7 +65,6 @@ class SafepointValueTypeTest {
         var prefix = "_".repeat(start);
         var suffix = "_".repeat(start + 1);
         var str = prefix + type.prefix + value + type.suffix + suffix;
-
         assertEquals(value, type.parseLong(str, start, str.length() - suffix.length()));
     }
 
@@ -82,9 +76,7 @@ class SafepointValueTypeTest {
     ) {
         var prefix = "_".repeat(start);
         var suffix = "_".repeat(start + 1);
-        var str = prefix + type.prefix + value + type.suffix + suffix;
-
-        assertEquals(type, SafepointValueType.resolveType(str, start));
+        assertEquals(type, SafepointValueType.resolveType(prefix + type.prefix + value + type.suffix + suffix, start));
     }
 
     @Property
@@ -93,9 +85,26 @@ class SafepointValueTypeTest {
         @ForAll @IntRange(min = 1, max = 8) int start
     ) {
         var prefix = "_".repeat(start);
-        var str = prefix + value;
+        assertNull(SafepointValueType.resolveType(prefix + value, start));
+    }
 
-        assertNull(SafepointValueType.resolveType(str, start));
+    @Test
+    void resolveTypeReturnsNullForNegativeStart() {
+        assertNull(SafepointValueType.resolveType("anything", -1));
+    }
+
+    @Test
+    void resolveTypeReturnsNullWhenStartDoesNotLeaveEnoughCharactersForLookupKey() {
+        assertNull(SafepointValueType.resolveType("__", 0));
+        assertNull(SafepointValueType.resolveType("abcd", 2));
+    }
+
+    @Test
+    void resolveTypeReturnsNullWhenLookupKeyMatchesButPrefixDoesNot() {
+        var type = SafepointValueType.SAFEPOINT_NAME;
+        var line = "_Sa definitely not " + type.suffix;
+
+        assertNull(SafepointValueType.resolveType(line, 0));
     }
 
     @Provide
