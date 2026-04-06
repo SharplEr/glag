@@ -8,7 +8,7 @@ import java.util.Map;
 import org.sharpler.glag.aggregations.SafepointAggregate;
 
 final class OutputUtils {
-    static final Path DOCS_PATH = Path.of("docs");
+    static final Path DOCS_PATH = Path.of("org", "sharpler", "glag", "docs");
 
     private OutputUtils() {
     }
