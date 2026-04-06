@@ -35,10 +35,10 @@ class TimeUtilsTest {
     void matchReturnsTrueForOverlappingIntervals(@ForAll("overlappingIntervals") IntervalPair intervals) {
         Assertions.assertTrue(
             TimeUtils.match(
-                intervals.xStart(),
-                intervals.xFinish(),
-                intervals.yStart(),
-                intervals.yFinish()
+                intervals.firstStart(),
+                intervals.firstFinish(),
+                intervals.secondStart(),
+                intervals.secondFinish()
             )
         );
     }
@@ -47,10 +47,10 @@ class TimeUtilsTest {
     void matchReturnsFalseForDisjointIntervals(@ForAll("disjointIntervals") IntervalPair intervals) {
         Assertions.assertFalse(
             TimeUtils.match(
-                intervals.xStart(),
-                intervals.xFinish(),
-                intervals.yStart(),
-                intervals.yFinish()
+                intervals.firstStart(),
+                intervals.firstFinish(),
+                intervals.secondStart(),
+                intervals.secondFinish()
             )
         );
     }
@@ -67,12 +67,12 @@ class TimeUtilsTest {
             Arbitraries.integers().between(2, 10_000),
             Arbitraries.integers().between(1, 9_999),
             Arbitraries.integers().between(1, 10_000)
-        ).as((xStart, xLength, overlapOffset, yTailLength) -> {
-            var xFinish = xStart + xLength;
-            var boundedOverlapOffset = Math.min(overlapOffset, xLength - 1);
-            var yStart = xStart + boundedOverlapOffset;
-            var yFinish = xFinish + yTailLength;
-            return new IntervalPair(xStart, xFinish, yStart, yFinish);
+        ).as((firstStart, firstLength, overlapOffset, secondTailLength) -> {
+            var firstFinish = firstStart + firstLength;
+            var boundedOverlapOffset = Math.min(overlapOffset, firstLength - 1);
+            var secondStart = firstStart + boundedOverlapOffset;
+            var secondFinish = firstFinish + secondTailLength;
+            return new IntervalPair(firstStart, firstFinish, secondStart, secondFinish);
         });
     }
 
@@ -83,14 +83,14 @@ class TimeUtilsTest {
             Arbitraries.integers().between(1, 10_000),
             Arbitraries.integers().between(1, 10_000),
             Arbitraries.integers().between(1, 10_000)
-        ).as((xStart, xLength, gap, yLength) -> {
-            var xFinish = xStart + xLength;
-            var yStart = xFinish + gap;
-            var yFinish = yStart + yLength;
-            return new IntervalPair(xStart, xFinish, yStart, yFinish);
+        ).as((firstStart, firstLength, gap, secondLength) -> {
+            var firstFinish = firstStart + firstLength;
+            var secondStart = firstFinish + gap;
+            var secondFinish = secondStart + secondLength;
+            return new IntervalPair(firstStart, firstFinish, secondStart, secondFinish);
         });
     }
 
-    private record IntervalPair(double xStart, double xFinish, double yStart, double yFinish) {
+    private record IntervalPair(double firstStart, double firstFinish, double secondStart, double secondFinish) {
     }
 }

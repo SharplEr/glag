@@ -11,12 +11,12 @@ public final class TimeUtils {
         // No-op.
     }
 
-    public static boolean match(double xStart, double xFinish, double yStart, double yFinish) {
-        return xStart == yStart
-            || xStart == yFinish
-            || yStart == yFinish
-            || yFinish == xFinish
-            || (xStart < yFinish && yStart < xFinish);
+    public static boolean match(double firstStart, double firstFinish, double secondStart, double secondFinish) {
+        return firstStart == secondStart
+            || firstStart == secondFinish
+            || secondStart == secondFinish
+            || secondFinish == firstFinish
+            || (firstStart < secondFinish && secondStart < firstFinish);
     }
 
     public static String formatDuration(long nanoseconds) {

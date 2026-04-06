@@ -28,10 +28,22 @@ class SafepointLogTest {
         assertAll(
             () -> assertEquals(expectedEvents, safepointLog.events().values()),
             () -> assertEquals(fixture.expectedOperationCounts(), countsByOperation(safepointLog.events().values())),
-            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasReachingTimeNs), safepointLog.aggregate().hasReachingTimeNs()),
-            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasCleanupTimeNs), safepointLog.aggregate().hasCleanupTimeNs()),
-            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasInsideTimeNs), safepointLog.aggregate().hasInsideTimeNs()),
-            () -> assertEquals(expectedEvents.stream().allMatch(SafepointLogRecord::hasLeavingTimeNs), safepointLog.aggregate().hasLeavingTimeNs()),
+            () -> assertEquals(
+                expectedEvents.stream().allMatch(SafepointLogRecord::hasReachingTimeNs),
+                safepointLog.aggregate().hasReachingTimeNs()
+            ),
+            () -> assertEquals(
+                expectedEvents.stream().allMatch(SafepointLogRecord::hasCleanupTimeNs),
+                safepointLog.aggregate().hasCleanupTimeNs()
+            ),
+            () -> assertEquals(
+                expectedEvents.stream().allMatch(SafepointLogRecord::hasInsideTimeNs),
+                safepointLog.aggregate().hasInsideTimeNs()
+            ),
+            () -> assertEquals(
+                expectedEvents.stream().allMatch(SafepointLogRecord::hasLeavingTimeNs),
+                safepointLog.aggregate().hasLeavingTimeNs()
+            ),
             () -> assertFalse(safepointLog.aggregate().totalTimeDistribution().isEmpty()),
             () -> assertEquals(fixture.expectedOperationCounts().keySet(), safepointLog.aggregatesByType().keySet()),
             () -> assertEquals(
@@ -114,12 +126,11 @@ class SafepointLogTest {
     }
 
     private static Map<String, Integer> countsByOperation(List<SafepointLogRecord> events) {
-        return events.stream()
-            .collect(java.util.stream.Collectors.toMap(
+        return events.stream().collect(java.util.stream.Collectors.toMap(
                 SafepointLogRecord::operationName,
                 event -> 1,
                 Integer::sum
-            ));
+        ));
     }
 
     private record SafepointLogFixture(

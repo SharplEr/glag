@@ -128,9 +128,10 @@ class SafepointParserTest {
                 default -> throw new IllegalArgumentException(kind);
             })
             .reduce("", String::concat);
-        var line = decorators +
-            "[info][safepoint] Safepoint \"ICBufferFull\", Time since last: 177611286 ns, Reaching safepoint: 69282 ns, Cleanup: 130048 ns, " +
-            "At safepoint: 8449 ns, Total: 207779 ns";
+        var line = decorators
+            + "[info][safepoint] Safepoint \"ICBufferFull\", Time since last: 177611286 ns, "
+            + "Reaching safepoint: 69282 ns, Cleanup: 130048 ns, "
+            + "At safepoint: 8449 ns, Total: 207779 ns";
 
         var expectedFinishTime = decoratorKinds.contains("ns")
             ? Math.round(seconds * 1_000_000_000d) / 1_000_000_000d

@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+  <suppress files="GcLogRecords\.java" checks=".*" />
+  <suppress files="." checks="EmptyCatchBlock" />
+  <suppress files="." checks="JavadocMethod" />
+  <suppress files="." checks="JavadocPackage" />
+  <suppress files="." checks="JavadocParagraph" />
+  <suppress files="." checks="JavadocTagContinuationIndentation" />
+  <suppress files="." checks="JavadocVariable" />
+  <suppress files="." checks="MissingJavadocMethod" />
+  <suppress files="." checks="MissingJavadocType" />
+  <suppress files="." checks="MissingSwitchDefault" />
+  <suppress files="." checks="OperatorWrap" />
+  <suppress files="." checks="OverloadMethodsDeclarationOrder" />
+  <suppress files="." checks="SummaryJavadoc" />
+</suppressions>
