@@ -1,5 +1,12 @@
 package org.sharpler.glag.parsing;
 
+import static org.sharpler.glag.parsing.SafepointValueType.AT_SAFEPOINT;
+import static org.sharpler.glag.parsing.SafepointValueType.CLEANUP;
+import static org.sharpler.glag.parsing.SafepointValueType.LEAVING_SAFEPOINT;
+import static org.sharpler.glag.parsing.SafepointValueType.REACHING_SAFEPOINT;
+import static org.sharpler.glag.parsing.SafepointValueType.SAFEPOINT_NAME;
+import static org.sharpler.glag.parsing.SafepointValueType.TOTAL;
+
 import java.util.List;
 import org.sharpler.glag.records.SafepointLogRecord;
 
@@ -34,11 +41,23 @@ public final class SafepointParser {
             }
             var type = SafepointValueType.resolveType(line, start);
             if (type != null) {
-                builder.addValue(type, start, commaIndex);
+                addValue(type, builder, start, commaIndex);
             }
             start = commaIndex + 1;
         }
 
         return builder.build();
+    }
+
+    private static void addValue(SafepointValueType type, SafepointRecordBuilder builder, int start, int end) {
+        var origin = builder.origin();
+        switch (type) {
+            case SAFEPOINT_NAME -> builder.addOperationName(SAFEPOINT_NAME.parseString(origin, start, end));
+            case REACHING_SAFEPOINT -> builder.addReachingTimeNs(REACHING_SAFEPOINT.parseLong(origin, start, end));
+            case CLEANUP -> builder.addCleanupTimeNs(CLEANUP.parseLong(origin, start, end));
+            case AT_SAFEPOINT -> builder.addInsideTimeNs(AT_SAFEPOINT.parseLong(origin, start, end));
+            case LEAVING_SAFEPOINT -> builder.addLeavingTimeNs(LEAVING_SAFEPOINT.parseLong(origin, start, end));
+            case TOTAL -> builder.addTotalTimeNs(TOTAL.parseLong(origin, start, end));
+        }
     }
 }
