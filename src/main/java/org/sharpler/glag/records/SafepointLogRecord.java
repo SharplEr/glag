@@ -30,26 +30,13 @@ public record SafepointLogRecord(
 ) implements WithTimeRange {
     /// Validates invariants for a parsed safepoint event.
     public SafepointLogRecord {
-        Objects.requireNonNull(origin);
-        Objects.requireNonNull(operationName);
-        if (Double.isNaN(startTimeSec) || Double.isNaN(finishTimeSec)) {
-            throw new IllegalStateException("Safepoint time range should be defined");
-        }
-        if (totalTimeNs < 0L) {
-            throw new IllegalStateException("Safepoint total time should be defined");
-        }
-        if (!TimeUtils.isOptionalTime(reachingTimeNs)) {
-            throw new IllegalStateException("Safepoint reaching time should be non-negative or NO_TIME");
-        }
-        if (!TimeUtils.isOptionalTime(cleanupTimeNs)) {
-            throw new IllegalStateException("Safepoint cleanup time should be non-negative or NO_TIME");
-        }
-        if (!TimeUtils.isOptionalTime(insideTimeNs)) {
-            throw new IllegalStateException("Safepoint inside time should be non-negative or NO_TIME");
-        }
-        if (!TimeUtils.isOptionalTime(leavingTimeNs)) {
-            throw new IllegalStateException("Safepoint leaving time should be non-negative or NO_TIME");
-        }
+        assert TimeUtils.isTime(startTimeSec);
+        assert TimeUtils.isTime(finishTimeSec);
+        assert totalTimeNs >= 0L;
+        assert TimeUtils.isOptionalTime(reachingTimeNs);
+        assert TimeUtils.isOptionalTime(cleanupTimeNs);
+        assert TimeUtils.isOptionalTime(insideTimeNs);
+        assert TimeUtils.isOptionalTime(leavingTimeNs);
     }
 
     /// Returns whether `reachingTimeNs` is available.

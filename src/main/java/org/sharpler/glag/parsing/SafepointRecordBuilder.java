@@ -15,7 +15,6 @@ import org.sharpler.glag.util.TimeUtils;
 
 final class SafepointRecordBuilder {
     private final String origin;
-
     private double startTimeSec = Double.NaN;
     private double finishTimeSec = Double.NaN;
     private @Nullable String operationName = null;
@@ -48,16 +47,32 @@ final class SafepointRecordBuilder {
     }
 
     SafepointLogRecord build() {
-        assert !Double.isNaN(startTimeSec);
-        assert !Double.isNaN(finishTimeSec);
-        assert operationName != null;
-        assert totalTimeNs >= 0L;
-        var builtOperationName = Objects.requireNonNull(operationName);
+        if (!TimeUtils.isTime(startTimeSec) || !TimeUtils.isTime(finishTimeSec)) {
+            throw new IllegalStateException("Safepoint time range should be defined");
+        }
+        if (operationName == null) {
+            throw new IllegalStateException("Safepoint operation name should be defined");
+        }
+        if (totalTimeNs < 0L) {
+            throw new IllegalStateException("Safepoint total time should be defined");
+        }
+        if (!TimeUtils.isOptionalTime(reachingTimeNs)) {
+            throw new IllegalStateException("Safepoint reaching time should be non-negative or NO_TIME");
+        }
+        if (!TimeUtils.isOptionalTime(cleanupTimeNs)) {
+            throw new IllegalStateException("Safepoint cleanup time should be non-negative or NO_TIME");
+        }
+        if (!TimeUtils.isOptionalTime(insideTimeNs)) {
+            throw new IllegalStateException("Safepoint inside time should be non-negative or NO_TIME");
+        }
+        if (!TimeUtils.isOptionalTime(leavingTimeNs)) {
+            throw new IllegalStateException("Safepoint leaving time should be non-negative or NO_TIME");
+        }
         return new SafepointLogRecord(
             startTimeSec,
             finishTimeSec,
             origin,
-            builtOperationName,
+            Objects.requireNonNull(operationName),
             reachingTimeNs,
             cleanupTimeNs,
             insideTimeNs,
