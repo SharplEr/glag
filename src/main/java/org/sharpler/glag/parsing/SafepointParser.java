@@ -3,15 +3,24 @@ package org.sharpler.glag.parsing;
 import java.util.List;
 import org.sharpler.glag.records.SafepointLogRecord;
 
+/// Parser for raw safepoint log lines.
 public final class SafepointParser {
     private SafepointParser() {
         // No-op
     }
 
+    /// Parses all safepoint log lines in order.
+    ///
+    /// @param lines raw safepoint log lines
+    /// @return parsed safepoint records
     public static List<SafepointLogRecord> parseAll(List<String> lines) {
         return lines.stream().map(SafepointParser::parse).toList();
     }
 
+    /// Parses a single safepoint log line.
+    ///
+    /// @param line raw safepoint log line
+    /// @return parsed safepoint record
     public static SafepointLogRecord parse(String line) {
         var builder = new SafepointRecordBuilder(line);
 

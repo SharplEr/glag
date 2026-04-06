@@ -10,6 +10,14 @@ import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.records.GcLogRecords;
 import org.sharpler.glag.records.GcName;
 
+/// Correlated runtime events derived from safepoint and GC logs.
+///
+/// @param gcName detected GC name, or `null` if detection failed
+/// @param safepointLog parsed safepoint log with indexes and aggregates
+/// @param thresholdMs slow-event threshold in milliseconds
+/// @param slowSingleVmOperations slow safepoints that were not matched to a GC iteration
+/// @param slowGcs slow GC iterations matched to safepoints
+/// @param slowSimultaneousGcs groups of overlapping GC iterations matched to safepoints
 public record RuntimeEvents(
     @Nullable
     GcName gcName,
@@ -21,6 +29,12 @@ public record RuntimeEvents(
 ) {
     private static final long GC_DURATION_MATCHING_TOLERANCE_NS = TimeUnit.MILLISECONDS.toNanos(50);
 
+    /// Correlates a parsed GC log with a parsed safepoint log.
+    ///
+    /// @param gcLog parsed GC log
+    /// @param safepointLog parsed safepoint log
+    /// @param thresholdMs slow-event threshold in milliseconds
+    /// @return correlated runtime events for reporting
     public static RuntimeEvents create(GcLog gcLog, SafepointLog safepointLog, int thresholdMs) {
         var thresholdNs = TimeUnit.MILLISECONDS.toNanos(thresholdMs);
 

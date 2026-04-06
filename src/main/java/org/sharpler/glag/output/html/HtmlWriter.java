@@ -168,6 +168,7 @@ final class HtmlWriter {
         return String.format(Locale.ROOT, format, args);
     }
 
+    /// Returns the accumulated HTML document.
     @Override
     public String toString() {
         return html.toString();

@@ -3,13 +3,30 @@ package org.sharpler.glag.distribution;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.ToLongFunction;
-import org.sharpler.glag.aggregations.SafepointLog;
 import org.sharpler.glag.records.SafepointLogRecord;
 
+/// Builds cumulative distributions for safepoint timing metrics.
 public final class CumulativeDistributionBuilder {
     private final int size;
     private final ArrayList<CumulativeDistributionPoint> points = new ArrayList<>();
     private int current = 0;
+
+    /// Builds a cumulative distribution for an arbitrary safepoint metric.
+    ///
+    /// @param events source safepoint events
+    /// @param metric extracts the metric value from each event
+    /// @return cumulative distribution of the extracted metric
+    public static List<CumulativeDistributionPoint> distribution(
+        List<SafepointLogRecord> events,
+        ToLongFunction<SafepointLogRecord> metric
+    ) {
+        var builder = new CumulativeDistributionBuilder(events.size());
+        events.stream()
+            .mapToLong(metric)
+            .sorted()
+            .forEach(builder::addValue);
+        return builder.build();
+    }
 
     private CumulativeDistributionBuilder(int size) {
         this.size = size;
@@ -47,65 +64,5 @@ public final class CumulativeDistributionBuilder {
 
     private List<CumulativeDistributionPoint> build() {
         return points;
-    }
-
-    public static List<CumulativeDistributionPoint> insideDistribution(SafepointLog safepoints) {
-        var builder = new CumulativeDistributionBuilder(safepoints.events().values().size());
-
-        safepoints.events().values().stream()
-            .mapToLong(SafepointLogRecord::insideTimeNs)
-            .sorted()
-            .forEach(builder::addValue);
-
-        return builder.build();
-    }
-
-    public static List<CumulativeDistributionPoint> operationTimeDistribution(List<SafepointLogRecord> events) {
-        return distribution(events, SafepointLogRecord::totalTimeNs);
-    }
-
-    public static List<CumulativeDistributionPoint> reachingDistribution(SafepointLog safepoints) {
-        var builder = new CumulativeDistributionBuilder(safepoints.events().values().size());
-
-        safepoints.events().values().stream()
-            .mapToLong(SafepointLogRecord::reachingTimeNs)
-            .sorted()
-            .forEach(builder::addValue);
-
-        return builder.build();
-    }
-
-    public static List<CumulativeDistributionPoint> cleanupDistribution(SafepointLog safepoints) {
-        var builder = new CumulativeDistributionBuilder(safepoints.events().values().size());
-
-        safepoints.events().values().stream()
-            .mapToLong(SafepointLogRecord::cleanupTimeNs)
-            .sorted()
-            .forEach(builder::addValue);
-
-        return builder.build();
-    }
-
-    public static List<CumulativeDistributionPoint> leavingDistribution(SafepointLog safepoints) {
-        var builder = new CumulativeDistributionBuilder(safepoints.events().values().size());
-
-        safepoints.events().values().stream()
-            .mapToLong(SafepointLogRecord::leavingTimeNs)
-            .sorted()
-            .forEach(builder::addValue);
-
-        return builder.build();
-    }
-
-    public static List<CumulativeDistributionPoint> distribution(
-        List<SafepointLogRecord> events,
-        ToLongFunction<SafepointLogRecord> metric
-    ) {
-        var builder = new CumulativeDistributionBuilder(events.size());
-        events.stream()
-            .mapToLong(metric)
-            .sorted()
-            .forEach(builder::addValue);
-        return builder.build();
     }
 }

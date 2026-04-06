@@ -6,10 +6,18 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.sharpler.glag.records.SafepointLogRecord;
 
+/// Precomputed safepoint aggregates for the whole log and for each operation type.
+///
+/// @param aggregate overall safepoint statistics for the log
+/// @param aggregatesByType safepoint statistics grouped by operation name
 public record Aggregates(
     SafepointAggregate aggregate,
     Map<String, SafepointAggregate> aggregatesByType
 ) {
+    /// Builds aggregates for a non-empty list of parsed safepoint events.
+    ///
+    /// @param events parsed safepoint events from a single log
+    /// @return overall and per-operation aggregates for `events`
     public static Aggregates from(List<SafepointLogRecord> events) {
         var totalLogTimeSec = events.getLast().finishTimeSec() - events.getFirst().startTimeSec();
 

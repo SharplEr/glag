@@ -3,11 +3,16 @@ package org.sharpler.glag.parsing;
 import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.records.GcLogRecord;
 
+/// Parser for raw HotSpot GC log lines.
 public final class GcParser {
     private GcParser() {
         // No-op.
     }
 
+    /// Parses a single GC log line.
+    ///
+    /// @param line raw GC log line
+    /// @return parsed GC record, or `null` if the line is not a GC event
     @Nullable
     public static GcLogRecord parse(String line) {
         var timestampSec = UptimeDecorators.parseMostPreciseTimestampSec(line);

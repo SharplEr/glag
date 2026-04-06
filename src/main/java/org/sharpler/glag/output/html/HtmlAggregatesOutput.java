@@ -10,13 +10,22 @@ import org.sharpler.glag.aggregations.Aggregates;
 import org.sharpler.glag.aggregations.SafepointAggregate;
 import org.sharpler.glag.output.OutputUtils;
 
+/// Writes an HTML report that only depends on safepoint aggregates.
 public final class HtmlAggregatesOutput {
     private final Path output;
 
+    /// Creates an HTML writer targeting `output`.
+    ///
+    /// @param output destination HTML file
     public HtmlAggregatesOutput(Path output) {
         this.output = output;
     }
 
+    /// Writes an HTML report for safepoint aggregates.
+    ///
+    /// @param aggregates overall and per-operation safepoint aggregates
+    /// @param thresholdMs threshold used when rendering distributions
+    /// @throws IOException if the output file cannot be written
     public void print(Aggregates aggregates, int thresholdMs) throws IOException {
         var aggregate = aggregates.aggregate();
         var writer = new HtmlWriter(new StringBuilder(96 * 1024));

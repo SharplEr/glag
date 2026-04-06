@@ -15,11 +15,16 @@ import org.sharpler.glag.aggregations.Aggregates;
 import org.sharpler.glag.aggregations.SafepointAggregate;
 import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 
+/// Renders safepoint aggregates to the terminal.
 public final class ConsoleOutput {
     private ConsoleOutput() {
         // No-op.
     }
 
+    /// Prints a console report built only from safepoint aggregates.
+    ///
+    /// @param safepoints overall and per-operation aggregates
+    /// @param thresholdMs threshold used to color timing values
     public static void print(Aggregates safepoints, int thresholdMs) {
         var aggregate = safepoints.aggregate();
         if (aggregate.hasInsideTimeNs()) {

@@ -13,13 +13,22 @@ import org.sharpler.glag.output.OutputUtils;
 import org.sharpler.glag.records.SafepointLogRecord;
 import org.sharpler.glag.util.TimeUtils;
 
+/// Writes the full Markdown report with GC correlation.
 public final class MdFullOutput {
     private final MdWriter writer;
 
+    /// Creates a Markdown writer targeting `output`.
+    ///
+    /// @param output destination Markdown file
     public MdFullOutput(Path output) {
         this.writer = new MdWriter(output);
     }
 
+    /// Writes a Markdown report for correlated runtime events.
+    ///
+    /// @param runtimeEvents correlated GC and safepoint events
+    /// @param examples number of slow examples to include in each section
+    /// @throws IOException if the output file cannot be written
     public void print(RuntimeEvents runtimeEvents, int examples) throws IOException {
         var safepoints = runtimeEvents.safepointLog();
         var aggregate = safepoints.aggregate();

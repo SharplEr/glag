@@ -57,6 +57,10 @@ final class Main implements Callable<Integer> {
         System.exit(new CommandLine(new Main()).execute(args));
     }
 
+    /// Runs the CLI command using the configured input and output paths.
+    ///
+    /// @return process exit code
+    /// @throws Exception if reading logs or writing a report fails
     @Override
     public Integer call() throws Exception {
         var safepointRecords = SafepointParser.parseAll(Files.readAllLines(safepointsPath));

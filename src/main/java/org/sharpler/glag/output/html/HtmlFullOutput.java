@@ -18,13 +18,22 @@ import org.sharpler.glag.records.GcName;
 import org.sharpler.glag.records.SafepointLogRecord;
 import org.sharpler.glag.util.TimeUtils;
 
+/// Writes the full HTML report with GC correlation.
 public final class HtmlFullOutput {
     private final Path output;
 
+    /// Creates an HTML writer targeting `output`.
+    ///
+    /// @param output destination HTML file
     public HtmlFullOutput(Path output) {
         this.output = output;
     }
 
+    /// Writes an HTML report for correlated runtime events.
+    ///
+    /// @param runtimeEvents correlated GC and safepoint events
+    /// @param examples number of slow examples to include in each section
+    /// @throws IOException if the output file cannot be written
     public void print(RuntimeEvents runtimeEvents, int examples) throws IOException {
         var thresholdMs = runtimeEvents.thresholdMs();
         var safepoints = runtimeEvents.safepointLog();

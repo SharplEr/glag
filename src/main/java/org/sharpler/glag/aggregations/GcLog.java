@@ -10,10 +10,18 @@ import org.sharpler.glag.records.GcLogRecord;
 import org.sharpler.glag.records.GcLogRecords;
 import org.sharpler.glag.records.GcName;
 
+/// Parsed GC log together with the detected collector name and an index by time range.
+///
+/// @param gcName detected collector name, or `null` if detection failed
+/// @param timeIndex GC iterations indexed by their time range
 public record GcLog(
     @Nullable GcName gcName,
     RangeIndex<GcLogRecords> timeIndex
 ) {
+    /// Parses raw GC log lines into grouped GC iterations.
+    ///
+    /// @param lines raw GC log lines
+    /// @return parsed GC log with grouped iterations and detected GC name
     public static GcLog parse(List<String> lines) {
         var gcIteration = new Int2ObjectOpenHashMap<ArrayList<GcLogRecord>>();
         GcName gcName = null;

@@ -6,10 +6,16 @@ import java.util.Comparator;
 import java.util.List;
 import org.sharpler.glag.util.TimeUtils;
 
+/// Immutable index for values that occupy a time range.
+///
+/// @param <T> indexed value type
 public final class RangeIndex<T extends WithTimeRange> {
     private final List<T> valuesByStart;
     private final double[] prefixMaxFinish;
 
+    /// Builds an index over the provided values.
+    ///
+    /// @param values values to index by their time range
     public RangeIndex(Collection<T> values) {
         valuesByStart = values.stream()
             .sorted(Comparator.comparingDouble(WithTimeRange::startTimeSec))
@@ -23,10 +29,18 @@ public final class RangeIndex<T extends WithTimeRange> {
         }
     }
 
+    /// Returns indexed values sorted by `startTimeSec`.
+    ///
+    /// @return indexed values sorted by start time
     public List<T> values() {
         return valuesByStart;
     }
 
+    /// Returns all indexed values whose time range overlaps `[start, finish]`.
+    ///
+    /// @param start query start time in seconds
+    /// @param finish query finish time in seconds
+    /// @return overlapping indexed values
     public List<T> findByRange(double start, double finish) {
         var toExclusive = firstIndexWithStartGreaterThan(finish);
         if (toExclusive == 0) {
