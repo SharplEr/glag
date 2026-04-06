@@ -1,5 +1,7 @@
 package org.sharpler.glag.parsing;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.ArrayList;
 import java.util.List;
 import net.jqwik.api.Arbitraries;
@@ -24,7 +26,7 @@ class SafepointParserTest {
 
         var result = SafepointParser.parse(line);
 
-        Assertions.assertEquals(
+        assertEquals(
             new SafepointLogRecord(
                 3.412 - 207779 / 1E9,
                 3.412,
@@ -49,7 +51,7 @@ class SafepointParserTest {
 
         var result = SafepointParser.parse(line);
 
-        Assertions.assertEquals(
+        assertEquals(
             new SafepointLogRecord(
                 3.412 - 207779 / 1E9,
                 3.412,
@@ -74,7 +76,7 @@ class SafepointParserTest {
 
         var result = SafepointParser.parse(line);
 
-        Assertions.assertEquals(
+        assertEquals(
             new SafepointLogRecord(
                 3.412 - 207779 / 1E9,
                 3.412,
@@ -99,7 +101,7 @@ class SafepointParserTest {
 
         var result = SafepointParser.parse(line);
 
-        Assertions.assertEquals(
+        assertEquals(
             new SafepointLogRecord(
                 3.412 - 207779 / 1E9,
                 3.412,
@@ -139,7 +141,7 @@ class SafepointParserTest {
             ? Math.round(seconds * 1_000d) / 1_000d
             : seconds;
 
-        Assertions.assertEquals(
+        assertEquals(
             new SafepointLogRecord(
                 expectedFinishTime - 207779 / 1E9,
                 expectedFinishTime,
@@ -164,7 +166,7 @@ class SafepointParserTest {
 
         var result = SafepointParser.parse(line);
 
-        Assertions.assertEquals(
+        assertEquals(
             new SafepointLogRecord(
                 3.412 - 227779 / 1E9,
                 3.412,
@@ -175,6 +177,31 @@ class SafepointParserTest {
                 8449L,
                 20000L,
                 227779L
+            ),
+            result
+        );
+    }
+
+    @Test
+    void parseIgnoresUnknownValueTypes() {
+        var line =
+            "[3.412s][info][safepoint] " +
+                "Safepoint \"ICBufferFull\", Time since last: 177611286 ns, Unknown metric: 42 ns, " +
+                "Reaching safepoint: 69282 ns, Cleanup: 130048 ns, At safepoint: 8449 ns, Total: 207779 ns";
+
+        var result = SafepointParser.parse(line);
+
+        assertEquals(
+            new SafepointLogRecord(
+                3.412 - 207779 / 1E9,
+                3.412,
+                line,
+                "ICBufferFull",
+                69282L,
+                130048L,
+                8449L,
+                SafepointLogRecord.NO_TIME,
+                207779L
             ),
             result
         );
