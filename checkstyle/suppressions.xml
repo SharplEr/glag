@@ -6,7 +6,6 @@
 
 <suppressions>
   <suppress files="GcLogRecords\.java" checks=".*" />
-  <suppress files="." checks="EmptyCatchBlock" />
   <suppress files="." checks="JavadocMethod" />
   <suppress files="." checks="JavadocPackage" />
   <suppress files="." checks="JavadocParagraph" />
