@@ -5,18 +5,19 @@ import java.util.function.ToLongFunction;
 import org.sharpler.glag.distribution.CumulativeDistributionBuilder;
 import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 import org.sharpler.glag.records.SafepointLogRecord;
+import org.sharpler.glag.util.TimeUtils;
 
 /// Statistical summary of a set of safepoint events without storing the raw events themselves.
 ///
-/// @param totalLogTimeSec observed wall-clock span of the full safepoint log
-/// @param eventsCount number of safepoint events in the aggregate
-/// @param totalTimeNsSum sum of `totalTimeNs` across all events
-/// @param insideTimeNsSum sum of `insideTimeNs`, or `NO_TIME` if any event does not have it
-/// @param totalTimeDistribution cumulative distribution of total safepoint time
+/// @param totalLogTimeSec          observed wall-clock span of the full safepoint log
+/// @param eventsCount              number of safepoint events in the aggregate
+/// @param totalTimeNsSum           sum of `totalTimeNs` across all events
+/// @param insideTimeNsSum          sum of `insideTimeNs`, or `NO_TIME` if any event does not have it
+/// @param totalTimeDistribution    cumulative distribution of total safepoint time
 /// @param reachingTimeDistribution cumulative distribution of time to safepoint
-/// @param cleanupTimeDistribution cumulative distribution of cleanup time
-/// @param insideTimeDistribution cumulative distribution of time inside safepoint
-/// @param leavingTimeDistribution cumulative distribution of time to leave safepoint
+/// @param cleanupTimeDistribution  cumulative distribution of cleanup time
+/// @param insideTimeDistribution   cumulative distribution of time inside safepoint
+/// @param leavingTimeDistribution  cumulative distribution of time to leave safepoint
 public record SafepointAggregate(
     double totalLogTimeSec,
     int eventsCount,
@@ -28,9 +29,6 @@ public record SafepointAggregate(
     List<CumulativeDistributionPoint> insideTimeDistribution,
     List<CumulativeDistributionPoint> leavingTimeDistribution
 ) {
-    /// Sentinel for an unavailable optional timing value.
-    public static final long NO_TIME = SafepointLogRecord.NO_TIME;
-
     /// Returns whether all aggregated events have `reachingTimeNs`.
     ///
     /// @return `true` if `reachingTimeNs` is available for all events
@@ -49,7 +47,7 @@ public record SafepointAggregate(
     ///
     /// @return `true` if `insideTimeNs` is available for all events
     public boolean hasInsideTimeNs() {
-        return insideTimeNsSum != NO_TIME;
+        return insideTimeNsSum != TimeUtils.NO_TIME;
     }
 
     /// Returns whether all aggregated events have `leavingTimeNs`.
@@ -84,7 +82,7 @@ public record SafepointAggregate(
     /// Builds a statistical summary for a non-empty set of safepoint events.
     ///
     /// @param totalLogTimeSec observed wall-clock span of the full safepoint log
-    /// @param events events to summarize
+    /// @param events          events to summarize
     /// @return aggregate statistics for `events`
     public static SafepointAggregate from(double totalLogTimeSec, List<SafepointLogRecord> events) {
         if (events.isEmpty()) {
@@ -92,9 +90,9 @@ public record SafepointAggregate(
         }
 
         var totalTimeNsSum = events.stream().mapToLong(SafepointLogRecord::totalTimeNs).sum();
-        var insideTimeNsSum = events.stream().allMatch(SafepointLogRecord::hasInsideTimeNs) ?
-            events.stream().mapToLong(SafepointLogRecord::insideTimeNs).sum() :
-            NO_TIME;
+        var insideTimeNsSum = events.stream().allMatch(SafepointLogRecord::hasInsideTimeNs)
+            ? events.stream().mapToLong(SafepointLogRecord::insideTimeNs).sum()
+            : TimeUtils.NO_TIME;
 
         return new SafepointAggregate(
             totalLogTimeSec,

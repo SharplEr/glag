@@ -1,19 +1,22 @@
 package org.sharpler.glag.records;
 
+import static org.sharpler.glag.util.TimeUtils.NO_TIME;
+
 import java.util.Objects;
 import org.sharpler.glag.index.WithTimeRange;
+import org.sharpler.glag.util.TimeUtils;
 
 /// One parsed safepoint log record.
 ///
-/// @param startTimeSec start of the safepoint in seconds
-/// @param finishTimeSec end of the safepoint in seconds
-/// @param origin original log line
-/// @param operationName safepoint operation name
+/// @param startTimeSec   start of the safepoint in seconds
+/// @param finishTimeSec  end of the safepoint in seconds
+/// @param origin         original log line
+/// @param operationName  safepoint operation name
 /// @param reachingTimeNs reaching time in nanoseconds, or `NO_TIME`
-/// @param cleanupTimeNs cleanup time in nanoseconds, or `NO_TIME`
-/// @param insideTimeNs inside-safepoint time in nanoseconds, or `NO_TIME`
-/// @param leavingTimeNs leaving-safepoint time in nanoseconds, or `NO_TIME`
-/// @param totalTimeNs total safepoint time in nanoseconds
+/// @param cleanupTimeNs  cleanup time in nanoseconds, or `NO_TIME`
+/// @param insideTimeNs   inside-safepoint time in nanoseconds, or `NO_TIME`
+/// @param leavingTimeNs  leaving-safepoint time in nanoseconds, or `NO_TIME`
+/// @param totalTimeNs    total safepoint time in nanoseconds
 public record SafepointLogRecord(
     double startTimeSec,
     double finishTimeSec,
@@ -25,9 +28,6 @@ public record SafepointLogRecord(
     long leavingTimeNs,
     long totalTimeNs
 ) implements WithTimeRange {
-    /// Sentinel for an unavailable optional timing value.
-    public static final long NO_TIME = -1L;
-
     /// Validates invariants for a parsed safepoint event.
     public SafepointLogRecord {
         Objects.requireNonNull(origin);
@@ -38,16 +38,16 @@ public record SafepointLogRecord(
         if (totalTimeNs < 0L) {
             throw new IllegalStateException("Safepoint total time should be defined");
         }
-        if (reachingTimeNs < 0L && reachingTimeNs != NO_TIME) {
+        if (!TimeUtils.isOptionalTime(reachingTimeNs)) {
             throw new IllegalStateException("Safepoint reaching time should be non-negative or NO_TIME");
         }
-        if (cleanupTimeNs < 0L && cleanupTimeNs != NO_TIME) {
+        if (!TimeUtils.isOptionalTime(cleanupTimeNs)) {
             throw new IllegalStateException("Safepoint cleanup time should be non-negative or NO_TIME");
         }
-        if (insideTimeNs < 0L && insideTimeNs != NO_TIME) {
+        if (!TimeUtils.isOptionalTime(insideTimeNs)) {
             throw new IllegalStateException("Safepoint inside time should be non-negative or NO_TIME");
         }
-        if (leavingTimeNs < 0L && leavingTimeNs != NO_TIME) {
+        if (!TimeUtils.isOptionalTime(leavingTimeNs)) {
             throw new IllegalStateException("Safepoint leaving time should be non-negative or NO_TIME");
         }
     }

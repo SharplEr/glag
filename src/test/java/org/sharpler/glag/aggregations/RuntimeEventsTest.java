@@ -9,6 +9,7 @@ import org.sharpler.glag.records.GcLogRecord;
 import org.sharpler.glag.records.GcLogRecords;
 import org.sharpler.glag.records.GcName;
 import org.sharpler.glag.records.SafepointLogRecord;
+import org.sharpler.glag.util.TimeUtils;
 
 final class RuntimeEventsTest {
     @Test
@@ -18,10 +19,10 @@ final class RuntimeEventsTest {
             10.200,
             "safepoint",
             "Cleanup",
-            SafepointLogRecord.NO_TIME,
-            SafepointLogRecord.NO_TIME,
-            SafepointLogRecord.NO_TIME,
-            SafepointLogRecord.NO_TIME,
+            TimeUtils.NO_TIME,
+            TimeUtils.NO_TIME,
+            TimeUtils.NO_TIME,
+            TimeUtils.NO_TIME,
             200_000_000L
         );
         var safepointLog = new SafepointLog(

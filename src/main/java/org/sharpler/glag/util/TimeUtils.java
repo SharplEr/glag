@@ -4,6 +4,9 @@ import java.util.Locale;
 
 /// Small helpers for time-based comparisons and formatting.
 public final class TimeUtils {
+    /// Sentinel for an unavailable optional timing value.
+    public static final long NO_TIME = -1L;
+
     private static final long MICROSECOND_IN_NS = 1_000;
     private static final long MILLISECOND_IN_NS = 1_000_000;
     private static final long SECOND_IN_NS = 1_000_000_000;
@@ -18,6 +21,14 @@ public final class TimeUtils {
     /// @return `true` if `value` is finite and non-negative
     public static boolean isTime(double value) {
         return Double.isFinite(value) && value >= 0d;
+    }
+
+    /// Returns whether a nanosecond duration is either defined or marked as `NO_TIME`.
+    ///
+    /// @param timeNs duration in nanoseconds or `NO_TIME`
+    /// @return `true` if `timeNs` is non-negative or equal to `NO_TIME`
+    public static boolean isOptionalTime(long timeNs) {
+        return timeNs >= NO_TIME;
     }
 
     /// Returns whether two time ranges overlap or touch at their boundaries.

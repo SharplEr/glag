@@ -14,6 +14,7 @@ import net.jqwik.api.Provide;
 import net.jqwik.api.constraints.LongRange;
 import org.junit.jupiter.api.Test;
 import org.sharpler.glag.records.SafepointLogRecord;
+import org.sharpler.glag.util.TimeUtils;
 
 class CumulativeDistributionBuilderTest {
     @Property
@@ -86,10 +87,10 @@ class CumulativeDistributionBuilderTest {
             finishTimeSec,
             "origin",
             "operation",
-            SafepointLogRecord.NO_TIME,
-            SafepointLogRecord.NO_TIME,
-            SafepointLogRecord.NO_TIME,
-            SafepointLogRecord.NO_TIME,
+            TimeUtils.NO_TIME,
+            TimeUtils.NO_TIME,
+            TimeUtils.NO_TIME,
+            TimeUtils.NO_TIME,
             totalTimeNs
         );
     }

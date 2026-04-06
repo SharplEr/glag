@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.sharpler.glag.records.SafepointLogRecord;
+import org.sharpler.glag.util.TimeUtils;
 
 final class SafepointAggregateTest {
     @Test
@@ -54,7 +55,7 @@ final class SafepointAggregateTest {
                 1.1,
                 "a",
                 "Cleanup",
-                SafepointLogRecord.NO_TIME,
+                TimeUtils.NO_TIME,
                 20,
                 30,
                 40,
@@ -83,13 +84,13 @@ final class SafepointAggregateTest {
     void fromMarksInsideTimeSumAsUnavailableWhenAnyValueIsMissing() {
         var events = List.of(
             new SafepointLogRecord(1.0, 1.1, "a", "Cleanup", 10, 20, 30, 40, 90),
-            new SafepointLogRecord(2.0, 2.2, "b", "Cleanup", 15, 25, SafepointLogRecord.NO_TIME, 45, 120)
+            new SafepointLogRecord(2.0, 2.2, "b", "Cleanup", 15, 25, TimeUtils.NO_TIME, 45, 120)
         );
 
         var aggregate = SafepointAggregate.from(1.2, events);
 
         assertAll(
-            () -> assertEquals(SafepointAggregate.NO_TIME, aggregate.insideTimeNsSum()),
+            () -> assertEquals(TimeUtils.NO_TIME, aggregate.insideTimeNsSum()),
             () -> assertFalse(aggregate.hasInsideTimeNs()),
             () -> assertTrue(aggregate.insideTimeDistribution().isEmpty())
         );

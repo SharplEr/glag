@@ -16,6 +16,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.sharpler.glag.parsing.SafepointParser;
 import org.sharpler.glag.records.SafepointLogRecord;
+import org.sharpler.glag.util.TimeUtils;
 
 class SafepointLogTest {
     @ParameterizedTest
@@ -87,10 +88,10 @@ class SafepointLogTest {
         var event = safepointLog.events().values().getFirst();
 
         assertAll(
-            () -> assertEquals(SafepointLogRecord.NO_TIME, event.reachingTimeNs()),
-            () -> assertEquals(SafepointLogRecord.NO_TIME, event.cleanupTimeNs()),
-            () -> assertEquals(SafepointLogRecord.NO_TIME, event.insideTimeNs()),
-            () -> assertEquals(SafepointLogRecord.NO_TIME, event.leavingTimeNs()),
+            () -> assertEquals(TimeUtils.NO_TIME, event.reachingTimeNs()),
+            () -> assertEquals(TimeUtils.NO_TIME, event.cleanupTimeNs()),
+            () -> assertEquals(TimeUtils.NO_TIME, event.insideTimeNs()),
+            () -> assertEquals(TimeUtils.NO_TIME, event.leavingTimeNs()),
             () -> assertFalse(safepointLog.aggregate().hasReachingTimeNs()),
             () -> assertFalse(safepointLog.aggregate().hasCleanupTimeNs()),
             () -> assertFalse(safepointLog.aggregate().hasInsideTimeNs()),

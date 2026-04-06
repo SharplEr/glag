@@ -19,11 +19,11 @@ final class SafepointRecordBuilder {
     private double startTimeSec = Double.NaN;
     private double finishTimeSec = Double.NaN;
     private @Nullable String operationName = null;
-    private long reachingTimeNs = SafepointLogRecord.NO_TIME;
-    private long cleanupTimeNs = SafepointLogRecord.NO_TIME;
-    private long insideTimeNs = SafepointLogRecord.NO_TIME;
-    private long leavingTimeNs = SafepointLogRecord.NO_TIME;
-    private long totalTimeNs = SafepointLogRecord.NO_TIME;
+    private long reachingTimeNs = TimeUtils.NO_TIME;
+    private long cleanupTimeNs = TimeUtils.NO_TIME;
+    private long insideTimeNs = TimeUtils.NO_TIME;
+    private long leavingTimeNs = TimeUtils.NO_TIME;
+    private long totalTimeNs = TimeUtils.NO_TIME;
 
     SafepointRecordBuilder(String origin) {
         this.origin = origin;
@@ -78,31 +78,31 @@ final class SafepointRecordBuilder {
     }
 
     private void addReachingTimeNs(long reachingTimeNs) {
-        assert this.reachingTimeNs == SafepointLogRecord.NO_TIME;
+        assert this.reachingTimeNs == TimeUtils.NO_TIME;
         assert reachingTimeNs >= 0L;
         this.reachingTimeNs = reachingTimeNs;
     }
 
     private void addCleanupTimeNs(long cleanupTimeNs) {
-        assert this.cleanupTimeNs == SafepointLogRecord.NO_TIME;
+        assert this.cleanupTimeNs == TimeUtils.NO_TIME;
         assert cleanupTimeNs >= 0L;
         this.cleanupTimeNs = cleanupTimeNs;
     }
 
     private void addInsideTimeNs(long insideTimeNs) {
-        assert this.insideTimeNs == SafepointLogRecord.NO_TIME;
+        assert this.insideTimeNs == TimeUtils.NO_TIME;
         assert insideTimeNs >= 0L;
         this.insideTimeNs = insideTimeNs;
     }
 
     private void addLeavingTimeNs(long leavingTimeNs) {
-        assert this.leavingTimeNs == SafepointLogRecord.NO_TIME;
+        assert this.leavingTimeNs == TimeUtils.NO_TIME;
         assert leavingTimeNs >= 0L;
         this.leavingTimeNs = leavingTimeNs;
     }
 
     private void addTotalTimeNs(long totalTimeNs) {
-        assert this.totalTimeNs == SafepointLogRecord.NO_TIME;
+        assert this.totalTimeNs == TimeUtils.NO_TIME;
         assert totalTimeNs >= 0L;
         this.totalTimeNs = totalTimeNs;
         addStartTimeSec(finishTimeSec - totalTimeNs / 1E9);

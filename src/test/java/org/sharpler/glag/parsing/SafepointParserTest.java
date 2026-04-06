@@ -13,6 +13,7 @@ import net.jqwik.api.Provide;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.sharpler.glag.records.SafepointLogRecord;
+import org.sharpler.glag.util.TimeUtils;
 
 class SafepointParserTest {
     private static final double TOTAL_TIME_SEC = 207779 / 1E9;
@@ -35,7 +36,7 @@ class SafepointParserTest {
                 69282L,
                 130048L,
                 8449L,
-                SafepointLogRecord.NO_TIME,
+                TimeUtils.NO_TIME,
                 207779L
             ),
             result
@@ -60,7 +61,7 @@ class SafepointParserTest {
                 69282L,
                 130048L,
                 8449L,
-                SafepointLogRecord.NO_TIME,
+                TimeUtils.NO_TIME,
                 207779L
             ),
             result
@@ -85,7 +86,7 @@ class SafepointParserTest {
                 69282L,
                 130048L,
                 8449L,
-                SafepointLogRecord.NO_TIME,
+                TimeUtils.NO_TIME,
                 207779L
             ),
             result
@@ -110,7 +111,7 @@ class SafepointParserTest {
                 69282L,
                 130048L,
                 8449L,
-                SafepointLogRecord.NO_TIME,
+                TimeUtils.NO_TIME,
                 207779L
             ),
             result
@@ -149,7 +150,7 @@ class SafepointParserTest {
                 69282L,
                 130048L,
                 8449L,
-                SafepointLogRecord.NO_TIME,
+                TimeUtils.NO_TIME,
                 207779L
             ),
             SafepointParser.parse(line)
@@ -199,7 +200,7 @@ class SafepointParserTest {
                 69282L,
                 130048L,
                 8449L,
-                SafepointLogRecord.NO_TIME,
+                TimeUtils.NO_TIME,
                 207779L
             ),
             result
