@@ -8,13 +8,13 @@ import java.util.HashSet;
 import java.util.List;
 import org.fusesource.jansi.AnsiConsole;
 import org.jspecify.annotations.Nullable;
+import org.sharpler.glag.aggregations.GcIteration;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.aggregations.SafepointAggregate;
-import org.sharpler.glag.records.GcIteration;
+import org.sharpler.glag.aggregations.SingleVMOperation;
 import org.sharpler.glag.records.GcLogRecords;
 import org.sharpler.glag.records.GcName;
 import org.sharpler.glag.records.SafepointLogRecord;
-import org.sharpler.glag.records.SingleVMOperation;
 import org.sharpler.glag.util.TimeUtils;
 
 public final class HtmlOutput {

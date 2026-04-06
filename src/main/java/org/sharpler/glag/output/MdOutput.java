@@ -6,10 +6,10 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import org.fusesource.jansi.AnsiConsole;
+import org.sharpler.glag.aggregations.GcIteration;
 import org.sharpler.glag.aggregations.RuntimeEvents;
-import org.sharpler.glag.records.GcIteration;
+import org.sharpler.glag.aggregations.SingleVMOperation;
 import org.sharpler.glag.records.SafepointLogRecord;
-import org.sharpler.glag.records.SingleVMOperation;
 import org.sharpler.glag.util.TimeUtils;
 
 public final class MdOutput {

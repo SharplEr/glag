@@ -7,11 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.jspecify.annotations.Nullable;
-import org.sharpler.glag.records.GcIteration;
 import org.sharpler.glag.records.GcLogRecords;
 import org.sharpler.glag.records.GcName;
-import org.sharpler.glag.records.SimultaneousGcIterations;
-import org.sharpler.glag.records.SingleVMOperation;
 
 public record RuntimeEvents(
     @Nullable
