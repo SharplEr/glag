@@ -37,20 +37,18 @@ public final class CumulativeDistributionBuilder {
             throw new IllegalStateException("All values already processed: size=" + size);
         }
         current++;
-        if (current == size) {
-            points.add(new CumulativeDistributionPoint(value, 1d));
-        } else if (current == 1) {
-            points.add(new CumulativeDistributionPoint(value, 1d / size));
-        } else {
-            var lastPoint = points.getLast();
-            var prob = (double) current / size;
+        var prob = (double) current / size;
+        if (points.isEmpty()) {
+            points.add(new CumulativeDistributionPoint(value, prob));
+            return;
+        }
 
-            if (roundCompare(value, lastPoint.value())) {
-                points.removeLast();
-                points.add(new CumulativeDistributionPoint(value, prob));
-            } else if (prob - lastPoint.prob() >= 0.1 || value > 2 * lastPoint.value()) {
-                points.add(new CumulativeDistributionPoint(value, prob));
-            }
+        var lastPoint = points.getLast();
+        if (roundCompare(value, lastPoint.value())) {
+            points.removeLast();
+            points.add(new CumulativeDistributionPoint(value, prob));
+        } else if (current == size || prob - lastPoint.prob() >= 0.1 || value > 2 * lastPoint.value()) {
+            points.add(new CumulativeDistributionPoint(value, prob));
         }
     }
 
@@ -58,7 +56,7 @@ public final class CumulativeDistributionBuilder {
         return round(a) == round(b);
     }
 
-    private static long round(long value) {
+    static long round(long value) {
         return value / 1000 + (value % 1000 >= 500 ? 1 : 0);
     }
 
