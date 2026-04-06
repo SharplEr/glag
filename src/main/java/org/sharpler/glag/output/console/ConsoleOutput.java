@@ -1,4 +1,4 @@
-package org.sharpler.glag.output;
+package org.sharpler.glag.output.console;
 
 import static org.fusesource.jansi.Ansi.Color.DEFAULT;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
@@ -16,6 +16,10 @@ import org.sharpler.glag.aggregations.SafepointAggregate;
 import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 
 public final class ConsoleOutput {
+    private ConsoleOutput() {
+        // No-op.
+    }
+
     public static void print(Aggregates safepoints, int thresholdMs) {
         var aggregate = safepoints.aggregate();
         if (aggregate.hasInsideTimeNs()) {

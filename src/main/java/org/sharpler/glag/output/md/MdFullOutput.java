@@ -1,4 +1,4 @@
-package org.sharpler.glag.output;
+package org.sharpler.glag.output.md;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -9,13 +9,14 @@ import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.aggregations.GcIteration;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.aggregations.SingleVMOperation;
+import org.sharpler.glag.output.OutputUtils;
 import org.sharpler.glag.records.SafepointLogRecord;
 import org.sharpler.glag.util.TimeUtils;
 
-public final class MdOutput {
+public final class MdFullOutput {
     private final MdWriter writer;
 
-    public MdOutput(Path output) {
+    public MdFullOutput(Path output) {
         this.writer = new MdWriter(output);
     }
 

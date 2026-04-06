@@ -1,4 +1,4 @@
-package org.sharpler.glag.output;
+package org.sharpler.glag.output.html;
 
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
@@ -12,6 +12,7 @@ import org.fusesource.jansi.AnsiConsole;
 import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.aggregations.SafepointAggregate;
 import org.sharpler.glag.distribution.CumulativeDistributionPoint;
+import org.sharpler.glag.output.OutputUtils;
 
 final class HtmlWriter {
     static final Path FULL_PAGE_STYLES_PATH = Path.of("org", "sharpler", "glag", "output", "full-page.css");

@@ -7,19 +7,20 @@ import java.util.List;
 import java.util.Map;
 import org.sharpler.glag.aggregations.SafepointAggregate;
 
-final class OutputUtils {
-    static final Path DOCS_PATH = Path.of("org", "sharpler", "glag", "docs");
+public final class OutputUtils {
+    public static final Path DOCS_PATH = Path.of("org", "sharpler", "glag", "docs");
 
     private OutputUtils() {
+        // No-op.
     }
 
-    static boolean docExists(Class<?> owner, Path docPath) throws IOException {
+    public static boolean docExists(Class<?> owner, Path docPath) throws IOException {
         try (var stream = owner.getClassLoader().getResourceAsStream(docPath.toString())) {
             return stream != null;
         }
     }
 
-    static String readDoc(Class<?> owner, Path docPath) throws IOException {
+    public static String readDoc(Class<?> owner, Path docPath) throws IOException {
         var strPath = docPath.toString();
         try (var stream = owner.getClassLoader().getResourceAsStream(strPath)) {
             if (stream == null) {
@@ -29,7 +30,7 @@ final class OutputUtils {
         }
     }
 
-    static List<Map.Entry<String, SafepointAggregate>> sortedOperationAggregates(
+    public static List<Map.Entry<String, SafepointAggregate>> sortedOperationAggregates(
         Map<String, SafepointAggregate> aggregatesByType
     ) {
         return aggregatesByType.entrySet().stream()

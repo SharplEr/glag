@@ -1,10 +1,11 @@
-package org.sharpler.glag.output;
+package org.sharpler.glag.output.md;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
 import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.aggregations.Aggregates;
+import org.sharpler.glag.output.OutputUtils;
 
 public final class MdAggregatesOutput {
     private final MdWriter writer;

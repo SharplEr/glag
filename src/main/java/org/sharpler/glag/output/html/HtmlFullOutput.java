@@ -1,4 +1,4 @@
-package org.sharpler.glag.output;
+package org.sharpler.glag.output.html;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,15 +12,16 @@ import org.sharpler.glag.aggregations.GcIteration;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.aggregations.SafepointAggregate;
 import org.sharpler.glag.aggregations.SingleVMOperation;
+import org.sharpler.glag.output.OutputUtils;
 import org.sharpler.glag.records.GcLogRecords;
 import org.sharpler.glag.records.GcName;
 import org.sharpler.glag.records.SafepointLogRecord;
 import org.sharpler.glag.util.TimeUtils;
 
-public final class HtmlOutput {
+public final class HtmlFullOutput {
     private final Path output;
 
-    public HtmlOutput(Path output) {
+    public HtmlFullOutput(Path output) {
         this.output = output;
     }
 

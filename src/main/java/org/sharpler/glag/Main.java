@@ -10,11 +10,11 @@ import org.sharpler.glag.aggregations.Aggregates;
 import org.sharpler.glag.aggregations.GcLog;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.aggregations.SafepointLog;
-import org.sharpler.glag.output.ConsoleOutput;
-import org.sharpler.glag.output.HtmlAggregatesOutput;
-import org.sharpler.glag.output.HtmlOutput;
-import org.sharpler.glag.output.MdAggregatesOutput;
-import org.sharpler.glag.output.MdOutput;
+import org.sharpler.glag.output.console.ConsoleOutput;
+import org.sharpler.glag.output.html.HtmlAggregatesOutput;
+import org.sharpler.glag.output.html.HtmlFullOutput;
+import org.sharpler.glag.output.md.MdAggregatesOutput;
+import org.sharpler.glag.output.md.MdFullOutput;
 import org.sharpler.glag.parsing.SafepointParser;
 import picocli.CommandLine;
 
@@ -76,9 +76,9 @@ final class Main implements Callable<Integer> {
                 var gclog = GcLog.parse(Files.readAllLines(gcPath));
                 var runtimeEvents = RuntimeEvents.create(gclog, safepoints, thresholdMs);
                 if (useHtml) {
-                    new HtmlOutput(output).print(runtimeEvents, examples);
+                    new HtmlFullOutput(output).print(runtimeEvents, examples);
                 } else {
-                    new MdOutput(output).print(runtimeEvents, examples);
+                    new MdFullOutput(output).print(runtimeEvents, examples);
                 }
             }
         }

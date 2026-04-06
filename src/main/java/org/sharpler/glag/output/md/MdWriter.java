@@ -1,4 +1,4 @@
-package org.sharpler.glag.output;
+package org.sharpler.glag.output.md;
 
 import static java.nio.file.StandardOpenOption.APPEND;
 
@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import org.sharpler.glag.distribution.CumulativeDistributionPoint;
+import org.sharpler.glag.output.OutputUtils;
 
 final class MdWriter {
     private final Path output;
