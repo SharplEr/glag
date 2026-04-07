@@ -55,6 +55,7 @@
           <release>25</release>
           <showWarnings>true</showWarnings>
           <compilerArgs>
+            <arg>-Xlint:deprecation</arg>
             <arg>-XDcompilePolicy=simple</arg>
             <arg>--should-stop=ifError=FLOW</arg>
             <arg>-XDaddTypeAnnotationsToSymbol=true</arg>

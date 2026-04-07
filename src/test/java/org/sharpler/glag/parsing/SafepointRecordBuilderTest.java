@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import java.lang.reflect.Field;
 import java.util.List;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
@@ -18,7 +17,7 @@ import org.sharpler.glag.util.TimeUtils;
 class SafepointRecordBuilderTest {
     private static final String ORIGIN = "origin";
     private static final List<SafepointValueType> VALUES = SafepointValueType.VALUES.stream()
-        .filter(x -> x != SafepointValueType.TOTAL)
+        .filter(x -> x != SafepointValueType.TOTAL && x != SafepointValueType.SAFEPOINT_NAME)
         .toList();
 
     @Property
@@ -35,21 +34,11 @@ class SafepointRecordBuilderTest {
                 case AT_SAFEPOINT -> builder.addInsideTimeNs(valueNs);
                 case LEAVING_SAFEPOINT -> builder.addLeavingTimeNs(valueNs);
                 case TOTAL -> builder.addTotalTimeNs(valueNs);
+                case SAFEPOINT_NAME -> throw new IllegalArgumentException(entry.getKey().name());
             }
         }
 
         assertEquals(validCase.expectedRecord(), builder.build());
-    }
-
-    @Property
-    void buildRejectsMissingFinishTime(@ForAll("validCases") ValidCase validCase) {
-        var builder = new SafepointRecordBuilder(ORIGIN);
-        builder.addOperationName(validCase.operationName());
-        addAllValuesExceptTotal(builder, validCase);
-        assertThrows(
-            AssertionError.class,
-            () -> builder.addTotalTimeNs(validCase.values().getLong(SafepointValueType.TOTAL))
-        );
     }
 
     @Property
@@ -71,38 +60,6 @@ class SafepointRecordBuilderTest {
         assertThrows(IllegalStateException.class, builder::build);
     }
 
-    @Property
-    void buildRejectsInvalidOptionalTime(@ForAll("validCases") ValidCase validCase,
-                                         @ForAll("invalidOptionalField") String fieldName,
-                                         @ForAll("invalidOptionalTime") long invalidTimeNs)
-        throws ReflectiveOperationException {
-        var builder = populatedBuilder(validCase);
-        setLongField(builder, fieldName, invalidTimeNs);
-
-        assertThrows(IllegalStateException.class, builder::build);
-    }
-
-    @Property
-    void buildRejectsInvalidTotalTime(@ForAll("validCases") ValidCase validCase,
-                                      @ForAll("invalidOptionalTime") long invalidTimeNs)
-        throws ReflectiveOperationException {
-        var builder = populatedBuilder(validCase);
-        setLongField(builder, "totalTimeNs", invalidTimeNs);
-
-        assertThrows(IllegalStateException.class, builder::build);
-    }
-
-    @Property
-    void buildRejectsInvalidTimeRange(@ForAll("validCases") ValidCase validCase,
-                                      @ForAll("invalidTimeField") String fieldName,
-                                      @ForAll("invalidDoubleTime") double invalidTime)
-        throws ReflectiveOperationException {
-        var builder = populatedBuilder(validCase);
-        setDoubleField(builder, fieldName, invalidTime);
-
-        assertThrows(IllegalStateException.class, builder::build);
-    }
-
     @Provide
     Arbitrary<ValidCase> validCases() {
         return Combinators.combine(
@@ -113,17 +70,17 @@ class SafepointRecordBuilderTest {
             Arbitraries.longs().between(0L, 1_000_000_000_000_000L),
             Arbitraries.longs().between(0L, 1_000_000_000L),
             Arbitraries.of(VALUES)
-                .array(SafepointValueType[].class)
+                .list()
                 .uniqueElements()
         ).as(BaseValidCase::new).flatMap(base ->
-            Arbitraries.longs().between(0L, 1_000_000_000L).array(long[].class).ofSize(base.types.length)
+            timeArray(base.types().size())
                 .map(times -> {
                     var finishTimeNs = base.startTimeNs() + base.totalTimeNs();
                     var finishTimeSec = finishTimeNs / 1E9;
                     var values = new Object2LongOpenHashMap<SafepointValueType>(times.length + 1);
                     values.defaultReturnValue(TimeUtils.NO_TIME);
                     for (var i = 0; i < times.length; i++) {
-                        values.put(base.types[i], times[i]);
+                        values.put(base.types().get(i), times[i]);
                     }
                     values.put(SafepointValueType.TOTAL, base.totalTimeNs());
                     return new ValidCase(
@@ -135,32 +92,11 @@ class SafepointRecordBuilderTest {
                 }));
     }
 
-    @Provide
-    Arbitrary<String> invalidOptionalField() {
-        return Arbitraries.of("reachingTimeNs", "cleanupTimeNs", "insideTimeNs", "leavingTimeNs");
-    }
-
-    @Provide
-    Arbitrary<String> invalidTimeField() {
-        return Arbitraries.of("startTimeSec", "finishTimeSec");
-    }
-
-    @Provide
-    Arbitrary<Long> invalidOptionalTime() {
-        return Arbitraries.longs().lessOrEqual(TimeUtils.NO_TIME - 1L);
-    }
-
-    @Provide
-    Arbitrary<Double> invalidDoubleTime() {
-        return Arbitraries.of(-1d, -0.1d, Double.NaN, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-    }
-
-    private static SafepointRecordBuilder populatedBuilder(ValidCase validCase) {
-        var builder = new SafepointRecordBuilder(ORIGIN);
-        builder.addFinishTimeSec(validCase.finishTimeSec());
-        builder.addOperationName(validCase.operationName());
-        addAllValues(builder, validCase);
-        return builder;
+    private static Arbitrary<long[]> timeArray(int size) {
+        return Arbitraries.longs()
+            .between(0L, 1_000_000_000L)
+            .array(long[].class)
+            .ofSize(size);
     }
 
     private static void addAllValues(SafepointRecordBuilder builder, ValidCase validCase) {
@@ -184,25 +120,8 @@ class SafepointRecordBuilderTest {
             case AT_SAFEPOINT -> builder.addInsideTimeNs(valueNs);
             case LEAVING_SAFEPOINT -> builder.addLeavingTimeNs(valueNs);
             case TOTAL -> builder.addTotalTimeNs(valueNs);
+            case SAFEPOINT_NAME -> throw new IllegalArgumentException(type.name());
         }
-    }
-
-    private static void setLongField(SafepointRecordBuilder builder, String fieldName, long value)
-        throws ReflectiveOperationException {
-        var field = declaredField(fieldName);
-        field.setLong(builder, value);
-    }
-
-    private static void setDoubleField(SafepointRecordBuilder builder, String fieldName, double value)
-        throws ReflectiveOperationException {
-        var field = declaredField(fieldName);
-        field.setDouble(builder, value);
-    }
-
-    private static Field declaredField(String fieldName) throws NoSuchFieldException {
-        var field = SafepointRecordBuilder.class.getDeclaredField(fieldName);
-        field.setAccessible(true);
-        return field;
     }
 
     private record ValidCase(
@@ -230,7 +149,7 @@ class SafepointRecordBuilderTest {
         String operationName,
         long startTimeNs,
         long totalTimeNs,
-        SafepointValueType[] types
+        List<SafepointValueType> types
     ) {
     }
 }

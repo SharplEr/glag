@@ -46,7 +46,8 @@ class GcParserTest {
 
     @Test
     void parseWithNonTimestampDecoratorEndingInS() {
-        var line = "[2026-04-07T15:37:47.079+0000][8.869s][debug][gc,refine,stats] GC(0) Mutator refinement: 0.00ms, refined: 0, precleaned: 0, dirtied: 777";
+        var line = "[2026-04-07T15:37:47.079+0000][8.869s][debug][gc,refine,stats] "
+            + "GC(0) Mutator refinement: 0.00ms, refined: 0, precleaned: 0, dirtied: 777";
 
         assertEquals(new GcLogRecord(line, 8.869, 0), GcParser.parse(line));
     }
