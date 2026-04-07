@@ -25,7 +25,7 @@ final class UptimeDecorators {
 
             if (unit != null) {
                 switch (unit) {
-                    case SECONDS -> seconds = JavaDoubleParser.parseDouble(line, valueStart, end - valueStart - 1);
+                    case SECONDS -> seconds = parseDouble(line, valueStart, end - valueStart - 1);
                     case MILLIS -> millis = Long.parseLong(line, valueStart, end - 2, 10) / 1E3;
                     case NANOS -> nanos = Long.parseLong(line, valueStart, end - 2, 10) / 1E9;
                 }
@@ -42,6 +42,19 @@ final class UptimeDecorators {
         }
 
         return Double.NaN;
+    }
+
+    private static double parseDouble(CharSequence line, int offset, int length) {
+        try {
+            return JavaDoubleParser.parseDouble(line, offset, length);
+        } catch (NumberFormatException e) {
+            var verboseException = new NumberFormatException(
+                "Failed to parse subSequence '%s' as double in line %s"
+                    .formatted(line.subSequence(offset, offset + length), line)
+            );
+            verboseException.addSuppressed(e);
+            throw verboseException;
+        }
     }
 
     static int skipLeadingDecorators(String line) {

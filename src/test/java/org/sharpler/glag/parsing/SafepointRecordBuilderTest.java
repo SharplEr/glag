@@ -1,8 +1,10 @@
 package org.sharpler.glag.parsing;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import java.lang.reflect.Field;
 import java.util.List;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
@@ -39,6 +41,68 @@ class SafepointRecordBuilderTest {
         assertEquals(validCase.expectedRecord(), builder.build());
     }
 
+    @Property
+    void buildRejectsMissingFinishTime(@ForAll("validCases") ValidCase validCase) {
+        var builder = new SafepointRecordBuilder(ORIGIN);
+        builder.addOperationName(validCase.operationName());
+        addAllValuesExceptTotal(builder, validCase);
+        assertThrows(
+            AssertionError.class,
+            () -> builder.addTotalTimeNs(validCase.values().getLong(SafepointValueType.TOTAL))
+        );
+    }
+
+    @Property
+    void buildRejectsMissingOperationName(@ForAll("validCases") ValidCase validCase) {
+        var builder = new SafepointRecordBuilder(ORIGIN);
+        builder.addFinishTimeSec(validCase.finishTimeSec());
+        addAllValues(builder, validCase);
+
+        assertThrows(IllegalStateException.class, builder::build);
+    }
+
+    @Property
+    void buildRejectsMissingTotalTime(@ForAll("validCases") ValidCase validCase) {
+        var builder = new SafepointRecordBuilder(ORIGIN);
+        builder.addFinishTimeSec(validCase.finishTimeSec());
+        builder.addOperationName(validCase.operationName());
+        addAllValuesExceptTotal(builder, validCase);
+
+        assertThrows(IllegalStateException.class, builder::build);
+    }
+
+    @Property
+    void buildRejectsInvalidOptionalTime(@ForAll("validCases") ValidCase validCase,
+                                         @ForAll("invalidOptionalField") String fieldName,
+                                         @ForAll("invalidOptionalTime") long invalidTimeNs)
+        throws ReflectiveOperationException {
+        var builder = populatedBuilder(validCase);
+        setLongField(builder, fieldName, invalidTimeNs);
+
+        assertThrows(IllegalStateException.class, builder::build);
+    }
+
+    @Property
+    void buildRejectsInvalidTotalTime(@ForAll("validCases") ValidCase validCase,
+                                      @ForAll("invalidOptionalTime") long invalidTimeNs)
+        throws ReflectiveOperationException {
+        var builder = populatedBuilder(validCase);
+        setLongField(builder, "totalTimeNs", invalidTimeNs);
+
+        assertThrows(IllegalStateException.class, builder::build);
+    }
+
+    @Property
+    void buildRejectsInvalidTimeRange(@ForAll("validCases") ValidCase validCase,
+                                      @ForAll("invalidTimeField") String fieldName,
+                                      @ForAll("invalidDoubleTime") double invalidTime)
+        throws ReflectiveOperationException {
+        var builder = populatedBuilder(validCase);
+        setDoubleField(builder, fieldName, invalidTime);
+
+        assertThrows(IllegalStateException.class, builder::build);
+    }
+
     @Provide
     Arbitrary<ValidCase> validCases() {
         return Combinators.combine(
@@ -69,6 +133,76 @@ class SafepointRecordBuilderTest {
                         values
                     );
                 }));
+    }
+
+    @Provide
+    Arbitrary<String> invalidOptionalField() {
+        return Arbitraries.of("reachingTimeNs", "cleanupTimeNs", "insideTimeNs", "leavingTimeNs");
+    }
+
+    @Provide
+    Arbitrary<String> invalidTimeField() {
+        return Arbitraries.of("startTimeSec", "finishTimeSec");
+    }
+
+    @Provide
+    Arbitrary<Long> invalidOptionalTime() {
+        return Arbitraries.longs().lessOrEqual(TimeUtils.NO_TIME - 1L);
+    }
+
+    @Provide
+    Arbitrary<Double> invalidDoubleTime() {
+        return Arbitraries.of(-1d, -0.1d, Double.NaN, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+    }
+
+    private static SafepointRecordBuilder populatedBuilder(ValidCase validCase) {
+        var builder = new SafepointRecordBuilder(ORIGIN);
+        builder.addFinishTimeSec(validCase.finishTimeSec());
+        builder.addOperationName(validCase.operationName());
+        addAllValues(builder, validCase);
+        return builder;
+    }
+
+    private static void addAllValues(SafepointRecordBuilder builder, ValidCase validCase) {
+        for (var entry : validCase.values().object2LongEntrySet()) {
+            addValue(builder, entry.getKey(), entry.getLongValue());
+        }
+    }
+
+    private static void addAllValuesExceptTotal(SafepointRecordBuilder builder, ValidCase validCase) {
+        for (var entry : validCase.values().object2LongEntrySet()) {
+            if (entry.getKey() != SafepointValueType.TOTAL) {
+                addValue(builder, entry.getKey(), entry.getLongValue());
+            }
+        }
+    }
+
+    private static void addValue(SafepointRecordBuilder builder, SafepointValueType type, long valueNs) {
+        switch (type) {
+            case REACHING_SAFEPOINT -> builder.addReachingTimeNs(valueNs);
+            case CLEANUP -> builder.addCleanupTimeNs(valueNs);
+            case AT_SAFEPOINT -> builder.addInsideTimeNs(valueNs);
+            case LEAVING_SAFEPOINT -> builder.addLeavingTimeNs(valueNs);
+            case TOTAL -> builder.addTotalTimeNs(valueNs);
+        }
+    }
+
+    private static void setLongField(SafepointRecordBuilder builder, String fieldName, long value)
+        throws ReflectiveOperationException {
+        var field = declaredField(fieldName);
+        field.setLong(builder, value);
+    }
+
+    private static void setDoubleField(SafepointRecordBuilder builder, String fieldName, double value)
+        throws ReflectiveOperationException {
+        var field = declaredField(fieldName);
+        field.setDouble(builder, value);
+    }
+
+    private static Field declaredField(String fieldName) throws NoSuchFieldException {
+        var field = SafepointRecordBuilder.class.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field;
     }
 
     private record ValidCase(
