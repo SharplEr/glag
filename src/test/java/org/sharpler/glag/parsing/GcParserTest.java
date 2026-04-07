@@ -45,6 +45,13 @@ class GcParserTest {
     }
 
     @Test
+    void parseWithNonTimestampDecoratorEndingInS() {
+        var line = "[2026-04-07T15:37:47.079+0000][8.869s][debug][gc,refine,stats] GC(0) Mutator refinement: 0.00ms, refined: 0, precleaned: 0, dirtied: 777";
+
+        assertEquals(new GcLogRecord(line, 8.869, 0), GcParser.parse(line));
+    }
+
+    @Test
     void parseInterleavedGcOperations() {
         var first = "[0.068s][info][gc] GC(0) Pause Young (Concurrent Start) (G1 Humongous Allocation) 7M->6M(20M) 7.230ms";
         var second = "[0.069s][info][gc] GC(1) Concurrent Cycle";

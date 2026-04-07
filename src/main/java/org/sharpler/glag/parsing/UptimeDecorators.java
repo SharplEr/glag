@@ -76,14 +76,48 @@ final class UptimeDecorators {
         }
         if (length >= 3) {
             var unit = line.charAt(end - 2);
-            if (unit == 'm') {
+            if (unit == 'm' && isAsciiDigits(line, start, end - 2)) {
                 return TimestampUnit.MILLIS;
             }
-            if (unit == 'n') {
+            if (unit == 'n' && isAsciiDigits(line, start, end - 2)) {
                 return TimestampUnit.NANOS;
             }
         }
-        return TimestampUnit.SECONDS;
+        return isAsciiDecimal(line, start, end - 1) ? TimestampUnit.SECONDS : null;
+    }
+
+    private static boolean isAsciiDigits(String line, int start, int end) {
+        if (start >= end) {
+            return false;
+        }
+        for (var i = start; i < end; i++) {
+            if (!Character.isDigit(line.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isAsciiDecimal(String line, int start, int end) {
+        if (start >= end) {
+            return false;
+        }
+
+        var sawDigit = false;
+        var sawDot = false;
+        for (var i = start; i < end; i++) {
+            var current = line.charAt(i);
+            if (Character.isDigit(current)) {
+                sawDigit = true;
+                continue;
+            }
+            if (current == '.' && !sawDot) {
+                sawDot = true;
+                continue;
+            }
+            return false;
+        }
+        return sawDigit;
     }
 
     private enum TimestampUnit {
