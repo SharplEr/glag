@@ -2,7 +2,8 @@ package org.sharpler.glag.parsing;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import java.util.List;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import net.jqwik.api.Combinators;
@@ -14,6 +15,9 @@ import org.sharpler.glag.util.TimeUtils;
 
 class SafepointRecordBuilderTest {
     private static final String ORIGIN = "origin";
+    private static final List<SafepointValueType> VALUES = SafepointValueType.VALUES.stream()
+        .filter(x -> x != SafepointValueType.TOTAL)
+        .toList();
 
     @Property
     void buildCreatesExpectedRecordForValidInput(@ForAll("validCases") ValidCase validCase) {
@@ -21,14 +25,14 @@ class SafepointRecordBuilderTest {
         builder.addFinishTimeSec(validCase.finishTimeSec());
         builder.addOperationName(validCase.operationName());
 
-        for (var value : validCase.values()) {
-            switch (value.type()) {
-                case REACHING_SAFEPOINT -> builder.addReachingTimeNs(value.valueNs());
-                case CLEANUP -> builder.addCleanupTimeNs(value.valueNs());
-                case AT_SAFEPOINT -> builder.addInsideTimeNs(value.valueNs());
-                case LEAVING_SAFEPOINT -> builder.addLeavingTimeNs(value.valueNs());
-                case TOTAL -> builder.addTotalTimeNs(value.valueNs());
-                default -> throw new IllegalArgumentException(value.type().name());
+        for (var entry : validCase.values().object2LongEntrySet()) {
+            var valueNs = entry.getLongValue();
+            switch (entry.getKey()) {
+                case REACHING_SAFEPOINT -> builder.addReachingTimeNs(valueNs);
+                case CLEANUP -> builder.addCleanupTimeNs(valueNs);
+                case AT_SAFEPOINT -> builder.addInsideTimeNs(valueNs);
+                case LEAVING_SAFEPOINT -> builder.addLeavingTimeNs(valueNs);
+                case TOTAL -> builder.addTotalTimeNs(valueNs);
             }
         }
 
@@ -44,46 +48,34 @@ class SafepointRecordBuilderTest {
                 .ofMaxLength(32),
             Arbitraries.longs().between(0L, 1_000_000_000_000_000L),
             Arbitraries.longs().between(0L, 1_000_000_000L),
-            Arbitraries.of(false, true),
-            Arbitraries.of(false, true),
-            Arbitraries.of(false, true),
-            Arbitraries.of(false, true)
-        ).as(BaseValidCase::new).flatMap(base -> Combinators.combine(
-            Arbitraries.longs().between(0L, 1_000_000_000L),
-            Arbitraries.longs().between(0L, 1_000_000_000L),
-            Arbitraries.longs().between(0L, 1_000_000_000L),
-            Arbitraries.longs().between(0L, 1_000_000_000L)
-        ).as((reachingTimeNs, cleanupTimeNs, insideTimeNs, leavingTimeNs) -> {
-            var finishTimeNs = base.startTimeNs() + base.totalTimeNs();
-            var finishTimeSec = finishTimeNs / 1E9;
-            var values = new ArrayList<TypeValue>(5);
-            if (base.hasReaching()) {
-                values.add(new TypeValue(SafepointValueType.REACHING_SAFEPOINT, reachingTimeNs));
-            }
-            if (base.hasCleanup()) {
-                values.add(new TypeValue(SafepointValueType.CLEANUP, cleanupTimeNs));
-            }
-            if (base.hasInside()) {
-                values.add(new TypeValue(SafepointValueType.AT_SAFEPOINT, insideTimeNs));
-            }
-            if (base.hasLeaving()) {
-                values.add(new TypeValue(SafepointValueType.LEAVING_SAFEPOINT, leavingTimeNs));
-            }
-            values.add(new TypeValue(SafepointValueType.TOTAL, base.totalTimeNs()));
-            return new ValidCase(
-                finishTimeSec - base.totalTimeNs() / 1E9,
-                finishTimeSec,
-                base.operationName(),
-                values.toArray(TypeValue[]::new)
-            );
-        }));
+            Arbitraries.of(VALUES)
+                .array(SafepointValueType[].class)
+                .uniqueElements()
+        ).as(BaseValidCase::new).flatMap(base ->
+            Arbitraries.longs().between(0L, 1_000_000_000L).array(long[].class).ofSize(base.types.length)
+                .map(times -> {
+                    var finishTimeNs = base.startTimeNs() + base.totalTimeNs();
+                    var finishTimeSec = finishTimeNs / 1E9;
+                    var values = new Object2LongOpenHashMap<SafepointValueType>(times.length + 1);
+                    values.defaultReturnValue(TimeUtils.NO_TIME);
+                    for (var i = 0; i < times.length; i++) {
+                        values.put(base.types[i], times[i]);
+                    }
+                    values.put(SafepointValueType.TOTAL, base.totalTimeNs());
+                    return new ValidCase(
+                        finishTimeSec - base.totalTimeNs() / 1E9,
+                        finishTimeSec,
+                        base.operationName(),
+                        values
+                    );
+                }));
     }
 
     private record ValidCase(
         double startTimeSec,
         double finishTimeSec,
         String operationName,
-        TypeValue[] values
+        Object2LongOpenHashMap<SafepointValueType> values
     ) {
         SafepointLogRecord expectedRecord() {
             return new SafepointLogRecord(
@@ -91,29 +83,12 @@ class SafepointRecordBuilderTest {
                 finishTimeSec,
                 ORIGIN,
                 operationName,
-                optionalTime(SafepointValueType.REACHING_SAFEPOINT),
-                optionalTime(SafepointValueType.CLEANUP),
-                optionalTime(SafepointValueType.AT_SAFEPOINT),
-                optionalTime(SafepointValueType.LEAVING_SAFEPOINT),
-                requiredTime(SafepointValueType.TOTAL)
+                values.getLong(SafepointValueType.REACHING_SAFEPOINT),
+                values.getLong(SafepointValueType.CLEANUP),
+                values.getLong(SafepointValueType.AT_SAFEPOINT),
+                values.getLong(SafepointValueType.LEAVING_SAFEPOINT),
+                values.getLong(SafepointValueType.TOTAL)
             );
-        }
-
-        private long optionalTime(SafepointValueType type) {
-            return findTime(type, TimeUtils.NO_TIME);
-        }
-
-        private long requiredTime(SafepointValueType type) {
-            return findTime(type, TimeUtils.NO_TIME);
-        }
-
-        private long findTime(SafepointValueType type, long defaultValue) {
-            for (var value : values) {
-                if (value.type() == type) {
-                    return value.valueNs();
-                }
-            }
-            return defaultValue;
         }
     }
 
@@ -121,13 +96,7 @@ class SafepointRecordBuilderTest {
         String operationName,
         long startTimeNs,
         long totalTimeNs,
-        boolean hasReaching,
-        boolean hasCleanup,
-        boolean hasInside,
-        boolean hasLeaving
+        SafepointValueType[] types
     ) {
-    }
-
-    private record TypeValue(SafepointValueType type, long valueNs) {
     }
 }
