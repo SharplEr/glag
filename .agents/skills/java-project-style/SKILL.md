@@ -258,6 +258,151 @@ Prefer code that is easy to scan.
 * prefer guard clauses over deeply nested conditionals,
 * keep methods focused,
 * avoid hidden side effects,
+* make important invariants and boundary checks easy to spot.
+
+## Testing strategy
+
+Tests are not written to maximize JaCoCo mechanically. Tests are written to make it hard to find a counterexample for the code.
+
+Use JaCoCo as a hint about which cases are not exercised yet, not as the source of truth for what tests should exist.
+
+### What JaCoCo is good for
+
+JaCoCo is useful for:
+
+* noticing missing boundary cases,
+* finding branches that were never exercised,
+* seeing which public parsing or aggregation paths have no tests yet.
+
+JaCoCo is not the goal. It may disagree with the real testing goal when some code is intentionally unreachable or only exists to strengthen invariants.
+
+### Intentionally uncovered code
+
+Some code should not be forced to 100% coverage:
+
+* `assert`-based invariant checks,
+* static startup checks over statically known values,
+* enum validation and similar “compile-time checks implemented at runtime”.
+
+Examples in this project:
+
+* [`SafepointValueType`](../../../../src/main/java/org/sharpler/glag/parsing/SafepointValueType.java) has static validation of enum prefixes. This protects the index design. It is not useful to write tests that try to make this startup check fail by bending the language or using custom classloading tricks.
+* `assert` checks in hot code are there to catch internal inconsistencies earlier during tests. If JaCoCo does not count the failing branch of an `assert`, that is JaCoCo's limitation, not a testing task.
+
+Do not write tests whose only purpose is to make an `assert` fail or to trigger static validation of known source constants. Those are not meaningful behavioral tests.
+
+### Refactor code when tests are hard to write
+
+If a test is awkward to write, first ask whether the production code is shaped correctly.
+
+Typical good sequence:
+
+1. test is hard to write,
+2. refactor code so invalid states become harder or impossible to express,
+3. test becomes simple,
+4. write the test,
+5. if the test finds a real bug, fix the code.
+
+Prefer making invalid states impossible over testing many impossible states.
+
+If an invariant can be established at the parsing boundary or by construction, do that there. After that:
+
+* boundary code should use explicit runtime validation,
+* downstream internal code should usually rely on `assert`.
+
+This keeps runtime validation close to user data and makes the deeper code easier to reason about and easier to test.
+
+Example in this project:
+
+* [`SafepointRecordBuilder`](../../../../src/main/java/org/sharpler/glag/parsing/SafepointRecordBuilder.java) is boundary code that assembles parsed data and performs runtime validation.
+* [`SafepointLogRecord`](../../../../src/main/java/org/sharpler/glag/records/SafepointLogRecord.java) uses `assert` for internal invariants after the builder has established validity.
+
+Tests should focus on the builder’s reachable invalid usage, not on creating impossible internal states inside the record.
+
+### Reflection in tests is a red flag
+
+Do not use reflection to inject invalid state into objects unless the user explicitly asks for white-box tests of an otherwise unreachable state.
+
+Reflection-based tests usually mean one of two things:
+
+* the test is trying to cover impossible states,
+* the production code should be refactored so the behavior can be exercised through its real API.
+
+For this project, reflection in tests should be treated as a strong smell. Prefer deleting such tests and testing reachable states instead.
+
+### Property-based testing guidance
+
+Prefer property-based tests for:
+
+* parsers,
+* data transformations,
+* aggregations,
+* invariants,
+* indexing and matching logic.
+
+However, do not write “two copies of the same algorithm” and compare them. That is not useful unless one side is a trusted reference implementation.
+
+Bad pattern:
+
+* production code computes result,
+* test re-implements the same logic in another method,
+* property asserts both results are equal.
+
+This usually just makes two similar bugs agree with each other.
+
+Better options:
+
+* assert structural invariants of the result,
+* generate inputs with known properties,
+* split one vague property into several focused properties over different input families.
+
+Examples in this project:
+
+* [`CumulativeDistributionBuilderTest`](../../../../src/test/java/org/sharpler/glag/distribution/CumulativeDistributionBuilderTest.java) checks invariants of the produced distribution:
+  * every point must come from the input,
+  * points appear only for a reason,
+  * rounded-equal neighbors must collapse,
+  * the last point must represent the maximum with probability `1.0`.
+  This is much better than duplicating the builder logic in a “reference” helper.
+* [`SafepointRecordBuilderTest`](../../../../src/test/java/org/sharpler/glag/parsing/SafepointRecordBuilderTest.java) generates valid combinations of optional times and checks the constructed record. This is a good pattern for builder-like logic with many combinations.
+
+### Generate inputs with known properties
+
+When a direct oracle is hard to write, design generators so the expected behavior is obvious from construction.
+
+Preferred approach:
+
+* write several smaller properties,
+* each property uses a generator that guarantees a particular shape,
+* assert only the consequences of that shape.
+
+Examples:
+
+* for interval matching, generate definitely overlapping and definitely disjoint intervals in separate properties;
+* for duration formatting, generate separate ranges for `ns`, `µs`, `ms`, and `s`;
+* for parser resolution, generate lines where the type must be known, must be absent, or must prefer a more precise decorator.
+
+This is usually better than one giant randomized property with many conditionals.
+
+### Reachable invalid cases only
+
+When writing negative tests, test only invalid states that are reachable through the intended API.
+
+Good negative tests:
+
+* missing required builder steps,
+* malformed input lines,
+* impossible timestamps coming from user-controlled parsing input,
+* inconsistent boundary data.
+
+Bad negative tests:
+
+* corrupting private fields,
+* bypassing construction rules,
+* forcing enum startup checks to fail,
+* making internal `assert` branches fail only to satisfy coverage tooling.
+
+If a negative test feels artificial, step back and ask whether it is actually testing a user-visible failure mode.
 * prefer explicit names over cleverness,
 * prefer direct code over abstraction layers when the abstraction does not buy much.
 
