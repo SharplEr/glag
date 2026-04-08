@@ -64,8 +64,12 @@ enum SafepointValueType {
         return line.substring(start + prefix.length(), end - suffix.length());
     }
 
-    long parseLong(String line, int start, int end) {
-        return Long.parseLong(line, start + prefix.length(), end - suffix.length(), 10);
+    long parseNanos(String line, int start, int end) {
+        var value = Long.parseLong(line, start + prefix.length(), end - suffix.length(), 10);
+        if (value < 0L) {
+            throw new IllegalArgumentException("Nanoseconds should be non-negative: " + value);
+        }
+        return value;
     }
 
     private static int key(char second, char third) {

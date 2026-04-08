@@ -53,11 +53,11 @@ public final class SafepointParser {
         var origin = builder.origin();
         switch (type) {
             case SAFEPOINT_NAME -> builder.addOperationName(SAFEPOINT_NAME.parseString(origin, start, end));
-            case REACHING_SAFEPOINT -> builder.addReachingTimeNs(REACHING_SAFEPOINT.parseLong(origin, start, end));
-            case CLEANUP -> builder.addCleanupTimeNs(CLEANUP.parseLong(origin, start, end));
-            case AT_SAFEPOINT -> builder.addInsideTimeNs(AT_SAFEPOINT.parseLong(origin, start, end));
-            case LEAVING_SAFEPOINT -> builder.addLeavingTimeNs(LEAVING_SAFEPOINT.parseLong(origin, start, end));
-            case TOTAL -> builder.addTotalTimeNs(TOTAL.parseLong(origin, start, end));
+            case REACHING_SAFEPOINT -> builder.addReachingTimeNs(REACHING_SAFEPOINT.parseNanos(origin, start, end));
+            case CLEANUP -> builder.addCleanupTimeNs(CLEANUP.parseNanos(origin, start, end));
+            case AT_SAFEPOINT -> builder.addInsideTimeNs(AT_SAFEPOINT.parseNanos(origin, start, end));
+            case LEAVING_SAFEPOINT -> builder.addLeavingTimeNs(LEAVING_SAFEPOINT.parseNanos(origin, start, end));
+            case TOTAL -> builder.addTotalTimeNs(TOTAL.parseNanos(origin, start, end));
         }
     }
 }

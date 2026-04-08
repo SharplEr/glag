@@ -3,6 +3,7 @@ package org.sharpler.glag.parsing;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import net.jqwik.api.Arbitraries;
@@ -57,15 +58,28 @@ class SafepointValueTypeTest {
     }
 
     @Property
-    void parseLong(
-        @ForAll("types") SafepointValueType type,
-        @ForAll @LongRange(min = Long.MIN_VALUE, max = Long.MAX_VALUE) long value,
+    void parseNanos(
+        @ForAll("nanosTypes") SafepointValueType type,
+        @ForAll @LongRange(min = 0, max = Long.MAX_VALUE) long value,
         @ForAll @IntRange(min = 1, max = 8) int start
     ) {
         var prefix = "_".repeat(start);
         var suffix = "_".repeat(start + 1);
         var str = prefix + type.prefix + value + type.suffix + suffix;
-        assertEquals(value, type.parseLong(str, start, str.length() - suffix.length()));
+        assertEquals(value, type.parseNanos(str, start, str.length() - suffix.length()));
+    }
+
+    @Property
+    void parseNanosRejectsNegativeValues(
+        @ForAll("nanosTypes") SafepointValueType type,
+        @ForAll @LongRange(min = Long.MIN_VALUE, max = -1) long value,
+        @ForAll @IntRange(min = 1, max = 8) int start
+    ) {
+        var prefix = "_".repeat(start);
+        var suffix = "_".repeat(start + 1);
+        var str = prefix + type.prefix + value + type.suffix + suffix;
+
+        assertThrows(IllegalArgumentException.class, () -> type.parseNanos(str, start, str.length() - suffix.length()));
     }
 
     @Property
@@ -110,6 +124,13 @@ class SafepointValueTypeTest {
     @Provide
     Arbitrary<SafepointValueType> types() {
         return Arbitraries.of(SafepointValueType.VALUES);
+    }
+
+    @Provide
+    Arbitrary<SafepointValueType> nanosTypes() {
+        return Arbitraries.of(SafepointValueType.VALUES.stream()
+            .filter(type -> type != SafepointValueType.SAFEPOINT_NAME)
+            .toList());
     }
 
     @Provide
