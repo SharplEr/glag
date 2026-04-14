@@ -478,6 +478,11 @@ When refactoring:
 * keep abstractions composable,
 * do not introduce unnecessary framework-like structure.
 
+Do not treat the same call appearing in several mutually exclusive branches as automatic duplication. First check actual execution flow:
+
+* if each scenario evaluates the call at most once, lifting it upward may only add unnecessary work,
+* only hoist a computation when it reduces real duplication without making more scenarios pay for it.
+
 Prefer refactorings that improve both correctness and maintainability without regressing performance.
 
 ## When uncertain
