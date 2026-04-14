@@ -24,24 +24,18 @@ final class SafepointRecordBuilder {
         return origin;
     }
 
-    void addFinishTimeSec(double finishTimeSec) {
-        assert TimeUtils.isTime(finishTimeSec) : "Ivalid finish time '%f'".formatted(startTimeSec);
-
-        if (!Double.isNaN(this.finishTimeSec)) {
-            throw new IllegalStateException("finishTimeSec already set as %f".formatted(this.finishTimeSec));
+    @Nullable SafepointLogRecord buildOrNull() {
+        if (!TimeUtils.isTime(startTimeSec)) {
+            return null;
         }
-        this.finishTimeSec = finishTimeSec;
-    }
-
-    SafepointLogRecord build() {
-        if (!TimeUtils.isTime(startTimeSec) || !TimeUtils.isTime(finishTimeSec)) {
-            throw new IllegalStateException("Safepoint time range should be defined");
+        if (!TimeUtils.isTime(finishTimeSec)) {
+            return null;
         }
         if (operationName == null) {
-            throw new IllegalStateException("Safepoint operation name should be defined");
+            return null;
         }
         if (totalTimeNs < 0L) {
-            throw new IllegalStateException("Safepoint total time should be defined");
+            return null;
         }
         return new SafepointLogRecord(
             startTimeSec,
@@ -56,68 +50,74 @@ final class SafepointRecordBuilder {
         );
     }
 
-    private void addStartTimeSec(double startTimeSec) {
-        if (!Double.isNaN(this.startTimeSec)) {
-            throw new IllegalStateException("startTimeSec already set as %f".formatted(this.startTimeSec));
+    boolean addFinishTimeSec(double finishTimeSec) {
+        assert TimeUtils.isTime(finishTimeSec);
+
+        if (!Double.isNaN(this.finishTimeSec)) {
+            return false;
         }
-        if (!TimeUtils.isTime(startTimeSec)) {
-            throw new IllegalArgumentException("Ivalid start time '%f'".formatted(startTimeSec));
+        this.finishTimeSec = finishTimeSec;
+        return true;
+    }
+
+    private boolean addStartTimeSec(double startTimeSec) {
+        if (!Double.isNaN(this.startTimeSec) || !TimeUtils.isTime(startTimeSec)) {
+            return false;
         }
         this.startTimeSec = startTimeSec;
+        return true;
     }
 
-    void addOperationName(String operationName) {
+    boolean addOperationName(String operationName) {
         if (this.operationName != null) {
-            throw new IllegalStateException("operationName already set as %s".formatted(this.operationName));
+            return false;
         }
         this.operationName = operationName;
+        return true;
     }
 
-    void addReachingTimeNs(long reachingTimeNs) {
+    boolean addReachingTimeNs(long reachingTimeNs) {
         assert reachingTimeNs >= 0L;
-
         if (this.reachingTimeNs != TimeUtils.NO_TIME) {
-            throw new IllegalStateException("reachingTimeNs already set as %d".formatted(this.reachingTimeNs));
+            return false;
         }
         this.reachingTimeNs = reachingTimeNs;
+        return true;
     }
 
-    void addCleanupTimeNs(long cleanupTimeNs) {
+    boolean addCleanupTimeNs(long cleanupTimeNs) {
         assert cleanupTimeNs >= 0L;
-
         if (this.cleanupTimeNs != TimeUtils.NO_TIME) {
-            throw new IllegalStateException("cleanupTimeNs already set as %d".formatted(this.cleanupTimeNs));
+            return false;
         }
         this.cleanupTimeNs = cleanupTimeNs;
+        return true;
     }
 
-    void addInsideTimeNs(long insideTimeNs) {
+    boolean addInsideTimeNs(long insideTimeNs) {
         assert insideTimeNs >= 0L;
-
         if (this.insideTimeNs != TimeUtils.NO_TIME) {
-            throw new IllegalStateException("insideTimeNs already set as %d".formatted(this.insideTimeNs));
+            return false;
         }
-
         this.insideTimeNs = insideTimeNs;
+        return true;
     }
 
-    void addLeavingTimeNs(long leavingTimeNs) {
+    boolean addLeavingTimeNs(long leavingTimeNs) {
         assert leavingTimeNs >= 0L;
-
         if (this.leavingTimeNs != TimeUtils.NO_TIME) {
-            throw new IllegalStateException("leavingTimeNs already set as %d".formatted(this.leavingTimeNs));
+            return false;
         }
         this.leavingTimeNs = leavingTimeNs;
+        return true;
     }
 
-    void addTotalTimeNs(long totalTimeNs) {
+    boolean addTotalTimeNs(long totalTimeNs) {
         assert totalTimeNs >= 0L;
-
         if (this.totalTimeNs != TimeUtils.NO_TIME) {
-            throw new IllegalStateException("totalTimeNs already set as %d".formatted(this.totalTimeNs));
+            return false;
         }
-
         this.totalTimeNs = totalTimeNs;
-        addStartTimeSec(finishTimeSec - totalTimeNs / 1E9);
+        return addStartTimeSec(finishTimeSec - totalTimeNs / 1E9);
     }
 }

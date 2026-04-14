@@ -1,6 +1,7 @@
 package org.sharpler.glag.parsing;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -205,6 +206,39 @@ class SafepointParserTest {
             ),
             result
         );
+    }
+
+    @Test
+    void parseReturnsNullWhenTimestampCannotBeExtracted() {
+        var line =
+            "[info][safepoint] "
+                + "Safepoint \"ICBufferFull\", Reaching safepoint: 69282 ns, Cleanup: 130048 ns, "
+                + "At safepoint: 8449 ns, Total: 207779 ns";
+
+        assertNull(SafepointParser.parse(line));
+    }
+
+    @Test
+    void parseReturnsNullWhenSameValueAppearsTwice() {
+        var line =
+            "[3.412s][info][safepoint] "
+                + "Safepoint \"ICBufferFull\", Reaching safepoint: 1 ns, Reaching safepoint: 2 ns, Total: 207779 ns";
+
+        assertNull(SafepointParser.parse(line));
+    }
+
+    @Test
+    void parseAllSkipsInvalidLines() {
+        var validLine =
+            "[3.412s][info][safepoint] "
+                + "Safepoint \"ICBufferFull\", Reaching safepoint: 69282 ns, Cleanup: 130048 ns, "
+                + "At safepoint: 8449 ns, Total: 207779 ns";
+        var invalidLine =
+            "[info][safepoint] "
+                + "Safepoint \"Broken\", Reaching safepoint: 69282 ns, Cleanup: 130048 ns, "
+                + "At safepoint: 8449 ns, Total: 207779 ns";
+
+        assertEquals(List.of(SafepointParser.parse(validLine)), SafepointParser.parseAll(List.of(validLine, invalidLine)));
     }
 
     @Provide

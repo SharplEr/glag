@@ -260,6 +260,10 @@ Prefer code that is easy to scan.
 * avoid hidden side effects,
 * make important invariants and boundary checks easy to spot.
 
+Prefer the simplest standard library construct that expresses the intent clearly.
+
+Do not reach for a more obscure stream operator or abstraction just to avoid one obvious intermediate concept such as `null` filtering, especially on cold code. For example, prefer `map(...).filter(Objects::nonNull)` over `mapMulti(...)` when the latter does not materially improve the code.
+
 ## Testing strategy
 
 Tests are not written to maximize JaCoCo mechanically. Tests are written to make it hard to find a counterexample for the code.

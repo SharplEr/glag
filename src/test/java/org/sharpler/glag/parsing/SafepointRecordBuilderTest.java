@@ -1,7 +1,7 @@
 package org.sharpler.glag.parsing;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import java.util.List;
@@ -38,7 +38,7 @@ class SafepointRecordBuilderTest {
             }
         }
 
-        assertEquals(validCase.expectedRecord(), builder.build());
+        assertEquals(validCase.expectedRecord(), builder.buildOrNull());
     }
 
     @Property
@@ -47,7 +47,7 @@ class SafepointRecordBuilderTest {
         builder.addFinishTimeSec(validCase.finishTimeSec());
         addAllValues(builder, validCase);
 
-        assertThrows(IllegalStateException.class, builder::build);
+        assertNull(builder.buildOrNull());
     }
 
     @Property
@@ -57,7 +57,7 @@ class SafepointRecordBuilderTest {
         builder.addOperationName(validCase.operationName());
         addAllValuesExceptTotal(builder, validCase);
 
-        assertThrows(IllegalStateException.class, builder::build);
+        assertNull(builder.buildOrNull());
     }
 
     @Provide
