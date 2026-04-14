@@ -13,8 +13,7 @@ public final class GcParser {
     ///
     /// @param line raw GC log line
     /// @return parsed GC record, or `null` if the line is not a GC event
-    @Nullable
-    public static GcLogRecord parse(String line) {
+    public static @Nullable GcLogRecord parse(String line) {
         var timestampSec = UptimeDecorators.parseMostPreciseTimestampSec(line);
         if (Double.isNaN(timestampSec)) {
             return null;
