@@ -184,6 +184,7 @@ final class HtmlWriter {
         var plotWidth = width - left - right;
         var plotHeight = height - top - bottom;
         var maxTimingMs = points.getLast().value() / 1E6;
+        var minTimingMs = points.getFirst().value() / 1E6;
         var normalizedMaxTimingMs = maxTimingMs == 0d ? 1d : maxTimingMs;
 
         html.append("<figure class='chart-card'>");
@@ -194,7 +195,7 @@ final class HtmlWriter {
         html.append("<line x1='").append(format("%.2f", left)).append("' y1='").append(format("%.2f", top + plotHeight)).append("' x2='")
             .append(format("%.2f", left + plotWidth)).append("' y2='").append(format("%.2f", top + plotHeight)).append("' class='axis'/>");
 
-        if (thresholdMs > 0d && thresholdMs <= normalizedMaxTimingMs) {
+        if (thresholdMs > 0d && thresholdMs >= minTimingMs && thresholdMs <= normalizedMaxTimingMs) {
             var thresholdY = top + plotHeight - (thresholdMs / normalizedMaxTimingMs) * plotHeight;
             var thresholdIntersection = findThresholdIntersection(points, thresholdMs);
             html.append("<line x1='").append(format("%.2f", left)).append("' y1='").append(format("%.2f", thresholdY)).append("' x2='")
