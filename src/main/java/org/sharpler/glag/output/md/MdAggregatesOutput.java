@@ -45,7 +45,7 @@ public final class MdAggregatesOutput {
         writer.writef("Average pause period: %.3f sec/op%n%n", aggregate.averagePausePeriodSec());
 
         writer.writef("## Safepoints%n%n");
-        writer.writeDoc(getClass(), OutputUtils.DOCS_PATH.resolve("safepoint").resolve("safepoint.writer"));
+        writer.writeDoc(getClass(), OutputUtils.DOCS_PATH.resolve("safepoint").resolve("safepoint.md"));
         writer.writef("%n%n");
         writer.writeAggregateSection("Total safepoint time", aggregate.totalTimeDistribution(), thresholdMs, 2);
         writer.writeAggregateSection("Time inside a safepoint", aggregate.insideTimeDistribution(), thresholdMs, 2);
@@ -54,7 +54,7 @@ public final class MdAggregatesOutput {
 
         if (aggregate.hasReachingTimeNs()) {
             writer.writef("## Time to safepoint%n%n");
-            writer.writeDoc(getClass(), OutputUtils.DOCS_PATH.resolve("safepoint").resolve("time_to_safepoint.writer"));
+            writer.writeDoc(getClass(), OutputUtils.DOCS_PATH.resolve("safepoint").resolve("time_to_safepoint.md"));
             writer.writef("%n%n");
             writer.writeAggregateSection("Cumulative distribution", aggregate.reachingTimeDistribution(), thresholdMs, 3);
         }
@@ -66,7 +66,7 @@ public final class MdAggregatesOutput {
             var operationAggregate = e.getValue();
 
             writer.writef("### Operation '%s'%n%n", operationName);
-            var description = OutputUtils.DOCS_PATH.resolve("operation").resolve(operationName + ".writer");
+            var description = OutputUtils.DOCS_PATH.resolve("operation").resolve(operationName + ".md");
             if (OutputUtils.docExists(getClass(), description)) {
                 writer.writef("#### Description%n%n");
                 writer.writeDoc(getClass(), description);

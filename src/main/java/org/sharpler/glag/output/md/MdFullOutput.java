@@ -54,7 +54,7 @@ public final class MdFullOutput {
         if (runtimeEvents.gcName() != null) {
             var name = runtimeEvents.gcName().getName();
             writer.writef("%s has been detected.%n%n", name);
-            var gcDescription = OutputUtils.DOCS_PATH.resolve("gc").resolve(name + ".writer");
+            var gcDescription = OutputUtils.DOCS_PATH.resolve("gc").resolve(name + ".md");
             if (OutputUtils.docExists(getClass(), gcDescription)) {
                 writer.writef("## %s%n%n", name);
                 writer.writeDoc(getClass(), gcDescription);
@@ -68,7 +68,7 @@ public final class MdFullOutput {
 
         var thresholdMs = runtimeEvents.thresholdMs();
         writer.writef("## Safepoints%n%n");
-        writer.writeDoc(getClass(), OutputUtils.DOCS_PATH.resolve("safepoint").resolve("safepoint.writer"));
+        writer.writeDoc(getClass(), OutputUtils.DOCS_PATH.resolve("safepoint").resolve("safepoint.md"));
         writer.writef("%n%n");
         writer.writeAggregateSection("Total safepoint time", safepoints.aggregate().totalTimeDistribution(), thresholdMs, 2);
         writer.writeAggregateSection("Time inside a safepoint", safepoints.aggregate().insideTimeDistribution(), thresholdMs, 2);
@@ -82,7 +82,7 @@ public final class MdFullOutput {
             var operationAggregate = e.getValue();
 
             writer.writef("### Operation '%s'%n%n", operationName);
-            var description = OutputUtils.DOCS_PATH.resolve("operation").resolve(operationName + ".writer");
+            var description = OutputUtils.DOCS_PATH.resolve("operation").resolve(operationName + ".md");
             if (OutputUtils.docExists(getClass(), description)) {
                 writer.writef("#### Description%n%n");
                 writer.writeDoc(getClass(), description);
@@ -137,7 +137,7 @@ public final class MdFullOutput {
 
         if (aggregate.hasReachingTimeNs()) {
             writer.writef("## Time to safepoint%n%n");
-            writer.writeDoc(getClass(), OutputUtils.DOCS_PATH.resolve("safepoint").resolve("time_to_safepoint.writer"));
+            writer.writeDoc(getClass(), OutputUtils.DOCS_PATH.resolve("safepoint").resolve("time_to_safepoint.md"));
             writer.writef("%n%n");
             writer.writeAggregateSection("Cumulative distribution", aggregate.reachingTimeDistribution(), thresholdMs, 3);
         }
