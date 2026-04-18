@@ -8,7 +8,7 @@ import org.sharpler.glag.records.SafepointLogRecord;
 
 /// Precomputed safepoint aggregates for the whole log and for each operation type.
 ///
-/// @param aggregate overall safepoint statistics for the log
+/// @param aggregate        overall safepoint statistics for the log
 /// @param aggregatesByType safepoint statistics grouped by operation name
 public record Aggregates(
     SafepointAggregate aggregate,
@@ -19,6 +19,9 @@ public record Aggregates(
     /// @param events parsed safepoint events from a single log
     /// @return overall and per-operation aggregates for `events`
     public static Aggregates from(List<SafepointLogRecord> events) {
+        if (events.isEmpty()) {
+            throw new IllegalArgumentException("`events` should be not empty");
+        }
         var totalLogTimeSec = events.getLast().finishTimeSec() - events.getFirst().startTimeSec();
 
         var eventsByOperation = events.stream()

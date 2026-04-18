@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.concurrent.Callable;
+import org.fusesource.jansi.AnsiConsole;
 import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.aggregations.Aggregates;
 import org.sharpler.glag.aggregations.GcLog;
@@ -64,6 +65,10 @@ final class Main implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         var safepointRecords = SafepointParser.parseAll(Files.readAllLines(safepointsPath));
+        if (safepointRecords.isEmpty()) {
+            AnsiConsole.err().printf("No valid safepoint events were found in '%s'%n", safepointsPath);
+            return 1;
+        }
 
         if (output == null) {
             ConsoleOutput.print(Aggregates.from(safepointRecords), thresholdMs);
