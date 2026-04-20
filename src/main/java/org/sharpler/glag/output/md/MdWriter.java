@@ -1,35 +1,27 @@
 package org.sharpler.glag.output.md;
 
-import static java.nio.file.StandardOpenOption.APPEND;
-
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import org.sharpler.glag.distribution.CumulativeDistributionPoint;
 import org.sharpler.glag.output.OutputUtils;
 
 final class MdWriter {
-    private final Path output;
+    private final StringBuilder markdown;
 
-    MdWriter(Path output) {
-        this.output = output;
-    }
-
-    void recreateFile() throws IOException {
-        Files.deleteIfExists(output);
-        Files.createFile(output);
+    MdWriter(StringBuilder markdown) {
+        this.markdown = markdown;
     }
 
     @FormatMethod
-    void writef(@FormatString String format, Object... args) throws IOException {
-        Files.writeString(output, String.format(format, args), APPEND);
+    void writef(@FormatString String format, Object... args) {
+        markdown.append(String.format(format, args));
     }
 
     void writeDoc(Class<?> owner, Path docPath) throws IOException {
-        Files.writeString(output, OutputUtils.readDoc(owner, docPath), APPEND);
+        markdown.append(OutputUtils.readDoc(owner, docPath));
     }
 
     void writeAggregateSection(
@@ -37,7 +29,7 @@ final class MdWriter {
         List<CumulativeDistributionPoint> points,
         int thresholdMs,
         int headingLevel
-    ) throws IOException {
+    ) {
         if (points.isEmpty()) {
             return;
         }
@@ -54,5 +46,10 @@ final class MdWriter {
             );
         }
         writef("%n");
+    }
+
+    @Override
+    public String toString() {
+        return markdown.toString();
     }
 }
