@@ -74,22 +74,24 @@ final class Main implements Callable<Integer> {
             ConsoleOutput.print(Aggregates.from(safepointRecords), thresholdMs);
         } else {
             var useHtml = output.toString().toLowerCase(Locale.ROOT).endsWith(".html");
+            String report;
             if (gcPath == null) {
                 if (useHtml) {
-                    new HtmlAggregatesOutput(output).print(Aggregates.from(safepointRecords), thresholdMs);
+                    report = HtmlAggregatesOutput.render(Aggregates.from(safepointRecords), thresholdMs);
                 } else {
-                    new MdAggregatesOutput(output).print(Aggregates.from(safepointRecords), thresholdMs);
+                    report = MdAggregatesOutput.render(Aggregates.from(safepointRecords), thresholdMs);
                 }
             } else {
                 var safepoints = SafepointLog.from(safepointRecords);
                 var gclog = GcLog.parse(Files.readAllLines(gcPath));
                 var runtimeEvents = RuntimeEvents.create(gclog, safepoints, thresholdMs);
                 if (useHtml) {
-                    new HtmlFullOutput(output).print(runtimeEvents, examples);
+                    report = HtmlFullOutput.render(runtimeEvents, examples);
                 } else {
-                    new MdFullOutput(output).print(runtimeEvents, examples);
+                    report = MdFullOutput.render(runtimeEvents, examples);
                 }
             }
+            Files.writeString(output, report);
         }
 
         return 0;

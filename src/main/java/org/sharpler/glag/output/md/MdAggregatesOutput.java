@@ -1,8 +1,6 @@
 package org.sharpler.glag.output.md;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashSet;
 import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.aggregations.Aggregates;
@@ -10,21 +8,16 @@ import org.sharpler.glag.output.OutputUtils;
 
 /// Writes a Markdown report that only depends on safepoint aggregates.
 public final class MdAggregatesOutput {
-    private final Path output;
+    /// Prevents instantiation of this utility class.
+    private MdAggregatesOutput() {}
 
-    /// Creates a Markdown writer targeting `output`.
-    ///
-    /// @param output destination Markdown file
-    public MdAggregatesOutput(Path output) {
-        this.output = output;
-    }
-
-    /// Writes a Markdown report for safepoint aggregates.
+    /// Renders a Markdown report for safepoint aggregates.
     ///
     /// @param aggregates overall and per-operation safepoint aggregates
     /// @param thresholdMs threshold used when rendering distributions
-    /// @throws IOException if the output file cannot be written
-    public void print(Aggregates aggregates, int thresholdMs) throws IOException {
+    /// @return Markdown report contents
+    /// @throws IOException if embedded documentation cannot be read
+    public static String render(Aggregates aggregates, int thresholdMs) throws IOException {
         var aggregate = aggregates.aggregate();
         var writer = new MdWriter(new StringBuilder(64 * 1024));
 
@@ -46,7 +39,7 @@ public final class MdAggregatesOutput {
         writer.writef("Average pause period: %.3f sec/op%n%n", aggregate.averagePausePeriodSec());
 
         writer.writef("## Safepoints%n%n");
-        writer.writeDoc(getClass(), OutputUtils.DOCS_PATH.resolve("safepoint").resolve("safepoint.md"));
+        writer.writeDoc(MdAggregatesOutput.class, OutputUtils.DOCS_PATH.resolve("safepoint").resolve("safepoint.md"));
         writer.writef("%n%n");
         writer.writeAggregateSection("Total safepoint time", aggregate.totalTimeDistribution(), thresholdMs, 2);
         writer.writeAggregateSection("Time inside a safepoint", aggregate.insideTimeDistribution(), thresholdMs, 2);
@@ -55,7 +48,7 @@ public final class MdAggregatesOutput {
 
         if (aggregate.hasReachingTimeNs()) {
             writer.writef("## Time to safepoint%n%n");
-            writer.writeDoc(getClass(), OutputUtils.DOCS_PATH.resolve("safepoint").resolve("time_to_safepoint.md"));
+            writer.writeDoc(MdAggregatesOutput.class, OutputUtils.DOCS_PATH.resolve("safepoint").resolve("time_to_safepoint.md"));
             writer.writef("%n%n");
             writer.writeAggregateSection("Cumulative distribution", aggregate.reachingTimeDistribution(), thresholdMs, 3);
         }
@@ -68,9 +61,9 @@ public final class MdAggregatesOutput {
 
             writer.writef("### Operation '%s'%n%n", operationName);
             var description = OutputUtils.DOCS_PATH.resolve("operation").resolve(operationName + ".md");
-            if (OutputUtils.docExists(getClass(), description)) {
+            if (OutputUtils.docExists(MdAggregatesOutput.class, description)) {
                 writer.writef("#### Description%n%n");
-                writer.writeDoc(getClass(), description);
+                writer.writeDoc(MdAggregatesOutput.class, description);
                 writer.writef("%n%n");
             } else if (unknownOperations.add(operationName)) {
                 AnsiConsole.err().printf("GC operation '%s' is unknown%n", operationName);
@@ -97,6 +90,6 @@ public final class MdAggregatesOutput {
             writer.writeAggregateSection("Time to leave safepoint", operationAggregate.leavingTimeDistribution(), thresholdMs, 4);
         }
 
-        Files.writeString(output, writer.toString());
+        return writer.toString();
     }
 }

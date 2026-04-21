@@ -1,8 +1,6 @@
 package org.sharpler.glag.output.md;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -16,21 +14,16 @@ import org.sharpler.glag.util.TimeUtils;
 
 /// Writes the full Markdown report with GC correlation.
 public final class MdFullOutput {
-    private final Path output;
+    /// Prevents instantiation of this utility class.
+    private MdFullOutput() {}
 
-    /// Creates a Markdown writer targeting `output`.
-    ///
-    /// @param output destination Markdown file
-    public MdFullOutput(Path output) {
-        this.output = output;
-    }
-
-    /// Writes a Markdown report for correlated runtime events.
+    /// Renders a Markdown report for correlated runtime events.
     ///
     /// @param runtimeEvents correlated GC and safepoint events
     /// @param examples number of slow examples to include in each section
-    /// @throws IOException if the output file cannot be written
-    public void print(RuntimeEvents runtimeEvents, int examples) throws IOException {
+    /// @return Markdown report contents
+    /// @throws IOException if embedded documentation cannot be read
+    public static String render(RuntimeEvents runtimeEvents, int examples) throws IOException {
         var safepoints = runtimeEvents.safepointLog();
         var aggregate = safepoints.aggregate();
         var writer = new MdWriter(new StringBuilder(128 * 1024));
@@ -56,9 +49,9 @@ public final class MdFullOutput {
             var name = runtimeEvents.gcName().getName();
             writer.writef("%s has been detected.%n%n", name);
             var gcDescription = OutputUtils.DOCS_PATH.resolve("gc").resolve(name + ".md");
-            if (OutputUtils.docExists(getClass(), gcDescription)) {
+            if (OutputUtils.docExists(MdFullOutput.class, gcDescription)) {
                 writer.writef("## %s%n%n", name);
-                writer.writeDoc(getClass(), gcDescription);
+                writer.writeDoc(MdFullOutput.class, gcDescription);
                 writer.writef("%n%n");
             } else {
                 AnsiConsole.err().printf("GC '%s' description is unsupported%n", name);
@@ -69,7 +62,7 @@ public final class MdFullOutput {
 
         var thresholdMs = runtimeEvents.thresholdMs();
         writer.writef("## Safepoints%n%n");
-        writer.writeDoc(getClass(), OutputUtils.DOCS_PATH.resolve("safepoint").resolve("safepoint.md"));
+        writer.writeDoc(MdFullOutput.class, OutputUtils.DOCS_PATH.resolve("safepoint").resolve("safepoint.md"));
         writer.writef("%n%n");
         writer.writeAggregateSection("Total safepoint time", safepoints.aggregate().totalTimeDistribution(), thresholdMs, 2);
         writer.writeAggregateSection("Time inside a safepoint", safepoints.aggregate().insideTimeDistribution(), thresholdMs, 2);
@@ -84,9 +77,9 @@ public final class MdFullOutput {
 
             writer.writef("### Operation '%s'%n%n", operationName);
             var description = OutputUtils.DOCS_PATH.resolve("operation").resolve(operationName + ".md");
-            if (OutputUtils.docExists(getClass(), description)) {
+            if (OutputUtils.docExists(MdFullOutput.class, description)) {
                 writer.writef("#### Description%n%n");
-                writer.writeDoc(getClass(), description);
+                writer.writeDoc(MdFullOutput.class, description);
                 writer.writef("%n%n");
             } else {
                 if (unknownOperations.add(operationName)) {
@@ -138,7 +131,7 @@ public final class MdFullOutput {
 
         if (aggregate.hasReachingTimeNs()) {
             writer.writef("## Time to safepoint%n%n");
-            writer.writeDoc(getClass(), OutputUtils.DOCS_PATH.resolve("safepoint").resolve("time_to_safepoint.md"));
+            writer.writeDoc(MdFullOutput.class, OutputUtils.DOCS_PATH.resolve("safepoint").resolve("time_to_safepoint.md"));
             writer.writef("%n%n");
             writer.writeAggregateSection("Cumulative distribution", aggregate.reachingTimeDistribution(), thresholdMs, 3);
         }
@@ -207,6 +200,6 @@ public final class MdFullOutput {
             }
         }
 
-        Files.writeString(output, writer.toString());
+        return writer.toString();
     }
 }
