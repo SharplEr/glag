@@ -1,12 +1,13 @@
 package org.sharpler.glag.output.html;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
-import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.aggregations.Aggregates;
 import org.sharpler.glag.aggregations.SafepointAggregate;
 import org.sharpler.glag.output.OutputUtils;
+import org.sharpler.glag.output.RenderResult;
 
 /// Writes an HTML report that only depends on safepoint aggregates.
 public final class HtmlAggregatesOutput {
@@ -17,11 +18,12 @@ public final class HtmlAggregatesOutput {
     ///
     /// @param aggregates overall and per-operation safepoint aggregates
     /// @param thresholdMs threshold used when rendering distributions
-    /// @return HTML report contents
+    /// @return rendered report and non-fatal rendering errors
     /// @throws IOException if embedded documentation or styles cannot be read
-    public static String render(Aggregates aggregates, int thresholdMs) throws IOException {
+    public static RenderResult render(Aggregates aggregates, int thresholdMs) throws IOException {
         var aggregate = aggregates.aggregate();
-        var writer = new HtmlWriter(new StringBuilder(96 * 1024));
+        var errors = new ArrayList<String>();
+        var writer = new HtmlWriter(new StringBuilder(96 * 1024), errors);
 
         writer.appendPageStart(HtmlAggregatesOutput.class, HtmlWriter.AGGREGATES_PAGE_STYLES_PATH);
         writer.appendOverview(
@@ -32,7 +34,7 @@ public final class HtmlAggregatesOutput {
         appendOperationsSection(writer, aggregates.aggregatesByType(), thresholdMs);
         writer.appendPageEnd();
 
-        return writer.toString();
+        return new RenderResult(writer.toString(), errors);
     }
 
     private static void appendSafepointSection(HtmlWriter writer, SafepointAggregate aggregate, int thresholdMs) throws IOException {
@@ -90,7 +92,7 @@ public final class HtmlAggregatesOutput {
             if (OutputUtils.docExists(HtmlAggregatesOutput.class, description)) {
                 writer.appendDocDetails(HtmlAggregatesOutput.class, "Description", description, null);
             } else if (unknownOperations.add(operationName)) {
-                AnsiConsole.err().printf("GC operation '%s' is unknown%n", operationName);
+                writer.addError("GC operation '%s' is unknown".formatted(operationName));
             }
 
             writer.appendDistributionSection("Cumulative distribution of total time", aggregate.totalTimeDistribution(), thresholdMs, 4);

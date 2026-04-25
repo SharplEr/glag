@@ -1,16 +1,17 @@
 package org.sharpler.glag.output.html;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import org.fusesource.jansi.AnsiConsole;
 import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.aggregations.GcIteration;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.aggregations.SafepointAggregate;
 import org.sharpler.glag.aggregations.SingleVMOperation;
 import org.sharpler.glag.output.OutputUtils;
+import org.sharpler.glag.output.RenderResult;
 import org.sharpler.glag.records.GcLogRecords;
 import org.sharpler.glag.records.GcName;
 import org.sharpler.glag.records.SafepointLogRecord;
@@ -25,13 +26,14 @@ public final class HtmlFullOutput {
     ///
     /// @param runtimeEvents correlated GC and safepoint events
     /// @param examples number of slow examples to include in each section
-    /// @return HTML report contents
+    /// @return rendered report and non-fatal rendering errors
     /// @throws IOException if embedded documentation or styles cannot be read
-    public static String render(RuntimeEvents runtimeEvents, int examples) throws IOException {
+    public static RenderResult render(RuntimeEvents runtimeEvents, int examples) throws IOException {
         var thresholdMs = runtimeEvents.thresholdMs();
         var safepoints = runtimeEvents.safepointLog();
         var aggregate = safepoints.aggregate();
-        var writer = new HtmlWriter(new StringBuilder(128 * 1024));
+        var errors = new ArrayList<String>();
+        var writer = new HtmlWriter(new StringBuilder(128 * 1024), errors);
 
         writer.appendPageStart(HtmlFullOutput.class, HtmlWriter.FULL_PAGE_STYLES_PATH);
         writer.appendOverview(
@@ -45,7 +47,7 @@ public final class HtmlFullOutput {
         appendSlowGcSections(writer, runtimeEvents, examples);
         writer.appendPageEnd();
 
-        return writer.toString();
+        return new RenderResult(writer.toString(), errors);
     }
 
     private static void appendGcSection(HtmlWriter writer, @Nullable GcName gcName) throws IOException {
@@ -58,7 +60,7 @@ public final class HtmlFullOutput {
                 "GC '%s' description is unsupported".formatted(name));
         } else {
             writer.append("<p>Failed to detect GC by logs.</p>");
-            AnsiConsole.err().println("Failed to detect GC by logs");
+            writer.addError("Failed to detect GC by logs");
         }
         writer.append("</section>");
     }
@@ -116,7 +118,7 @@ public final class HtmlFullOutput {
             if (OutputUtils.docExists(HtmlFullOutput.class, description)) {
                 writer.appendDocDetails(HtmlFullOutput.class, "Description", description, null);
             } else if (unknownOperations.add(operationName)) {
-                AnsiConsole.err().printf("GC operation '%s' is unknown%n", operationName);
+                writer.addError("GC operation '%s' is unknown".formatted(operationName));
             }
 
             writer.appendDistributionSection("Cumulative distribution of total time", operationAggregate.totalTimeDistribution(),

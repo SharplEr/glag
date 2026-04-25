@@ -1,10 +1,11 @@
 package org.sharpler.glag.output.md;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
-import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.aggregations.Aggregates;
 import org.sharpler.glag.output.OutputUtils;
+import org.sharpler.glag.output.RenderResult;
 
 /// Writes a Markdown report that only depends on safepoint aggregates.
 public final class MdAggregatesOutput {
@@ -15,9 +16,9 @@ public final class MdAggregatesOutput {
     ///
     /// @param aggregates overall and per-operation safepoint aggregates
     /// @param thresholdMs threshold used when rendering distributions
-    /// @return Markdown report contents
+    /// @return rendered report and non-fatal rendering errors
     /// @throws IOException if embedded documentation cannot be read
-    public static String render(Aggregates aggregates, int thresholdMs) throws IOException {
+    public static RenderResult render(Aggregates aggregates, int thresholdMs) throws IOException {
         var aggregate = aggregates.aggregate();
         var writer = new MdWriter(new StringBuilder(64 * 1024));
 
@@ -54,6 +55,7 @@ public final class MdAggregatesOutput {
         }
 
         writer.writef("## JVM operations in safepoint%n%n");
+        var errors = new ArrayList<String>();
         var unknownOperations = new HashSet<String>();
         for (var e : OutputUtils.sortedOperationAggregates(aggregates.aggregatesByType())) {
             var operationName = e.getKey();
@@ -66,7 +68,7 @@ public final class MdAggregatesOutput {
                 writer.writeDoc(MdAggregatesOutput.class, description);
                 writer.writef("%n%n");
             } else if (unknownOperations.add(operationName)) {
-                AnsiConsole.err().printf("GC operation '%s' is unknown%n", operationName);
+                errors.add("GC operation '%s' is unknown".formatted(operationName));
             }
 
             writer.writef("Period: %.3f (sec/op)%n%n", operationAggregate.averagePausePeriodSec());
@@ -90,6 +92,6 @@ public final class MdAggregatesOutput {
             writer.writeAggregateSection("Time to leave safepoint", operationAggregate.leavingTimeDistribution(), thresholdMs, 4);
         }
 
-        return writer.toString();
+        return new RenderResult(writer.toString(), errors);
     }
 }

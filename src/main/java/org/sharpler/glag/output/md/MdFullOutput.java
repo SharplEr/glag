@@ -1,14 +1,15 @@
 package org.sharpler.glag.output.md;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import org.fusesource.jansi.AnsiConsole;
 import org.sharpler.glag.aggregations.GcIteration;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.aggregations.SingleVMOperation;
 import org.sharpler.glag.output.OutputUtils;
+import org.sharpler.glag.output.RenderResult;
 import org.sharpler.glag.records.SafepointLogRecord;
 import org.sharpler.glag.util.TimeUtils;
 
@@ -21,11 +22,12 @@ public final class MdFullOutput {
     ///
     /// @param runtimeEvents correlated GC and safepoint events
     /// @param examples number of slow examples to include in each section
-    /// @return Markdown report contents
+    /// @return rendered report and non-fatal rendering errors
     /// @throws IOException if embedded documentation cannot be read
-    public static String render(RuntimeEvents runtimeEvents, int examples) throws IOException {
+    public static RenderResult render(RuntimeEvents runtimeEvents, int examples) throws IOException {
         var safepoints = runtimeEvents.safepointLog();
         var aggregate = safepoints.aggregate();
+        var errors = new ArrayList<String>();
         var writer = new MdWriter(new StringBuilder(128 * 1024));
 
         writer.writef("# Report%n%n");
@@ -54,10 +56,10 @@ public final class MdFullOutput {
                 writer.writeDoc(MdFullOutput.class, gcDescription);
                 writer.writef("%n%n");
             } else {
-                AnsiConsole.err().printf("GC '%s' description is unsupported%n", name);
+                errors.add("GC '%s' description is unsupported".formatted(name));
             }
         } else {
-            AnsiConsole.err().println("Failed to detect GC by logs");
+            errors.add("Failed to detect GC by logs");
         }
 
         var thresholdMs = runtimeEvents.thresholdMs();
@@ -83,7 +85,7 @@ public final class MdFullOutput {
                 writer.writef("%n%n");
             } else {
                 if (unknownOperations.add(operationName)) {
-                    AnsiConsole.err().printf("GC operation '%s' is unknown%n", operationName);
+                    errors.add("GC operation '%s' is unknown".formatted(operationName));
                 }
             }
 
@@ -200,6 +202,6 @@ public final class MdFullOutput {
             }
         }
 
-        return writer.toString();
+        return new RenderResult(writer.toString(), errors);
     }
 }

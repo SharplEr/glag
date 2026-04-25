@@ -1,8 +1,10 @@
 package org.sharpler.glag;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 import org.fusesource.jansi.AnsiConsole;
@@ -11,12 +13,14 @@ import org.sharpler.glag.aggregations.Aggregates;
 import org.sharpler.glag.aggregations.GcLog;
 import org.sharpler.glag.aggregations.RuntimeEvents;
 import org.sharpler.glag.aggregations.SafepointLog;
+import org.sharpler.glag.output.RenderResult;
 import org.sharpler.glag.output.console.ConsoleOutput;
 import org.sharpler.glag.output.html.HtmlAggregatesOutput;
 import org.sharpler.glag.output.html.HtmlFullOutput;
 import org.sharpler.glag.output.md.MdAggregatesOutput;
 import org.sharpler.glag.output.md.MdFullOutput;
 import org.sharpler.glag.parsing.SafepointParser;
+import org.sharpler.glag.records.SafepointLogRecord;
 import picocli.CommandLine;
 
 final class Main implements Callable<Integer> {
@@ -74,26 +78,30 @@ final class Main implements Callable<Integer> {
             ConsoleOutput.print(Aggregates.from(safepointRecords), thresholdMs);
         } else {
             var useHtml = output.toString().toLowerCase(Locale.ROOT).endsWith(".html");
-            String report;
-            if (gcPath == null) {
-                if (useHtml) {
-                    report = HtmlAggregatesOutput.render(Aggregates.from(safepointRecords), thresholdMs);
-                } else {
-                    report = MdAggregatesOutput.render(Aggregates.from(safepointRecords), thresholdMs);
-                }
-            } else {
-                var safepoints = SafepointLog.from(safepointRecords);
-                var gclog = GcLog.parse(Files.readAllLines(gcPath));
-                var runtimeEvents = RuntimeEvents.create(gclog, safepoints, thresholdMs);
-                if (useHtml) {
-                    report = HtmlFullOutput.render(runtimeEvents, examples);
-                } else {
-                    report = MdFullOutput.render(runtimeEvents, examples);
-                }
-            }
-            Files.writeString(output, report);
+            var result = buildReport(useHtml, safepointRecords);
+            result.writeReport(output);
+            result.printErrors();
         }
 
         return 0;
+    }
+
+    private RenderResult buildReport(boolean useHtml, List<SafepointLogRecord> safepointRecords) throws IOException {
+        if (gcPath == null) {
+            if (useHtml) {
+                return HtmlAggregatesOutput.render(Aggregates.from(safepointRecords), thresholdMs);
+            } else {
+                return MdAggregatesOutput.render(Aggregates.from(safepointRecords), thresholdMs);
+            }
+        } else {
+            var safepoints = SafepointLog.from(safepointRecords);
+            var gclog = GcLog.parse(Files.readAllLines(gcPath));
+            var runtimeEvents = RuntimeEvents.create(gclog, safepoints, thresholdMs);
+            if (useHtml) {
+                return HtmlFullOutput.render(runtimeEvents, examples);
+            } else {
+                return MdFullOutput.render(runtimeEvents, examples);
+            }
+        }
     }
 }

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Locale;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
-import org.fusesource.jansi.AnsiConsole;
 import org.jspecify.annotations.Nullable;
 import org.sharpler.glag.aggregations.SafepointAggregate;
 import org.sharpler.glag.distribution.CumulativeDistributionPoint;
@@ -22,9 +21,11 @@ final class HtmlWriter {
     private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().build();
 
     private final StringBuilder html;
+    private final List<String> errors;
 
-    HtmlWriter(StringBuilder html) {
+    HtmlWriter(StringBuilder html, List<String> errors) {
         this.html = html;
+        this.errors = errors;
     }
 
     HtmlWriter append(String value) {
@@ -122,7 +123,7 @@ final class HtmlWriter {
     ) throws IOException {
         if (!OutputUtils.docExists(owner, docPath)) {
             if (missingMessage != null) {
-                AnsiConsole.err().println(missingMessage);
+                addError(missingMessage);
             }
             return;
         }
@@ -166,6 +167,10 @@ final class HtmlWriter {
     @FormatMethod
     String format(@FormatString String format, Object... args) {
         return String.format(Locale.ROOT, format, args);
+    }
+
+    void addError(String error) {
+        errors.add(error);
     }
 
     /// Returns the accumulated HTML document.

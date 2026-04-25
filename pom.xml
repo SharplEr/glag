@@ -91,6 +91,9 @@
             <goals>
               <goal>prepare-agent</goal>
             </goals>
+            <configuration>
+              <append>false</append>
+            </configuration>
           </execution>
           <execution>
             <id>report</id>
