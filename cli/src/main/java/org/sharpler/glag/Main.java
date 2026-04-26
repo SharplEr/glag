@@ -79,8 +79,10 @@ final class Main implements Callable<Integer> {
         } else {
             var useHtml = output.toString().toLowerCase(Locale.ROOT).endsWith(".html");
             var result = buildReport(useHtml, safepointRecords);
-            result.writeReport(output);
-            result.printErrors();
+            Files.writeString(output, result.report());
+            for (var error : result.errors()) {
+                AnsiConsole.err().println(error);
+            }
         }
 
         return 0;

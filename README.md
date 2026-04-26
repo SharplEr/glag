@@ -67,7 +67,7 @@ If a GC log is present, in addition to the summary data, it includes:
 Example:
 
 ```bash
-java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
+java -jar ./cli/target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
   -s /path/to/safepoint.log \
   -o /path/to/report.md
 ```
@@ -75,7 +75,7 @@ java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
 Example with GC correlation:
 
 ```bash
-java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
+java -jar ./cli/target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
   -s /path/to/safepoint.log \
   -g /path/to/gc.log \
   -o /path/to/report.md
@@ -97,7 +97,7 @@ This format contains the same core content as the Markdown report, but presents 
 Example:
 
 ```bash
-java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
+java -jar ./cli/target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
   -s /path/to/safepoint.log \
   -o /path/to/report.html
 ```
@@ -105,7 +105,7 @@ java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
 Example with GC correlation:
 
 ```bash
-java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
+java -jar ./cli/target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
   -s /path/to/safepoint.log \
   -g /path/to/gc.log \
   -o /path/to/report.html
@@ -122,14 +122,14 @@ mvn package
 Run with console output:
 
 ```bash
-java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
+java -jar ./cli/target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
   -s /path/to/safepoint.log
 ```
 
 Run with Markdown output:
 
 ```bash
-java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
+java -jar ./cli/target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
   -s /path/to/safepoint.log \
   -o /path/to/report.md
 ```
@@ -137,7 +137,7 @@ java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
 Run with HTML output:
 
 ```bash
-java -jar ./target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
+java -jar ./cli/target/glag-1.0-SNAPSHOT-jar-with-dependencies.jar \
   -s /path/to/safepoint.log \
   -o /path/to/report.html
 ```
