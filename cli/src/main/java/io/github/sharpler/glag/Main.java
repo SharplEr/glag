@@ -1,0 +1,109 @@
+package io.github.sharpler.glag;
+
+import io.github.sharpler.glag.aggregations.Aggregates;
+import io.github.sharpler.glag.aggregations.GcLog;
+import io.github.sharpler.glag.aggregations.RuntimeEvents;
+import io.github.sharpler.glag.aggregations.SafepointLog;
+import io.github.sharpler.glag.output.RenderResult;
+import io.github.sharpler.glag.output.console.ConsoleOutput;
+import io.github.sharpler.glag.output.html.HtmlAggregatesOutput;
+import io.github.sharpler.glag.output.html.HtmlFullOutput;
+import io.github.sharpler.glag.output.md.MdAggregatesOutput;
+import io.github.sharpler.glag.output.md.MdFullOutput;
+import io.github.sharpler.glag.parsing.SafepointParser;
+import io.github.sharpler.glag.records.SafepointLogRecord;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.Callable;
+import org.fusesource.jansi.AnsiConsole;
+import org.jspecify.annotations.Nullable;
+import picocli.CommandLine;
+
+final class Main implements Callable<Integer> {
+    @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
+    @CommandLine.Option(names = {"-s", "--safepoints"}, paramLabel = "SAFEPOINTS", description = "safepoints log", required = true)
+    private Path safepointsPath = Paths.get(".");
+
+    @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
+    @CommandLine.Option(names = {"-g", "--gc"}, paramLabel = "GC", description = "gc log", required = false)
+    @Nullable
+    private Path gcPath = null;
+
+    @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
+    @CommandLine.Option(
+        names = {"-t", "--threshold"},
+        paramLabel = "THRESHOLD",
+        description = "slow safepoint threshold in ms",
+        required = false,
+        defaultValue = "50"
+    )
+    private int thresholdMs = 50;
+
+    @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
+    @CommandLine.Option(
+        names = {"--examples"},
+        paramLabel = "EXAMPLES",
+        description = "count of slow operation examples",
+        required = false,
+        defaultValue = "5"
+    )
+    private int examples = 5;
+
+    @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
+    @CommandLine.Option(names = {"-o", "--output"}, paramLabel = "OUTPUT", description = "Report output path", required = false)
+    @Nullable
+    private Path output = null;
+
+    static void main(String... args) {
+        System.exit(new CommandLine(new Main()).execute(args));
+    }
+
+    /// Runs the CLI command using the configured input and output paths.
+    ///
+    /// @return process exit code
+    /// @throws Exception if reading logs or writing a report fails
+    @Override
+    public Integer call() throws Exception {
+        var safepointRecords = SafepointParser.parseAll(Files.readAllLines(safepointsPath));
+        if (safepointRecords.isEmpty()) {
+            AnsiConsole.err().printf("No valid safepoint events were found in '%s'%n", safepointsPath);
+            return 1;
+        }
+
+        if (output == null) {
+            ConsoleOutput.print(Aggregates.from(safepointRecords), thresholdMs);
+        } else {
+            var useHtml = output.toString().toLowerCase(Locale.ROOT).endsWith(".html");
+            var result = buildReport(useHtml, safepointRecords);
+            Files.writeString(output, result.report());
+            for (var error : result.errors()) {
+                AnsiConsole.err().println(error);
+            }
+        }
+
+        return 0;
+    }
+
+    private RenderResult buildReport(boolean useHtml, List<SafepointLogRecord> safepointRecords) throws IOException {
+        if (gcPath == null) {
+            if (useHtml) {
+                return HtmlAggregatesOutput.render(Aggregates.from(safepointRecords), thresholdMs);
+            } else {
+                return MdAggregatesOutput.render(Aggregates.from(safepointRecords), thresholdMs);
+            }
+        } else {
+            var safepoints = SafepointLog.from(safepointRecords);
+            var gclog = GcLog.parse(Files.readAllLines(gcPath));
+            var runtimeEvents = RuntimeEvents.create(gclog, safepoints, thresholdMs);
+            if (useHtml) {
+                return HtmlFullOutput.render(runtimeEvents, examples);
+            } else {
+                return MdFullOutput.render(runtimeEvents, examples);
+            }
+        }
+    }
+}
