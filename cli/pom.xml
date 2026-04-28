@@ -13,6 +13,9 @@
 
   <artifactId>glag-cli</artifactId>
   <name>glag-cli</name>
+  <description>
+    Command-line application for generating glag reports.
+  </description>
 
   <build>
     <plugins>

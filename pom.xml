@@ -9,6 +9,33 @@
   <version>1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>glag</name>
+  <description>
+    A Java library and CLI for aggregating HotSpot GC and safepoint logs.
+  </description>
+  <url>https://github.com/SharplEr/glag</url>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>sharpler</id>
+      <name>SharplEr</name>
+      <url>https://github.com/SharplEr</url>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/SharplEr/glag.git</connection>
+    <developerConnection>scm:git:https://github.com/SharplEr/glag.git</developerConnection>
+    <url>https://github.com/SharplEr/glag</url>
+    <tag>HEAD</tag>
+  </scm>
 
   <modules>
     <module>core</module>
@@ -30,114 +57,153 @@
 
   <build>
     <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.15.0</version>
+          <configuration>
+            <release>25</release>
+            <showWarnings>true</showWarnings>
+            <compilerArgs>
+              <arg>-Xlint:all</arg>
+              <arg>-Werror</arg>
+              <arg>-XDcompilePolicy=simple</arg>
+              <arg>--should-stop=ifError=FLOW</arg>
+              <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
+              <arg>-Xplugin:ErrorProne -Xep:NullAway:ERROR -XepOpt:NullAway:OnlyNullMarked=true</arg>
+            </compilerArgs>
+            <annotationProcessorPaths>
+              <path>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_core</artifactId>
+                <version>${error-prone.version}</version>
+              </path>
+              <path>
+                <groupId>com.uber.nullaway</groupId>
+                <artifactId>nullaway</artifactId>
+                <version>${nullaway.version}</version>
+              </path>
+            </annotationProcessorPaths>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.5.5</version>
+        </plugin>
+        <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>0.8.13</version>
+          <executions>
+            <execution>
+              <id>prepare-agent</id>
+              <goals>
+                <goal>prepare-agent</goal>
+              </goals>
+              <configuration>
+                <append>false</append>
+              </configuration>
+            </execution>
+            <execution>
+              <id>report</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>report</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>3.6.0</version>
+          <configuration>
+            <configLocation>${maven.multiModuleProjectDirectory}/checkstyle/checkstyle.xml</configLocation>
+            <propertyExpansion>config_loc=${maven.multiModuleProjectDirectory}/checkstyle</propertyExpansion>
+            <consoleOutput>true</consoleOutput>
+            <failsOnError>true</failsOnError>
+            <failOnViolation>true</failOnViolation>
+            <includeTestSourceDirectory>true</includeTestSourceDirectory>
+          </configuration>
+          <executions>
+            <execution>
+              <id>checkstyle</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+          <dependencies>
+            <dependency>
+              <groupId>com.puppycrawl.tools</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>${checkstyle.version}</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.4.0</version>
+          <executions>
+            <execution>
+              <id>attach-sources</id>
+              <goals>
+                <goal>jar-no-fork</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.12.0</version>
+          <executions>
+            <execution>
+              <id>doclint</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+              <configuration>
+                <doclint>all</doclint>
+                <failOnError>true</failOnError>
+                <source>25</source>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.15.0</version>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>3.3.1</version>
         <configuration>
-          <release>25</release>
-          <showWarnings>true</showWarnings>
-          <compilerArgs>
-            <arg>-Xlint:all</arg>
-            <arg>-Werror</arg>
-            <arg>-XDcompilePolicy=simple</arg>
-            <arg>--should-stop=ifError=FLOW</arg>
-            <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
-            <arg>-Xplugin:ErrorProne -Xep:NullAway:ERROR -XepOpt:NullAway:OnlyNullMarked=true</arg>
-          </compilerArgs>
-          <annotationProcessorPaths>
-            <path>
-              <groupId>com.google.errorprone</groupId>
-              <artifactId>error_prone_core</artifactId>
-              <version>${error-prone.version}</version>
-            </path>
-            <path>
-              <groupId>com.uber.nullaway</groupId>
-              <artifactId>nullaway</artifactId>
-              <version>${nullaway.version}</version>
-            </path>
-          </annotationProcessorPaths>
+          <autoVersionSubmodules>true</autoVersionSubmodules>
+          <tagNameFormat>v@{project.version}</tagNameFormat>
+          <pushChanges>true</pushChanges>
+          <scmCommentPrefix>[release]</scmCommentPrefix>
+          <releaseProfiles>release</releaseProfiles>
         </configuration>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.5.5</version>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.13</version>
-        <executions>
-          <execution>
-            <id>prepare-agent</id>
-            <goals>
-              <goal>prepare-agent</goal>
-            </goals>
-            <configuration>
-              <append>false</append>
-            </configuration>
-          </execution>
-          <execution>
-            <id>report</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>report</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>3.6.0</version>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <version>0.10.0</version>
+        <extensions>true</extensions>
         <configuration>
-          <configLocation>${maven.multiModuleProjectDirectory}/checkstyle/checkstyle.xml</configLocation>
-          <propertyExpansion>config_loc=${maven.multiModuleProjectDirectory}/checkstyle</propertyExpansion>
-          <consoleOutput>true</consoleOutput>
-          <failsOnError>true</failsOnError>
-          <failOnViolation>true</failOnViolation>
-          <includeTestSourceDirectory>true</includeTestSourceDirectory>
+          <publishingServerId>central</publishingServerId>
+          <excludeArtifacts>
+            <excludeArtifact>glag-cli</excludeArtifact>
+          </excludeArtifacts>
         </configuration>
-        <executions>
-          <execution>
-            <id>checkstyle</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-        <dependencies>
-          <dependency>
-            <groupId>com.puppycrawl.tools</groupId>
-            <artifactId>checkstyle</artifactId>
-            <version>${checkstyle.version}</version>
-          </dependency>
-        </dependencies>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.12.0</version>
-        <executions>
-          <execution>
-            <id>doclint</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-            <configuration>
-              <doclint>all</doclint>
-              <failOnError>true</failOnError>
-              <source>25</source>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
-    </pluginManagement>
   </build>
 
   <dependencyManagement>
@@ -204,5 +270,35 @@
     </dependency>
   </dependencies>
   </dependencyManagement>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>3.2.8</version>
+            <configuration>
+              <gpgArguments>
+                <arg>--pinentry-mode</arg>
+                <arg>loopback</arg>
+              </gpgArguments>
+            </configuration>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>

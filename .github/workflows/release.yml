@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: maven
+          server-id: central
+          server-username: MAVEN_CENTRAL_PORTAL_USERNAME
+          server-password: MAVEN_CENTRAL_PORTAL_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: GPG_PASSPHRASE
+
+      - name: Configure Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Configure Git remote for pushes
+        run: git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run release
+        run: >
+          mvn --batch-mode
+          -Darguments="-DskipTests=false"
+          release:clean release:prepare release:perform
+        env:
+          MAVEN_CENTRAL_PORTAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_PORTAL_USERNAME }}
+          MAVEN_CENTRAL_PORTAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PORTAL_PASSWORD }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Read release tag
+        id: release_tag
+        run: |
+          tag=$(git tag --sort=-creatordate | head -n1)
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_tag.outputs.tag }}
+          generate_release_notes: true

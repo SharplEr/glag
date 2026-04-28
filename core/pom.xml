@@ -13,6 +13,9 @@
 
   <artifactId>glag-core</artifactId>
   <name>glag-core</name>
+  <description>
+    Core library for parsing, aggregating, and rendering HotSpot GC and safepoint log data.
+  </description>
 
   <build>
     <plugins>
@@ -31,6 +34,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
