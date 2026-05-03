@@ -11,6 +11,21 @@ In broad terms Shenandoah tries to:
 2. evacuate objects concurrently,
 3. update references concurrently or with small pauses around the transition points.
 
+The normal Shenandoah cycle is easiest to read as a sequence of short coordination VM operations
+with concurrent work between them:
+
+1. **ShenandoahInitMark** starts a concurrent marking cycle.
+2. Concurrent marking runs while Java threads continue.
+3. **ShenandoahFinalMarkStartEvac** finishes marking and starts evacuation.
+4. Evacuation moves objects mostly concurrently.
+5. **ShenandoahInitUpdateRefs** starts the update-references phase when that phase is needed.
+6. Reference updates run mostly concurrently.
+7. **ShenandoahFinalUpdateRefs** finishes the update-references phase.
+
+So if a Shenandoah report shows several small VM operations for one collection cycle,
+that is usually expected: the VM operations are the stop-the-world transition points,
+not the whole amount of GC work.
+
 That makes Shenandoah very different from throughput-oriented collectors such as Parallel GC.
 The tradeoff is usually:
 

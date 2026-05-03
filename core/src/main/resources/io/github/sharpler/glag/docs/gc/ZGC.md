@@ -10,6 +10,24 @@ At a high level ZGC tries to do most expensive work concurrently:
 2. relocating objects,
 3. reclaiming memory.
 
+In modern generational ZGC logs, the VM operations are mostly the short transitions around that concurrent work.
+For a young collection the typical sequence is:
+
+1. **ZMarkStartYoung** starts young-generation marking.
+2. Young marking runs concurrently.
+3. **ZMarkEndYoung** finishes young marking and lets ZGC choose what can be reclaimed or relocated.
+4. ZGC selects the relocation set concurrently.
+5. **ZRelocateStartYoung** starts young relocation.
+6. Young relocation runs concurrently.
+
+For a major collection, ZGC starts young and old marking together with **ZMarkStartYoungAndOld**.
+The old-generation part then has its own later transitions:
+
+1. **ZMarkEndOld** finishes old-generation marking after concurrent old marking.
+2. ZGC processes non-strong references and selects old relocation candidates concurrently.
+3. **ZRelocateStartOld** starts old-generation relocation.
+4. Old relocation runs concurrently.
+
 Application threads may still participate indirectly through barriers,
 but the collector avoids long global pauses as a core design principle.
 
