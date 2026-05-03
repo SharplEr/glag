@@ -1,5 +1,7 @@
 **ShenandoahInitUpdateRefs** is the initial pause that starts the update-references phase in **Shenandoah**.
 
+[Source code see VM_ShenandoahInitUpdateRefs](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/gc/shenandoah/shenandoahVMOperations.cpp)
+
 After evacuation, Shenandoah needs object references to point consistently to the new locations.
 This pause is the coordination step that starts that phase.
 

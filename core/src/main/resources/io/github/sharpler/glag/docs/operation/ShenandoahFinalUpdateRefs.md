@@ -1,5 +1,7 @@
 **ShenandoahFinalUpdateRefs** is the final pause of the reference-update phase in **Shenandoah**.
 
+[Source code see VM_ShenandoahFinalUpdateRefs](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/gc/shenandoah/shenandoahVMOperations.cpp)
+
 Shenandoah tries to do most update-reference work concurrently,
 but this pause is used to finish the phase consistently before the JVM proceeds.
 

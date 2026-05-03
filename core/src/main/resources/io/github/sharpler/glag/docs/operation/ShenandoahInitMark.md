@@ -1,5 +1,7 @@
 **ShenandoahInitMark** is the initial-mark pause of a **Shenandoah** marking cycle.
 
+[Source code see VM_ShenandoahInitMark](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/gc/shenandoah/shenandoahVMOperations.cpp)
+
 In practice, it means:
 
 1. Shenandoah is starting a new concurrent marking cycle,

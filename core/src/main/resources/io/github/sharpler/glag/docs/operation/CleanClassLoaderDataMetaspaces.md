@@ -2,7 +2,7 @@
 bookkeeping.
 
 [Source code see VM_CleanClassLoaderDataMetaspaces](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/runtime/vmOperations.hpp)
-[Source code see walk_metadata_and_clean_metaspaces](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/classfile/classLoaderDataGraph.cp)
+[Source code see walk_metadata_and_clean_metaspaces](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/classfile/classLoaderDataGraph.cpp)
 
 In practice, it means the JVM is cleaning metadata structures associated with class loaders,
 usually after some classes or loaders became unreachable.

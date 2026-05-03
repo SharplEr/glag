@@ -1,5 +1,7 @@
 **ParallelCollectForAllocation** is the main allocation-driven GC operation in **Parallel GC**.
 
+[Source code see VM_ParallelCollectForAllocation](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/gc/parallel/psVMOperations.cpp)
+
 In practice it means:
 
 1. the application needed more memory,

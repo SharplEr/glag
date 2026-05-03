@@ -1,5 +1,7 @@
 **SerialCollectForAllocation** is the main allocation-driven GC operation in **Serial GC**.
 
+[Source code see VM_SerialCollectForAllocation](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/gc/serial/serialVMOperations.cpp)
+
 In practice, it means:
 
 1. the application needed more memory,

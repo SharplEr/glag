@@ -1,5 +1,7 @@
 **ShenandoahFinalMarkStartEvac** is the final-mark pause that completes marking and starts evacuation in **Shenandoah**.
 
+[Source code see VM_ShenandoahFinalMarkStartEvac](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/gc/shenandoah/shenandoahVMOperations.cpp)
+
 At this point Shenandoah has already done most marking concurrently.
 This pause finalizes the marking state and switches the collector into evacuation work.
 
